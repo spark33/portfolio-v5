@@ -1,4 +1,4 @@
-import { JAMO_INK, SYLLABLE_INK } from "./metrics.ts";
+import { JAMO_INK, JAMO_PATH, SYLLABLE_INK } from "./metrics.ts";
 
 /**
  * How a Korean syllable is put together.
@@ -44,8 +44,12 @@ export interface Part {
   role: Role;
   /** 박 = 0, 상 = 1, 현 = 2. */
   syllable: number;
-  /** SVG transform placing this jamo's ink exactly in its cell. */
+  /** The jamo's outline, as SVG path data. */
+  d: string;
+  /** SVG transform placing that outline in its cell. */
   transform: string;
+  /** Uniform scale applied by that transform, so stroke width can undo it. */
+  scale: number;
   /** Where it flies in from, as a translation applied before that. */
   approach: { x: number; y: number };
 }
@@ -83,10 +87,33 @@ export function blockX(index: number): number {
  * the assembly is drawn in SVG rather than in HTML, where the same placement
  * would depend on line-height and half-leading.
  */
-function fit(char: string, cell: Cell): string {
+/**
+ * Fits a jamo into its cell at a *uniform* scale, centred.
+ *
+ * Uniform is the whole point. Stretching each jamo to fill its cell is what a
+ * real Korean typeface does — it redraws the form for the position — but doing
+ * it by scaling one drawing gives anisotropic strokes: ㄱ squashed into a wide
+ * flat cell comes out with hairline horizontals and heavy verticals, and reads
+ * as clunky no matter how well it is animated. A uniform scale keeps every
+ * stroke the weight the designer drew, at the cost of the parts sitting a
+ * little smaller than the block they are building. That reads as parts, which
+ * is what they are.
+ */
+function fit(char: string, cell: Cell): { transform: string; scale: number } {
   const ink = JAMO_INK[char];
   if (!ink) throw new Error(`no ink box for ${char} — re-run npm run build:loader`);
-  return fitInk(ink, cell);
+
+  const inkWidth = ink.x2 - ink.x1;
+  const inkHeight = ink.y2 - ink.y1;
+  const scale = Math.min(cell.width / inkWidth, cell.height / inkHeight);
+
+  const x = cell.x + (cell.width - inkWidth * scale) / 2 - ink.x1 * scale;
+  const y = cell.y + (cell.height - inkHeight * scale) / 2 + ink.y2 * scale;
+
+  return {
+    transform: `translate(${x.toFixed(4)} ${y.toFixed(4)}) scale(${scale.toFixed(4)})`,
+    scale,
+  };
 }
 
 function fitInk(ink: { x1: number; y1: number; x2: number; y2: number }, cell: Cell): string {
@@ -131,11 +158,19 @@ export function buildParts(): Part[] {
     final: { x: 0, y: 0.55 },
   };
 
-  return PARTS.map((part) => ({
-    ...part,
-    transform: fit(part.char, CELLS[part.role]),
-    approach: approaches[part.role],
-  }));
+  return PARTS.map((part) => {
+    const placed = fit(part.char, CELLS[part.role]);
+    const d = JAMO_PATH[part.char];
+    if (!d) throw new Error(`no outline for ${part.char} — re-run npm run build:loader`);
+
+    return {
+      ...part,
+      d,
+      transform: placed.transform,
+      scale: placed.scale,
+      approach: approaches[part.role],
+    };
+  });
 }
 
 /**

@@ -81,8 +81,22 @@ That is also why it cannot be a stock preloader wearing someone's name: this
 animation is specific to *this* name in *this* script, and would have to be
 rebuilt from scratch for any other.
 
-Everything is real text in a 3.6 KB subset of Pretendard Variable, animated
-along its `wght` axis: the parts arrive hairline and gain weight as they lock,
+**Construction is drawn; the result is set.** Each jamo is a baked outline that
+draws itself on with `stroke-dashoffset`, the fill catching up behind the line
+— the one thing here that could not be done any other way, and what makes the
+parts read as drawn rather than as glyphs being faded up. The composed
+syllables and SEAN PARK are real text.
+
+Each jamo is fitted to its cell at a **uniform** scale. A real Korean typeface
+redraws a jamo for its position; scaling one drawing to fill a cell instead
+gives anisotropic strokes — ㄱ squashed into a wide flat cell comes out with
+hairline horizontals and heavy verticals — and no amount of easing rescues
+that. Uniform keeps every stroke the weight it was drawn at, at the cost of the
+parts sitting a little smaller than the block they build. They read as parts,
+which is what they are.
+
+The composed syllables and SEAN PARK are real text in a 3.6 KB subset of
+Pretendard Variable, animated along its `wght` axis: the parts arrive hairline and gain weight as they lock,
 landing at 930 exactly as the counter reaches 100, so the letterforms and the
 number are two readings of one signal. `src/loader/layout.ts` holds the cell
 table — the regions of the square each role occupies — which is the part worth

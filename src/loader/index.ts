@@ -156,6 +156,13 @@ function svgEl<K extends keyof SVGElementTagNameMap>(
 /** Vertical padding around the blocks, in block units. */
 const PAD = 0.34;
 
+/** Line weight of the drawn outlines, in block units. */
+const STROKE = 0.011;
+
+/** Where in a part's arrival the outline finishes drawing and the fill takes
+ *  over. The two overlap, so the form is never a bare outline for long. */
+const DRAW = { span: 0.62, fillFrom: 0.45 };
+
 export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): LoaderHandle {
   const { autoplay = true, loop = true, onComplete } = options;
 
@@ -199,18 +206,39 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   const parts = buildParts();
   const partGroup = svgEl("g");
   const partNodes = parts.map((part) => {
-    // An outer group carries the approach; the inner text carries the fit, so
-    // the two never have to be composed by hand.
+    // An outer group carries the approach; the path carries the fit, so the
+    // two never have to be composed by hand.
     const outer = svgEl("g");
-    const text = svgEl("text", { x: 0, y: 0, "font-size": 1, transform: part.transform });
-    text.textContent = part.char;
+    const path = svgEl("path", {
+      d: part.d,
+      transform: part.transform,
+      fill: "currentColor",
+      stroke: "currentColor",
+      // Butt, not round. A round cap on a zero-length dash renders as a dot,
+      // so at rest — dash offset at full length, nothing meant to be drawn —
+      // every contour start left a speck on screen.
+      "stroke-linecap": "butt",
+      "stroke-linejoin": "round",
+      // The fit scales the path, and stroke scales with it, so this undoes
+      // that — every jamo draws with the same weight of line whatever size its
+      // cell made it.
+      "stroke-width": (STROKE / part.scale).toFixed(4),
+    });
+
     // Each block is offset here rather than in the fit, so the fit stays in
     // block-local units and is readable next to the cell table.
     const positioned = svgEl("g", { transform: `translate(${blockX(part.syllable)} 0)` });
-    positioned.append(text);
+    positioned.append(path);
     outer.append(positioned);
     partGroup.append(outer);
-    return outer;
+
+    // Total outline length, for the draw-on. Read once; a jamo with several
+    // contours returns their sum, so they draw one after another, which is
+    // roughly how the strokes would be written by hand.
+    const length = path.getTotalLength();
+    path.setAttribute("stroke-dasharray", String(length));
+
+    return { outer, path, length };
   });
   svg.append(partGroup);
 
@@ -310,18 +338,32 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
     // --- Parts -------------------------------------------------------------
     LOCK_ORDER.forEach((partIndex, order) => {
-      const node = partNodes[partIndex];
+      const { outer, path, length } = partNodes[partIndex];
       const part = parts[partIndex];
 
       const locked = lockEase(phase(t, T.assembleFrom, T.assembleSpan, T.assembleStagger, order));
       const gone = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, part.syllable);
 
       const away = 1 - locked;
-      node.setAttribute(
+      outer.setAttribute(
         "transform",
         `translate(${(part.approach.x * away).toFixed(4)} ${(part.approach.y * away).toFixed(4)})`,
       );
-      node.setAttribute("opacity", (locked * (1 - gone)).toFixed(3));
+      outer.setAttribute("opacity", (1 - gone).toFixed(3));
+
+      // The outline draws itself on, and the fill catches up behind it. This
+      // is the one thing here that could not be done any other way — a stroke
+      // that runs along the letterform is what makes it read as drawn rather
+      // than as a glyph being faded up.
+      const drawn = Math.min(1, locked / DRAW.span);
+      path.setAttribute("stroke-dashoffset", (length * (1 - drawn)).toFixed(3));
+
+      const filled = Math.max(0, (locked - DRAW.fillFrom) / (1 - DRAW.fillFrom));
+      path.setAttribute("fill-opacity", filled.toFixed(3));
+      // The line fades as the fill arrives, so the part ends as a solid form
+      // rather than a solid form wearing an outline. Gated on the draw having
+      // started at all, so nothing is painted before the part exists.
+      path.setAttribute("stroke-opacity", (drawn > 0 ? 1 - filled : 0).toFixed(3));
     });
 
     partGroup.style.fontVariationSettings = `"wght" ${lerp(
