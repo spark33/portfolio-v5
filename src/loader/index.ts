@@ -1,36 +1,30 @@
 import "./loader.css";
-import { MORPH_POINTS, MORPHS } from "./morphs.ts";
-import {
-  BLOCK,
-  blockX,
-  buildParts,
-  LOCK_ORDER,
-  SYLLABLES,
-  TOTAL_WIDTH,
-} from "./layout.ts";
+import { APPROACH, LOCK_ORDER } from "./layout.ts";
+import { FRAME, MORPH_POINTS, MORPHS } from "./morphs.ts";
 
 /**
  * The loading animation.
  *
- *   ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ   nine parts, arriving
- *   박 상 현              three blocks, assembled
+ *   ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ   the name, taken apart
  *   SEAN PARK            the name he goes by
  *
- * The mechanic is the meaning. Hangul is an assembly system — a syllable is a
- * square built from jamo placed in fixed regions of it — and loading is
- * assembly, so the animation builds the name the way the writing system builds
- * it. The parts fly in along the axis their role occupies, the bottom tier of
- * each block locking before the tier above it, and only once a block is
- * complete does it resolve into the syllable itself.
+ * Two stages and one continuous morph. 박상현 is three Hangul blocks, each a
+ * square assembled from two or three jamo; taken apart it is nine pieces, and
+ * those nine arrive as a line of type and then become eight Latin letters.
+ *
+ * The composed syllables are not drawn at all. Assembling them and immediately
+ * pulling them apart again showed the same name twice, and the pieces are the
+ * more interesting half — a name you can read only if you know how to put it
+ * back together.
  *
  * That is also why this cannot be a stock preloader wearing someone's name:
  * the animation is specific to *this* name, in *this* script, and would have
  * to be rebuilt from scratch for any other.
  *
  * Every form is baked outline data rather than live text — the whole point is
- * that a jamo turns into its share of a syllable and then into a Latin letter,
- * and only matched contours can do that. `scripts/build-loader.mjs` does the
- * matching once, at build time, against Pretendard Variable.
+ * that a jamo turns into a Latin letter, and only matched contours can do
+ * that. `scripts/build-loader.mjs` does the matching once, at build time,
+ * against Pretendard Variable, at one weight and one scale for every glyph.
  *
  * The whole animation is a pure function of normalised time, `apply(t)`. Any
  * frame can be rendered on demand, which is what makes it possible to
@@ -38,7 +32,7 @@ import {
  */
 
 /** Total duration in milliseconds. */
-export const DURATION = 3800;
+export const DURATION = 3200;
 
 /**
  * Where the sequence comes to rest.
@@ -63,13 +57,8 @@ const T = {
    * mass you were looking at is a letter.
    */
   assembleFrom: -0.06,
-  assembleSpan: 0.22,
-  assembleStagger: 0.026,
-
-  /** Parts fuse into their syllable. */
-  fuseFrom: 0.3,
-  fuseSpan: 0.16,
-  fuseStagger: 0.03,
+  assembleSpan: 0.24,
+  assembleStagger: 0.03,
 
   /**
    * The name flows into the one he goes by.
@@ -79,8 +68,8 @@ const T = {
    * is the most interesting thing in it. Rushing past it to reach a legible
    * frame throws away the reason for doing the morph at all.
    */
-  flowFrom: 0.52,
-  flowSpan: 0.34,
+  flowFrom: 0.46,
+  flowSpan: 0.38,
   /** Unstaggered: by this point there are no parts left, only the name. */
   flowStagger: 0,
 
@@ -108,22 +97,21 @@ const T = {
  * rather than left as arithmetic in a comment, because it is the kind of thing
  * that breaks silently every time a beat is retimed.
  */
-const LAST_FUSE = T.fuseFrom + 2 * T.fuseStagger + T.fuseSpan;
 const LAST = Math.max(
   T.assembleFrom + 8 * T.assembleStagger + T.assembleSpan,
-  LAST_FUSE,
   T.flowFrom + T.flowSpan,
 );
 if (LAST > REST) {
   throw new Error(`loader beats run to ${LAST.toFixed(3)}, past the resting frame at ${REST}`);
 }
 /**
- * The field takes over from the nine parts the instant the flow starts, and it
- * only holds the composed syllables — so a part still mid-fuse at that moment
- * would be yanked to its finished shape. Nothing on screen is allowed to jump.
+ * The morph is drawn by one path that takes over from the nine at `flowFrom`,
+ * and that path only knows where the pieces finish assembling — so a piece
+ * still arriving at that moment would be yanked into place. Nothing on screen
+ * is allowed to jump.
  */
-if (LAST_FUSE > T.flowFrom + 1e-9) {
-  throw new Error(`fuse runs to ${LAST_FUSE.toFixed(3)}, past the flow at ${T.flowFrom}`);
+if (T.assembleFrom + 8 * T.assembleStagger + T.assembleSpan > T.flowFrom + 1e-9) {
+  throw new Error(`pieces are still arriving at the flow, which starts at ${T.flowFrom}`);
 }
 
 /** CSS-style cubic bézier, solved for y given x. */
@@ -155,17 +143,9 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
 /** A part travelling to its cell: covers ground fast, then seats. */
 const lockEase = cubicBezier(0.16, 1, 0.3, 1);
 /**
- * The fuse.
- *
- * Symmetric and unhurried. This is the one moment the piece exists for — nine
- * parts becoming three blocks — and rushing it wastes the only thing that
- * makes the animation this name's and not anyone else's.
- */
-const fuseEase = cubicBezier(0.65, 0, 0.35, 1);
-/**
  * The flow into Latin.
  *
- * Gentler at both ends than the fuse, and slower through the middle, so the
+ * Gentle at both ends and slower through the middle, so the
  * abstract stretch — where the forms are neither script — is the part that
  * gets the time.
  */
@@ -237,18 +217,15 @@ function svgEl<K extends keyof SVGElementTagNameMap>(
   return node;
 }
 
-/** Vertical padding around the blocks, in block units. */
-const PAD = 0.34;
-
 /**
  * The camera.
  *
  * A viewBox that moves, which is the difference between type appearing on a
- * screen and a space you are moved through. It opens inside a single stroke —
- * so the first thing on screen is an abstract mark, not a name — pulls back as
- * the parts arrive, and then pushes in through the morph.
+ * screen and a space you are moved through. It opens hard inside a single
+ * stroke — so the first thing on screen is an abstract mass, not a name —
+ * pulls back as the pieces arrive, and then pushes in through the morph.
  *
- * That push is doing real work. Twenty contours becoming twelve means eight of
+ * That push is doing real work. Twenty contours becoming eleven means nine of
  * them shrink to nothing, and the field loses mass through the middle: on a
  * fixed camera the name visibly collapses and comes back, which reads as a
  * fault. Moving in as it contracts keeps it filling the frame, and the same
@@ -256,49 +233,71 @@ const PAD = 0.34;
  *
  * The aspect ratio is fixed. Animating it would change the element's own
  * height — `width: 100%; height: auto` takes its ratio from the viewBox — and
- * the whole page would shift on every frame.
+ * the whole page would shift on every frame. `FRAME` comes from `morphs.ts`,
+ * which derives it from the geometry it just laid out, so there is no second
+ * copy of the composition to drift.
  */
-const FRAME = {
-  width: TOTAL_WIDTH + PAD * 2,
-  height: BLOCK.size + PAD * 2,
-};
-
 interface Shot {
   at: number;
   /** 1 is the whole frame; higher is closer. */
   zoom: number;
-  /** Centre, in block units. */
+  /** Centre, in frame units. */
   x: number;
   y: number;
 }
 
+const CENTRE = { x: FRAME.width / 2, y: FRAME.height / 2 };
+
 /**
- * Where the camera opens and closes: hard inside the bottom-left block, on the
- * cell the very first part is drawn into. Opening anywhere else means opening
- * on an empty frame.
+ * Where the camera opens and closes: hard inside the first piece to be drawn.
+ *
+ * Measured off that piece's own outline rather than written down, because
+ * "inside the first thing on screen" is the requirement and a hand-picked
+ * coordinate stops meaning that the moment the layout moves. Opening anywhere
+ * else means opening on an empty frame.
  */
-const KEYHOLE = { zoom: 3.6, x: 0.44, y: 0.78 };
+function keyhole(points: number[]): Shot {
+  let x1 = Infinity;
+  let y1 = Infinity;
+  let x2 = -Infinity;
+  let y2 = -Infinity;
+  for (let i = 0; i < points.length; i += 2) {
+    x1 = Math.min(x1, points[i]);
+    x2 = Math.max(x2, points[i]);
+    y1 = Math.min(y1, points[i + 1]);
+    y2 = Math.max(y2, points[i + 1]);
+  }
+  // Close enough that the glyph overflows the view: this is a look at the ink,
+  // not a look at the letter.
+  const zoom = Math.min(6, Math.max(2.4, FRAME.height / ((y2 - y1) * 0.8)));
+  return { at: 0, zoom, x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
+}
 
-const SHOTS: Shot[] = [
-  { at: 0, ...KEYHOLE },
-  // Off the keyhole quickly. Held, it is three hundred milliseconds of one
-  // hairline in an empty frame — a confident opening for about a third as long
-  // as it lasted.
-  { at: 0.11, zoom: 1.8, x: 0.86, y: 0.6 },
-  { at: 0.28, zoom: 1, x: TOTAL_WIDTH / 2, y: BLOCK.size / 2 },
-  { at: 0.5, zoom: 1, x: TOTAL_WIDTH / 2, y: BLOCK.size / 2 },
-  // In through the collapse, and back out as the name resolves.
-  { at: 0.7, zoom: 1.34, x: TOTAL_WIDTH / 2, y: BLOCK.size * 0.52 },
-  { at: REST, zoom: 1.02, x: TOTAL_WIDTH / 2, y: BLOCK.size * 0.55 },
-  // Held still while the name is legible. The one moment in the run the
-  // camera is asked to do nothing, and it is the moment the piece is *for*.
-  { at: 0.93, zoom: 1.02, x: TOTAL_WIDTH / 2, y: BLOCK.size * 0.55 },
-  // Back into the keyhole, which is where the next pass starts.
-  { at: 1, ...KEYHOLE },
-];
+function shots(open: Shot): Shot[] {
+  return [
+    { ...open, at: 0 },
+    // Off the keyhole quickly. Held, it is three hundred milliseconds of one
+    // hairline in an empty frame — a confident opening for about a third as
+    // long as it lasted.
+    { at: 0.11, zoom: 1.9, x: FRAME.width * 0.3, y: CENTRE.y },
+    { at: 0.3, zoom: 1, ...CENTRE },
+    { at: 0.46, zoom: 1, ...CENTRE },
+    // In through the collapse, and back out as the name resolves.
+    { at: 0.7, zoom: 1.3, x: CENTRE.x, y: CENTRE.y * 0.98 },
+    { at: REST, zoom: 1.02, ...CENTRE },
+    // Held still while the name is legible. The one moment in the run the
+    // camera is asked to do nothing, and it is the moment the piece is *for*.
+    { at: 0.93, zoom: 1.02, ...CENTRE },
+    // Back into the keyhole, which is where the next pass starts.
+    { ...open, at: 1 },
+  ];
+}
 
-/** Line weight of the drawn outlines, in block units. */
-const STROKE = 0.011;
+/** The camera's whole path, opening and closing on the first piece drawn. */
+const SHOTS = shots(keyhole(MORPHS[LOCK_ORDER[0]].from));
+
+/** Line weight of the drawn outlines, in frame units. */
+const STROKE = 0.0065;
 
 /**
  * The interior.
@@ -309,19 +308,28 @@ const STROKE = 0.011;
  * enlarged and running ahead of where it currently is: the visible form is
  * always filled with the form it is about to become.
  *
- * That is what pays for the still moments. 박상현 holds legible for a beat in
- * the middle and SEAN PARK holds at the end, and on flat ink both read as the
- * animation having stopped. Filled with their own future they are the most
- * interesting frames in the run, because the shape is still and its interior
- * is not.
+ * That is what pays for the still moments. The assembled line holds for a beat
+ * before the morph and SEAN PARK holds at the end, and on flat ink both read
+ * as the animation having stopped. Filled with their own future they are the
+ * most interesting frames in the run, because the shape is still and its
+ * interior is not.
  *
  * Two layers at different scales and different amounts of lead, so the inside
  * has depth rather than a single moving line.
  */
 const ECHOES = [
-  { scale: 2.7, lead: 0.13, drift: { x: -0.55, y: 0.09 }, weight: 0.05 },
-  { scale: 5.6, lead: 0.27, drift: { x: 0.34, y: -0.14 }, weight: 0.1 },
+  { scale: 2.2, lead: 0.13, drift: { x: -0.5, y: 0.07 }, weight: 0.022 },
+  { scale: 4, lead: 0.27, drift: { x: 0.3, y: -0.1 }, weight: 0.044 },
 ];
+
+/**
+ * The weights above are read against the type's own stem, not against the
+ * frame. A line of nine glyphs is set a good deal smaller than three composed
+ * blocks were, and cuts that were an inlay at the old size took a third out of
+ * every stroke at this one. Roughly a quarter of a stem for the fine layer and
+ * a half for the broad one is the range where they read as cut into the
+ * letterform rather than as damage to it.
+ */
 
 /** Where in a part's arrival the outline finishes drawing and the fill takes
  *  over. The two overlap, so the form is never a bare outline for long. */
@@ -340,7 +348,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   wrap.className = "loader";
 
   const svg = svgEl("svg", {
-    viewBox: `${-PAD} ${-PAD} ${TOTAL_WIDTH + PAD * 2} ${BLOCK.size + PAD * 2}`,
+    viewBox: `0 0 ${FRAME.width} ${FRAME.height}`,
     width: "100%",
     fill: "currentColor",
     // The names duplicate copy that is already on the page. The meter below
@@ -352,9 +360,9 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   /**
    * The mask, and the single plane of ink seen through it.
    *
-   * Nothing in this animation is painted directly. Every form — the parts, the
-   * construction squares, the name — is a white shape inside this mask, and the
-   * only thing with colour is one rectangle behind it. Inverting the
+   * Nothing in this animation is painted directly. Every form — the pieces and
+   * the name they become — is a white shape inside this mask, and the only
+   * thing with colour is one rectangle behind it. Inverting the
    * relationship that way costs nothing at rest and buys the interior: a
    * black shape added to the mask takes ink *away*, so the letterforms can be
    * cut into as well as drawn.
@@ -367,32 +375,18 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   // viewBox three units wide dilates a letterform into a slab. Anything that
   // wants a stroke asks for one, with a width.
   const forms = svgEl("g", { fill: "#fff", stroke: "none" });
-  const voids = svgEl("g", { fill: "none", stroke: "#000", "stroke-linejoin": "round" });
+  // Not fully black. A cut at full strength severs a stroke, and half the
+  // glyphs in the first stage are thin vertical strokes — ㅏ came apart into
+  // three pieces every time a cut crossed it. At two thirds the letterform
+  // stays whole and the interior still reads as inlaid rather than painted.
+  const voids = svgEl("g", {
+    fill: "none",
+    stroke: "#000",
+    "stroke-opacity": 0.66,
+    "stroke-linejoin": "round",
+  });
 
-  // --- The construction squares -------------------------------------------
-  // One per block, drawn as the parts arrive and gone once the block resolves.
-  // They make the system visible: this is a square being filled, not letters
-  // drifting into place.
-  const frames = SYLLABLES.map((_, index) =>
-    svgEl("rect", {
-      x: blockX(index),
-      y: 0,
-      width: BLOCK.size,
-      height: BLOCK.size,
-      fill: "none",
-      stroke: "#fff",
-      "stroke-width": 0.006,
-      // Constant on screen regardless of where the camera is.
-      "vector-effect": "non-scaling-stroke",
-    }),
-  );
-  const frameGroup = svgEl("g");
-  frameGroup.append(...frames);
-  forms.append(frameGroup);
-
-  // --- The nine parts, which become the three syllables --------------------
-  const parts = buildParts();
-
+  // --- The nine pieces, which become SEAN PARK -----------------------------
   /** Builds path data from a flat run of x, y pairs. */
   function toPath(points: number[], contours: number): string {
     let d = "";
@@ -408,14 +402,8 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   }
 
   const partGroup = svgEl("g");
-  const partNodes = parts.map((part) => {
-    const morph = MORPHS.find(
-      (entry) => entry.char === part.char && entry.syllable === SYLLABLES[part.syllable],
-    );
-    if (!morph) throw new Error(`no morph for ${part.char} — run npm run build:loader`);
-
+  const partNodes = MORPHS.map((morph) => {
     const from = toPath(morph.from, morph.contours);
-    const to = toPath(morph.to, morph.contours);
     const latin = toPath(morph.latin, morph.contours);
 
     const outer = svgEl("g");
@@ -431,9 +419,9 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
       "stroke-width": STROKE,
     });
 
-    // The morph points are baked in frame coordinates — the same space the
-    // final path uses, because that one has to hold all twenty contours at once
-    // and can carry no per-block transform. So the only transform on a part is
+    // The points are baked in frame coordinates — the same space the final
+    // path uses, because that one has to hold all twenty contours at once and
+    // can carry no per-glyph transform. So the only transform on a piece is
     // the distance it still has to travel.
     outer.append(path);
     partGroup.append(outer);
@@ -444,34 +432,29 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     const length = path.getTotalLength();
     path.setAttribute("stroke-dasharray", String(length));
 
-    return { outer, path, length, morph, from, to, latin, current: from };
+    return { outer, path, length, morph, from, latin, current: from };
   });
   forms.append(partGroup);
 
-  // --- The whole field, as one path ----------------------------------------
+  // --- The whole line, as one path ------------------------------------------
   //
-  // The flow into Latin has to be a single element. A letter's outline and its
-  // counter are separate contours, and `fill-rule` only punches a hole when
-  // both live in the same path — split across nine, every counter rendered as
-  // a solid blob and SEAN PARK came out unreadable.
+  // The morph has to be a single element. A letter's outline and its counter
+  // are separate contours, and `fill-rule` only punches a hole when both live
+  // in the same path — split across nine, every counter rendered as a solid
+  // blob and SEAN PARK came out unreadable.
   //
-  // It also makes the last stage one movement rather than nine, which is what
-  // it should be: by then there are no parts left, only the name.
-  //
-  // Three runs of the same twenty contours: where the parts start, the composed
-  // syllables, and SEAN PARK. The whole animation is a walk along this chain,
-  // which is what the interior echoes read ahead into.
-  const chain = { start: [] as number[], mid: [] as number[], end: [] as number[] };
+  // It also makes the second stage one movement rather than nine, which is
+  // what it should be: by then there are no pieces left, only the name.
+  const chain = { start: [] as number[], end: [] as number[] };
   let fieldContours = 0;
   for (const node of partNodes) {
     chain.start.push(...node.morph.from);
-    chain.mid.push(...node.morph.to);
     chain.end.push(...node.morph.latin);
     fieldContours += node.morph.contours;
   }
 
   const field = svgEl("path", {
-    d: toPath(chain.mid, fieldContours),
+    d: toPath(chain.start, fieldContours),
     fill: "#fff",
     opacity: 0,
   });
@@ -513,8 +496,8 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     id: `${uid}-sheen`,
     gradientUnits: "userSpaceOnUse",
     x1: 0,
-    y1: BLOCK.size,
-    x2: TOTAL_WIDTH * 0.62,
+    y1: FRAME.height,
+    x2: FRAME.width * 0.62,
     y2: 0,
   });
   const INK = "currentColor";
@@ -592,16 +575,15 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   root.append(wrap);
 
   /**
-   * The twenty contours at any moment of the chain, unstaggered.
+   * The twenty contours at any moment of the morph, unstaggered.
    *
-   * The visible animation staggers its beats; this does not, because it is read
-   * at a time other than now and a stagger there would only smear the lead.
+   * The visible animation staggers its arrival; this does not, because it is
+   * read at a time other than now and a stagger there would only smear the
+   * lead.
    */
   function chainAt(time: number): string {
     const flowed = flowEase(phase(time, T.flowFrom, T.flowSpan, 0, 0));
-    if (flowed > 0) return blend(chain.mid, chain.end, flowed, fieldContours, toPath);
-    const fused = fuseEase(phase(time, T.fuseFrom, T.fuseSpan, 0, 0));
-    return blend(chain.start, chain.mid, fused, fieldContours, toPath);
+    return blend(chain.start, chain.end, flowed, fieldContours, toPath);
   }
 
   /** Renders the frame at normalised time. */
@@ -610,17 +592,17 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     // the exit is not loading, it is leaving.
     const progress = progressEase(Math.min(1, t / REST));
 
-    // --- Parts -------------------------------------------------------------
+    // --- Pieces --------------------------------------------------------------
     LOCK_ORDER.forEach((partIndex, order) => {
       const node = partNodes[partIndex];
-      const part = parts[partIndex];
+      const approach = APPROACH[node.morph.kind];
 
       const locked = lockEase(phase(t, T.assembleFrom, T.assembleSpan, T.assembleStagger, order));
 
       const away = 1 - locked;
       node.outer.setAttribute(
         "transform",
-        `translate(${(part.approach.x * away).toFixed(4)} ${(part.approach.y * away).toFixed(4)})`,
+        `translate(${(approach.x * away).toFixed(4)} ${(approach.y * away).toFixed(4)})`,
       );
 
       // The outline draws itself on, and the fill catches up behind it. A
@@ -631,49 +613,23 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
       const filled = Math.max(0, (locked - DRAW.fillFrom) / (1 - DRAW.fillFrom));
       node.path.setAttribute("fill-opacity", filled.toFixed(3));
-      // The line fades as the fill arrives, so a part ends as a solid form
+      // The line fades as the fill arrives, so a piece ends as a solid form
       // rather than a solid form wearing an outline. Gated on the draw having
-      // begun, so nothing is painted before the part exists.
+      // begun, so nothing is painted before the piece exists.
       node.path.setAttribute("stroke-opacity", (drawn > 0 ? 1 - filled : 0).toFixed(3));
-
-      // Then it becomes its share of the syllable, and the syllable becomes
-      // its share of SEAN PARK. One continuous chain of the same contours —
-      // never a crossfade, never a cut, and nothing on screen that is not the
-      // same twenty outlines it started with.
-      const fused = fuseEase(phase(t, T.fuseFrom, T.fuseSpan, T.fuseStagger, part.syllable));
-
-      const wanted =
-        fused >= 1
-          ? node.to
-          : fused > 0
-            ? blend(node.morph.from, node.morph.to, fused, node.morph.contours, toPath)
-            : node.from;
-
-      if (wanted !== node.current) {
-        node.path.setAttribute("d", wanted);
-        node.current = wanted;
-      }
     });
 
-    // The field takes over for the flow. At its first frame it is exactly what
-    // the nine paths were drawing, so the handover is invisible.
+    // The single path takes over for the morph. At its first frame it draws
+    // exactly what the nine were drawing, so the handover is invisible — and
+    // from there it is one continuous change of the same twenty contours,
+    // never a crossfade and never a cut.
     const flowed = flowEase(phase(t, T.flowFrom, T.flowSpan, 0, 0));
     const flowing = flowed > 0;
     partGroup.setAttribute("opacity", flowing ? "0" : "1");
     field.setAttribute("opacity", flowing ? "1" : "0");
     if (flowing) {
-      field.setAttribute("d", blend(chain.mid, chain.end, flowed, fieldContours, toPath));
+      field.setAttribute("d", blend(chain.start, chain.end, flowed, fieldContours, toPath));
     }
-
-    // --- Frames ------------------------------------------------------------
-    // Present while there is something to assemble, gone once each block has.
-    // The first one is already drawn at t = 0 — the camera opens hard inside
-    // it, and an empty first frame is a dead first frame.
-    frames.forEach((frame, index) => {
-      const drawn = lockEase(phase(t, -0.05, 0.16, 0.05, index));
-      const gone = phase(t, T.fuseFrom, T.fuseSpan * 0.6, T.fuseStagger, index);
-      frame.setAttribute("opacity", (drawn * (1 - gone) * 0.22).toFixed(3));
-    });
 
     // --- Camera -------------------------------------------------------------
     let shot = SHOTS[SHOTS.length - 1];
@@ -712,12 +668,15 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     // frame's centre and drifting. Clamped rather than wrapped: past the end
     // there is nothing further to read, and a wrap would put the beginning of
     // the next pass inside the last frame of this one.
-    const cx = TOTAL_WIDTH / 2;
-    const cy = BLOCK.size / 2;
-    // The cuts fine down as the name arrives. They keep moving — that is what
-    // the resting frames are for — but a name this piece spent four seconds
-    // resolving should land crisp, not chewed.
-    const settle = (1 - 0.55 * phase(t, 0.74, 0.12, 0, 0)) * cutScale;
+    const { x: cx, y: cy } = CENTRE;
+    // The cuts are choreographed rather than constant: light on the two states
+    // that have to be read, full strength through the middle, where the forms
+    // are neither script and legibility is not the job. They never stop moving
+    // — that is what the resting frames are for — but neither the assembled
+    // line nor the name it resolves to should land chewed.
+    const bite =
+      0.45 + 0.55 * phase(t, 0.3, 0.2, 0, 0) * (1 - 0.9 * phase(t, 0.74, 0.12, 0, 0));
+    const settle = bite * cutScale;
     ECHOES.forEach((echo, index) => {
       const node = echoNodes[index];
       node.setAttribute("d", chainAt(Math.min(REST, t + echo.lead)));
@@ -736,7 +695,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
     // The sheen crosses once over the run, so it is never in the same place
     // twice and the loop never catches it mid-repeat.
-    sheen.setAttribute("gradientTransform", `translate(${(t * 2.2 - 1.1) * TOTAL_WIDTH} 0)`);
+    sheen.setAttribute("gradientTransform", `translate(${(t * 2.2 - 1.1) * FRAME.width} 0)`);
 
     // --- Exit ----------------------------------------------------------------
     // The dive is the camera's; this is the blink that goes with it. Out over

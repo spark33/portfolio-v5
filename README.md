@@ -30,7 +30,8 @@ npm run storybook  # component workbench on http://localhost:6006
 | `src/blog.css`       | Blog index and post styles                                |
 | `src/loader/`        | The loading animation; see [Loader](#loader)             |
 | `src/loader/gate.ts` | Mounts it as the home page's curtain and lifts it again   |
-| `scripts/build-loader.mjs` | Bakes and contour-matches its letterforms         |
+| `scripts/build-loader.mjs` | Sets both stages and contour-matches them         |
+| `scripts/glyph-outlines.py` | Reads glyph outlines out of the variable font    |
 | `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
 | `.mcp.json`          | Design-reference MCP servers                              |
 
@@ -65,129 +66,132 @@ directory first, so dropping a family leaves nothing behind.
 `src/loader/` is the loading animation, and the mechanic is the point.
 
 ```
-ㅂㅏㄱ  ㅅㅏㅇ  ㅎㅕㄴ    nine parts, arriving
-박  상  현              three blocks, assembled
+ㅂㅏㄱ  ㅅㅏㅇ  ㅎㅕㄴ    the name, taken apart
 SEAN PARK              the name he goes by
 ```
 
-Hangul is an assembly system: a syllable is not a busy-looking character, it
-is a **square built from jamo placed in fixed regions of it**. 박 is ㅂ over ㄱ
-with ㅏ down the right-hand side. Loading is assembly — so the loader builds
-the name the way the writing system builds it, rather than sliding some
-letters around. The parts fly in along the axis their role occupies, the
-bottom tier of each block locking before the tier above it, and only once a
-block is complete does it snap into the syllable itself.
+박상현 is three syllables, and Hangul is an assembly system: a syllable is not
+a busy-looking character, it is a **square built from jamo placed in fixed
+regions of it**. 박 is ㅂ over ㄱ with ㅏ down the right-hand side. Take the
+three blocks apart and you have nine pieces — and those nine pieces arrive as a
+line of type and then become eight Latin letters.
 
-That is also why it cannot be a stock preloader wearing someone's name: this
-animation is specific to *this* name in *this* script, and would have to be
-rebuilt from scratch for any other.
+The composed syllables are not drawn at all. Assembling them and immediately
+pulling them apart again was a beat that showed the same name twice, and the
+pieces are the more interesting half: a name you can read only if you know how
+to put it back together. That is also why this cannot be a stock preloader
+wearing someone's name — it is specific to *this* name in *this* script, and
+would have to be rebuilt from scratch for any other.
+
+**One typeface, one weight, one scale, one baseline.** This is the part that
+took two goes. The jamo used to be fitted individually into cells of an
+invented grid, which gave each of them its own scale and therefore its own
+stroke weight — ㄱ squashed into a wide flat cell came out with hairline
+horizontals — and nine glyphs of visibly different colour read as shapes
+arranged to resemble Hangul rather than as type. They are now *set*: one scale
+for every glyph, a shared baseline, and the only decision left is the spacing.
+
+That spacing is optical, not metric. Compatibility jamo are full-width — every
+one advances 0.864 em, because they are meant to be composed into a square and
+not set in a row — and their ink sits in wildly different places inside that
+square, so metric spacing gives gaps swinging between a third and two thirds of
+an em. Measuring between ink instead, with a wider gap between syllable groups,
+is what a designer does at display size.
+
+The curves were also being destroyed. The flattening tolerance was written as
+`0.3` font units and compared against deviations measured in *em*, where a
+whole glyph is about 1 — so the test passed on the first try every time and
+every curve in the piece was flattened to a single straight chord. ㅇ was a
+polygon. Both the flattening and its tolerance are now in font units, which is
+why `scripts/glyph-outlines.py` hands over the font's own integer coordinates
+rather than anything pre-scaled.
 
 **The type is a window, not a mark.** Nothing is painted directly. Every form
-— the parts, the construction squares, the name — is a white shape inside one
-`<mask>`, and the only thing on screen with colour is a single plane behind it.
-That costs nothing at rest and buys the interior: a *black* shape added to the
-mask takes ink away, so a letterform can be cut into as well as drawn.
+is a white shape inside one `<mask>`, and the only thing on screen with colour
+is a single plane behind it. That costs nothing at rest and buys the interior:
+a *black* shape added to the mask takes ink away, so a letterform can be cut
+into as well as drawn.
 
 What shows through is the piece itself, enlarged and running ahead of where it
 currently is — the visible form is always filled with the form it is about to
-become. That is what pays for the still moments. 박상현 holds legible for a
-beat in the middle and SEAN PARK holds at the end, and on flat ink both read as
-the animation having stopped; filled with their own future they are the most
-interesting frames in the run. A sheen crosses the plane once over the run for
-the same reason: dark edges around a lit core, so it reads as light catching an
-edge rather than as a wash. That core is the site's own `--accent` and the only
-colour in the piece — everything else is the page's ink on the page's ground —
-and it follows the theme for free, because that token is already a different
-value on each. It is a dip across full ink rather than a highlight across a
-held-back plane, so the resolved frame the whole thing builds to lands at full
-weight instead of at whatever the gradient's floor happens to be.
+become. That is what pays for the still moments. The assembled line holds for a
+beat and SEAN PARK holds at the end, and on flat ink both read as the animation
+having stopped; filled with their own future they are the most interesting
+frames in the run. The cuts are choreographed rather than constant: light on
+the two states that have to be read, full strength through the middle, where
+the forms are neither script. They dim the ink rather than remove it — at full
+strength a cut severs a stroke, and half the glyphs in the first stage are thin
+vertical strokes.
 
-The cuts are scaled to how big the loader is being drawn. Left in viewBox
+A sheen crosses the plane once over the run for the same reason: dark edges
+around a lit core, so it reads as light catching an edge rather than as a wash.
+That core is the site's own `--accent` and the only colour in the piece —
+everything else is the page's ink on the page's ground — and it follows the
+theme for free, because that token is already a different value on each. It is
+a dip across full ink rather than a highlight across a held-back plane, so the
+resolved frame the whole thing builds to lands at full weight.
+
+The cuts are also scaled to how big the loader is being drawn. Left in viewBox
 units they are a constant *fraction* of the letterform, which is right at hero
-size and wrong at two hundred pixels — taking a third out of a stroke fourteen
-pixels tall stops being a treatment and starts being damage.
+size and wrong at two hundred pixels.
 
 **The camera moves.** A viewBox that opens hard inside a single stroke — so
 the first thing on screen is an abstract mass, not a name — pulls back as the
-parts arrive, then pushes in through the morph. That push is doing real work:
-twenty contours becoming twelve means eight shrink to nothing, and on a fixed
+pieces arrive, then pushes in through the morph. That push is doing real work:
+twenty contours becoming eleven means nine shrink to nothing, and on a fixed
 camera the field visibly collapsed and came back, which read as a fault. Moving
-in as it contracts keeps it filling the frame and the same moment reads as a
-dive into the transformation. The aspect ratio is fixed — animating it would
-change the element's own height and shift the page every frame.
+in as it contracts keeps it filling the frame. The opening framing is measured
+off the first piece's own outline rather than written down, because "inside the
+first thing on screen" is the requirement and a coordinate stops meaning that
+the moment the layout moves.
 
 The run ends where it began: the camera dives back into the stroke it opened
 on while the frame blinks out, so a loop dissolves into the next pass instead
 of cutting from a resolved name to an empty one, and a single run hands off to
 the page rather than switching off. `REST` — not 1 — marks where the sequence
-actually lands, which is the frame reduced motion draws and the one to
-screenshot.
+lands, which is the frame reduced motion draws and the one to screenshot.
 
-**Nothing in the sequence is a cut.** Nine jamo become three syllables become
-SEAN PARK, as one continuous chain of the same twenty contours. Twenty become
-twelve: the eight with no counterpart collapse to a point inside themselves and
-stop having area, which is the lossy half of the transliteration said in
-geometry rather than in a caption — 박상현 carries more than SEAN PARK keeps.
-The middle of that last morph is the only place the piece is neither Korean nor
-Latin, and it gets the longest beat, because that in-between is the most
-interesting thing in it.
+**Nothing in the sequence is a cut.** Nine jamo become eight letters as one
+continuous change of the same twenty contours. Twenty become eleven: the nine
+with no counterpart collapse to a point inside themselves and stop having area,
+which is the lossy half of the transliteration said in geometry rather than in
+a caption — 박상현 carries more than SEAN PARK keeps. Contours are matched left
+to right and never crossing, and only where the winding agrees, then point
+order is rotation-aligned; without that last step a morph unwinds and
+cartwheels. The two scripts differ in how they make a hole — the jamo carry
+three true counters, in ㅂ, ㅇ and ㅎ, while Pretendard's Latin caps cut theirs
+as hairline slits in a single contour — so all three Korean counters are among
+the ones that collapse. A slit is about a thousandth of the frame wide, which
+is why the baked coordinates keep five decimal places: round its two sides onto
+each other and the counter it cuts fills solid.
 
-**The parts do not cut to the syllable — they become it.** Each jamo's outline
-morphs into its share of the composed block, contour by contour. That is
-possible because the counts line up exactly: 박 has five contours and ㅂㅏㄱ
-have 2 + 2 + 1; 상 has six and 2 + 2 + 2; 현 has nine and 4 + 3 + 2. The font
-redraws each jamo for its position but keeps its structure, so every contour of
-a syllable has exactly one counterpart among its parts — no topology to absorb,
-nothing appearing from nowhere, and no seam to hide because there is no seam.
-Contours are matched by centroid proximity and only where the winding agrees,
-then point order is rotation-aligned; without that last step a morph unwinds
-and cartwheels.
-
-**Construction is drawn.** Each jamo draws itself on with `stroke-dashoffset`,
-the fill catching up behind the line — what makes the parts read as drawn
-rather than as glyphs being faded up.
+**Construction is drawn.** Each piece draws itself on with `stroke-dashoffset`,
+the fill catching up behind the line — what makes them read as drawn rather
+than as glyphs being faded up. The six consonants land first and then the three
+vowels, which is the order the writing system uses: nothing is a syllable until
+a vowel arrives.
 
 **No webfont ships.** Every letterform is baked outline data. Live text cannot
-do any of the above: the morph needs each contour of one form paired with a
+do any of the above: the morph needs each contour of one stage paired with a
 contour of the next, resampled to a shared point count and rotation-aligned so
 a straight lerp between them is a valid outline at every step. `npm run
 build:loader` does that matching once against Pretendard Variable (OFL, pinned
-as a devDependency) and writes `src/loader/morphs.ts`. The whole chain is 53 KB
-of source and needs nothing at runtime but arithmetic.
+as a devDependency) and writes `src/loader/morphs.ts`, which also carries the
+frame it derived — so there is no second copy of the composition to drift.
+Needs `python3 -m pip install fonttools`.
 
-Every stage is baked in **frame** coordinates, not block-local ones. The final
-morph has to be a single path — a letter's counter only punches a hole when it
-shares a path with its outline — and a single path can carry no per-block
-transform, so block-local geometry put all three syllables on top of one
-another the instant that path took over. `tests/loader.spec.ts` guards it.
-
-Each jamo is fitted to its cell at a **uniform** scale. A real Korean typeface
-redraws a jamo for its position; scaling one drawing to fill a cell instead
-gives anisotropic strokes — ㄱ squashed into a wide flat cell comes out with
-hairline horizontals and heavy verticals — and no amount of easing rescues
-that. Uniform keeps every stroke the weight it was drawn at, at the cost of the
-parts sitting a little smaller than the block they build. They read as parts,
-which is what they are. The cell table lives in `scripts/build-loader.mjs`,
-which is what consumes it, and is the part worth reading if the block
-proportions ever look wrong.
-
-The assembly is drawn in SVG rather than HTML because an SVG glyph outline at
-font-size 1 with its origin at (0, 0) puts its ink exactly where the font says
-it is, so a jamo can be fitted to a cell arithmetically. The same placement in
-HTML would depend on line-height and half-leading.
-
-**It gates a real load.** `src/loader/gate.ts` mounts the sequence as a
-curtain over the home page and takes it away again. The curtain is in
-`index.html` rather than created by script, so it covers the page from first
-paint instead of flashing the content it introduces, and `src/main.ts` splits
-three.js into its own chunk — bundled together, the loading animation could not
-start until the thing it is covering for had finished downloading.
+**It gates a real load.** `src/loader/gate.ts` mounts the sequence as a curtain
+over the home page and takes it away again. The curtain is in `index.html`
+rather than created by script, so it covers the page from first paint instead
+of flashing the content it introduces, and `src/main.ts` splits three.js into
+its own chunk — bundled together, the loading animation could not start until
+the thing it is covering for had finished downloading.
 
 Everything about the gate is the difference between an intro and an obstacle.
 It plays **once per session**, so a second visit or a back button lands on the
 page itself. Any click, key, scroll or touch **lifts it early**. Reduced motion
 **never sees it at all** — not a static frame; a full-screen panel held over
-the page for four seconds is worse than no animation. And it cannot get stuck:
+the page for three seconds is worse than no animation. And it cannot get stuck:
 the element carries a CSS failsafe that removes it on a timer whatever happens,
 so a script error takes the animation down rather than the site. The whole
 curtain is `aria-hidden` and the counter is not exposed as progress, because it
@@ -205,17 +209,15 @@ The animation is a pure function of normalised time — `apply(t)` derives every
 visual property and nothing else touches them — so `npm run film` seeks frame
 by frame through `window.__loader` rather than waiting on wall-clock time. The
 strip is exact and reproducible, which is what makes the motion iterable rather
-than guessable. It caught the counter stalling at 100 for the last quarter of
-the run, a lone S sitting in an empty frame, and SEAN PARK losing its word
-space.
+than guessable.
 
 `npm run play` is its counterpart and not a duplicate: it shoots real rAF
 playback on a wall clock, so it sees what seeking cannot. Every fault that
 survived into the finished piece was found this way — the field collapsing to a
-cluster halfway through, the three syllables landing on top of one another at
-the flow handover, three hundred milliseconds of one hairline in an empty frame
-at the start, and the SVG spilling across the page whenever the camera pushed
-in. None of them appear in a single seeked still. Frames land in `shots/loader/`
+cluster halfway through, three syllables landing on top of one another at the
+handover, three hundred milliseconds of one hairline in an empty frame at the
+start, and the SVG spilling across the page whenever the camera pushed in. None
+of them appear in a single seeked still. Frames land in `shots/loader/`
 (gitignored).
 
 Stories: `Frame` (seek one moment), `Playing`, `OnLight`, `Small`.

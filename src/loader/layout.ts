@@ -1,81 +1,44 @@
 /**
- * How a Korean syllable is put together.
+ * The name, taken apart.
  *
- * This is the whole idea of the loader, so it is worth being exact about it.
- * Hangul is an assembly system: a syllable is not a character that happens to
- * look busy, it is a *block* built from two or three jamo placed in fixed
- * regions of a square. 박 is ㅂ over ㄱ with ㅏ down the right-hand side.
- * Nothing else in common use works this way, and "loading" is assembly — which
- * is why the animation builds the name the way the writing system does rather
- * than sliding some letters around.
+ * 박상현 is three syllables and each is a *block* — Hangul is an assembly
+ * system, a square built from two or three jamo placed in fixed regions of it.
+ * ㅂ over ㄱ with ㅏ down the right-hand side is 박. Take the blocks apart and
+ * you get nine pieces, and those nine pieces are what this animation is made
+ * of: they arrive as a line of type, and then they become SEAN PARK.
  *
- * All coordinates are in block units: one block is 1 × 1, with the origin at
- * its top-left and y running down, as in SVG.
+ * The composed syllables are not drawn. Assembling them and then immediately
+ * pulling them apart again was a beat that showed the same name twice, and the
+ * pieces are the more interesting half — a name you can read only if you know
+ * how to put it back together.
  *
- * The cell table itself lives in `scripts/build-loader.mjs`, because that is
- * what consumes it: every jamo is fitted to its cell once, at build time, and
- * baked into `morphs.ts` in frame coordinates. Nothing here needs to place a
- * glyph at runtime.
+ * All the geometry lives in `morphs.ts`, baked by `scripts/build-loader.mjs`:
+ * nine glyphs at one weight and one scale on one baseline, which is what makes
+ * them read as a typeface rather than as shapes arranged to resemble one. What
+ * is left here is only how they move.
  */
 
-export type Role = "initial" | "vowel" | "final";
-
-export interface Part {
-  char: string;
-  role: Role;
-  /** 박 = 0, 상 = 1, 현 = 2. */
-  syllable: number;
-  /** Where it flies in from, as a translation applied before its own shape. */
-  approach: { x: number; y: number };
-}
-
-/** 박상현, decomposed. */
-const PARTS: Array<{ char: string; role: Role; syllable: number }> = [
-  { char: "ㅂ", role: "initial", syllable: 0 },
-  { char: "ㅏ", role: "vowel", syllable: 0 },
-  { char: "ㄱ", role: "final", syllable: 0 },
-  { char: "ㅅ", role: "initial", syllable: 1 },
-  { char: "ㅏ", role: "vowel", syllable: 1 },
-  { char: "ㅇ", role: "final", syllable: 1 },
-  { char: "ㅎ", role: "initial", syllable: 2 },
-  { char: "ㅕ", role: "vowel", syllable: 2 },
-  { char: "ㄴ", role: "final", syllable: 2 },
-];
-
-export const SYLLABLES = [..."박상현"];
-
-/** Block pitch, and the gap between blocks. */
-export const BLOCK = { size: 1, gap: 0.14 };
-
-export const TOTAL_WIDTH = 3 * BLOCK.size + 2 * BLOCK.gap;
-
-export function blockX(index: number): number {
-  return index * (BLOCK.size + BLOCK.gap);
-}
+export type Kind = "consonant" | "vowel";
 
 /**
- * The nine parts, placed.
+ * Where a piece comes in from, in frame units.
  *
- * Each arrives from outside the block along the axis its role occupies —
- * initials from the left, vowels from the right, finals from below. The
- * approach direction is what makes the assembly read as construction rather
- * than as nine things converging on a point.
+ * Split by kind, and the split is the script's own: a Korean syllable is built
+ * consonant-first, and the vowel is what turns a consonant into one. So the
+ * consonants rise into the line and the vowels — which are the tall vertical
+ * strokes — come down into it, and the two directions cross.
  */
-export function buildParts(): Part[] {
-  const approaches: Record<Role, { x: number; y: number }> = {
-    initial: { x: -0.55, y: -0.12 },
-    vowel: { x: 0.6, y: 0 },
-    final: { x: 0, y: 0.55 },
-  };
-
-  return PARTS.map((part) => ({ ...part, approach: approaches[part.role] }));
-}
+export const APPROACH: Record<Kind, { x: number; y: number }> = {
+  consonant: { x: -0.07, y: 0.5 },
+  vowel: { x: 0.05, y: -0.58 },
+};
 
 /**
- * Order the parts lock in: finals, then initials, then vowels.
+ * The order the pieces land in: the six consonants, then the three vowels,
+ * each in reading order.
  *
- * A real construction order rather than reading order — the bottom tier of
- * every block settles before the tier above it, which is what makes three
- * blocks look like they are being built rather than typed.
+ * A construction order rather than reading order. It is also the one the
+ * writing system uses — nothing is a syllable until a vowel arrives — so the
+ * line finishes assembling in the same move that makes it readable.
  */
-export const LOCK_ORDER = [2, 5, 8, 0, 3, 6, 1, 4, 7];
+export const LOCK_ORDER = [0, 2, 3, 5, 6, 8, 1, 4, 7];
