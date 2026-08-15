@@ -95,8 +95,16 @@ That spacing is optical, not metric. Compatibility jamo are full-width — every
 one advances 0.864 em, because they are meant to be composed into a square and
 not set in a row — and their ink sits in wildly different places inside that
 square, so metric spacing gives gaps swinging between a third and two thirds of
-an em. Measuring between ink instead, with a wider gap between syllable groups,
-is what a designer does at display size.
+an em.
+
+Nor are bounding boxes enough. ㅏ is a stem hard against the right of its square
+with a short branch off the left; box it and the branch sets the left edge, so
+the eye sees the stem sitting far from the glyph before it and the branch almost
+touching the one after. Each pair is set by **closest approach** instead — the
+real gap, measured in ninety-six horizontal bands — which is what a designer is
+doing by eye, and is the difference between glyphs that are spaced and glyphs
+that are placed. Syllable groups get a wider gap, so the name's structure is
+visible without composing it.
 
 The curves were also being destroyed. The flattening tolerance was written as
 `0.3` font units and compared against deviations measured in *em*, where a

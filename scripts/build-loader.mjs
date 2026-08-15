@@ -48,8 +48,8 @@ const JAMO = [
 const LATIN = "SEAN PARK";
 
 /**
- * Spacing for the jamo line, as a fraction of the em, measured between ink
- * rather than between advances.
+ * Spacing for the jamo line, as a fraction of the em, measured as the closest
+ * approach between neighbouring ink.
  *
  * Compatibility jamo are full-width — every one of them advances 0.864 em,
  * because they are meant to be composed into a square and not set in a row.
@@ -295,28 +295,82 @@ function alignRotation(source, target) {
 }
 
 
+/** Bands of a contour set, as the leftmost and rightmost ink in each. */
+function profile(contours, top, bottom, bands) {
+  const left = new Array(bands).fill(Infinity);
+  const right = new Array(bands).fill(-Infinity);
+  const step = (bottom - top) / bands;
+
+  for (const contour of contours) {
+    for (let i = 0; i < contour.length; i++) {
+      const a = contour[i];
+      const b = contour[(i + 1) % contour.length];
+      // Sampled along each edge rather than at its ends, so a long diagonal
+      // registers in every band it crosses instead of only two.
+      const steps = Math.max(1, Math.ceil(Math.abs(b[1] - a[1]) / step));
+      for (let k = 0; k <= steps; k++) {
+        const x = a[0] + ((b[0] - a[0]) * k) / steps;
+        const y = a[1] + ((b[1] - a[1]) * k) / steps;
+        const band = Math.min(bands - 1, Math.max(0, Math.floor((y - top) / step)));
+        if (x < left[band]) left[band] = x;
+        if (x > right[band]) right[band] = x;
+      }
+    }
+  }
+
+  return { left, right };
+}
+
 /**
  * The nine jamo, set as a line.
  *
  * One scale for all of them and one baseline, which is the whole of what makes
  * them read as a typeface rather than as an arrangement. Only the spacing is a
- * decision, and it is made between ink rather than between advances — see
- * `TRACK`.
+ * decision — see `TRACK` — and it is made by closest approach rather than
+ * between bounding boxes.
+ *
+ * Bounding boxes are the obvious way and they are wrong here. ㅏ is a stem hard
+ * against the right of its square with a short branch off the left; box it and
+ * the branch sets the left edge, so the eye sees the stem sitting far from the
+ * glyph before it and the branch almost touching the one after. Measuring the
+ * real gap in horizontal bands is what a designer is doing by eye, and it is
+ * the difference between glyphs that are spaced and glyphs that are placed.
  */
-function jamoLine(glyphs) {
-  const inks = JAMO.map((part) => boxOf(glyphs[part.char].contours));
+const BANDS = 96;
 
-  // Laid out at em scale first, then scaled and centred as one piece, so no
-  // glyph is ever sized against any other.
+function jamoLine(glyphs) {
+  const boxes = JAMO.map((part) => boxOf(glyphs[part.char].contours));
+  const top = Math.min(...boxes.map((b) => b.y1));
+  const bottom = Math.max(...boxes.map((b) => b.y2));
+  const profiles = JAMO.map((part) => profile(glyphs[part.char].contours, top, bottom, BANDS));
+
   let pen = 0;
-  const placed = JAMO.map((part, index) => {
-    if (index > 0) {
-      const gap = JAMO[index - 1].syllable === part.syllable ? TRACK.within : TRACK.between;
-      pen += gap;
+  const placed = [];
+  const shifts = [];
+
+  JAMO.forEach((part, index) => {
+    if (index === 0) {
+      shifts.push(-boxes[0].x1);
+    } else {
+      const want = JAMO[index - 1].syllable === part.syllable ? TRACK.within : TRACK.between;
+      const before = profiles[index - 1];
+      const now = profiles[index];
+
+      // The tightest the pair can sit before any band touches. Bands where only
+      // one of them has ink say nothing about the gap between them.
+      let clearance = Infinity;
+      for (let band = 0; band < BANDS; band++) {
+        if (before.right[band] === -Infinity || now.left[band] === Infinity) continue;
+        clearance = Math.min(clearance, now.left[band] - before.right[band]);
+      }
+      // Two glyphs that never share a band — a high ㄱ over a low ㄴ — have no
+      // gap to measure, so the boxes are all there is.
+      if (clearance === Infinity) clearance = boxes[index].x1 - boxes[index - 1].x2;
+
+      shifts.push(shifts[index - 1] + want - clearance);
     }
-    const shift = pen - inks[index].x1;
-    pen += inks[index].width;
-    return mapContours(glyphs[part.char].contours, (x, y) => [x + shift, y]);
+
+    placed.push(mapContours(glyphs[part.char].contours, (x, y) => [x + shifts[index], y]));
   });
 
   return placed;

@@ -47,14 +47,14 @@ export const REST = 0.88;
 /** Beats, in normalised time. */
 const T = {
   /**
-   * Parts fly in and lock into their cells.
+   * The pieces fly in and land on the line.
    *
-   * Starting before zero on purpose. The camera opens hard inside the cell the
-   * first part lands in, and a part that begins arriving at t = 0 is a hairline
-   * there — the piece opened on three hundred milliseconds of one thin line in
+   * Starting before zero on purpose. The camera opens hard inside the first
+   * piece drawn, and a piece that begins arriving at t = 0 is a hairline there
+   * — the animation opened on three hundred milliseconds of one thin line in
    * an empty frame. Half a beat of head start means the first thing on screen
-   * is solid ink at four times size, and what the pull-back reveals is that the
-   * mass you were looking at is a letter.
+   * is solid ink at several times size, and what the pull-back reveals is that
+   * the mass you were looking at is a letter.
    */
   assembleFrom: -0.06,
   assembleSpan: 0.24,
@@ -70,7 +70,7 @@ const T = {
    */
   flowFrom: 0.46,
   flowSpan: 0.38,
-  /** Unstaggered: by this point there are no parts left, only the name. */
+  /** Unstaggered: by this point there are no pieces left, only the line. */
   flowStagger: 0,
 
   /**
@@ -91,11 +91,12 @@ const T = {
 /**
  * Every staggered beat has to close before the run ends.
  *
- * The flow used to start at 0.58 and stagger nine parts by 0.022 over a span
- * of 0.3, which puts the last of them finishing at 1.076 — so the final frame
- * caught them mid-morph and the name rendered as a scramble. Checked here
- * rather than left as arithmetic in a comment, because it is the kind of thing
- * that breaks silently every time a beat is retimed.
+ * A staggered beat spends part of its window before its last member starts, so
+ * a span that looks like it ends in time does not. The flow once ran nine
+ * staggered pieces past the end of the sequence, and the final frame caught
+ * them mid-morph and rendered the name as a scramble. Checked here rather than
+ * left as arithmetic in a comment, because it is the kind of thing that breaks
+ * silently every time a beat is retimed.
  */
 const LAST = Math.max(
   T.assembleFrom + 8 * T.assembleStagger + T.assembleSpan,
@@ -140,14 +141,14 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
   };
 }
 
-/** A part travelling to its cell: covers ground fast, then seats. */
+/** A piece travelling to the line: covers ground fast, then seats. */
 const lockEase = cubicBezier(0.16, 1, 0.3, 1);
 /**
  * The flow into Latin.
  *
  * Gentle at both ends and slower through the middle, so the
- * abstract stretch — where the forms are neither script — is the part that
- * gets the time.
+ * abstract stretch — where the forms are neither script — is what gets the
+ * time.
  */
 const flowEase = cubicBezier(0.5, 0.02, 0.5, 0.98);
 /**
@@ -161,7 +162,7 @@ const shotEase = cubicBezier(0.22, 0.78, 0.24, 1);
  * The counter.
  *
  * Has to actually finish, and has to not finish early. The old curve reached 92
- * before the parts had even stopped arriving and then crawled the last eight
+ * before the pieces had even stopped arriving and then crawled the last eight
  * over two seconds, which reads as a progress bar lying — the one thing a
  * counter can do that is worse than not being there.
  */
@@ -331,7 +332,7 @@ const ECHOES = [
  * letterform rather than as damage to it.
  */
 
-/** Where in a part's arrival the outline finishes drawing and the fill takes
+/** Where in a piece's arrival the outline finishes drawing and the fill takes
  *  over. The two overlap, so the form is never a bare outline for long. */
 const DRAW = { span: 0.62, fillFrom: 0.45 };
 
@@ -427,7 +428,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     partGroup.append(outer);
 
     // Total outline length, for the draw-on. Read once, from the state the
-    // part is drawn in. A jamo with several contours returns their sum, so
+    // piece is drawn in. A jamo with several contours returns their sum, so
     // they draw one after another — roughly the order they would be written.
     const length = path.getTotalLength();
     path.setAttribute("stroke-dasharray", String(length));
