@@ -18,7 +18,6 @@ export default defineConfig(({ command }) => {
         // Relative to the project root. Blog entries are generated; see plugins/blog.ts.
         input: {
           main: "index.html",
-          specimen: "specimen/index.html",
           ...blogInputs,
         },
       },

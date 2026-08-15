@@ -1,7 +1,7 @@
 @import "./fonts.css";
 
 /* The shared type and colour system for the whole site.
-   Editorial (Newsreader) was chosen from the specimen — see docs/concept.md. */
+   Editorial (Newsreader); see docs/concept.md for why. */
 
 :root {
   --font-display: "Newsreader", Georgia, serif;
@@ -189,6 +189,45 @@ pre {
 pre code {
   background: none;
   padding: 0;
+}
+
+.site-nav {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1.5rem;
+  max-width: 78rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2rem) var(--gutter);
+}
+
+.site-nav .wordmark {
+  font-family: var(--font-display);
+  font-weight: var(--display-weight);
+  font-size: var(--step-1);
+  letter-spacing: var(--heading-tracking);
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.site-nav nav {
+  display: flex;
+  gap: 1.25rem;
+}
+
+.site-nav nav a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.site-nav nav a:hover,
+.site-nav nav a[aria-current="page"] {
+  color: var(--fg);
+  text-decoration: underline;
+}
+
+.site-nav .wordmark:hover {
+  color: var(--accent);
 }
 
 .page {

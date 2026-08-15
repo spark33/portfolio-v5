@@ -128,10 +128,11 @@ Rules the loader enforces, not the figure author:
 
 ### Typography and layout
 
-**Decided: Editorial (Newsreader), from the specimen at `/specimen/`.** It gives the
-writing more authority than a grotesk does, and it separates the site from the
-Inter-based default that most engineer portfolios land on. The rejected alternatives
-stay in `src/specimen.css` so the choice can be re-examined against real copy.
+**Decided: Editorial (Newsreader).** It gives the writing more authority than a
+grotesk does, and it separates the site from the Inter-based default that most
+engineer portfolios land on. It was chosen by comparing three treatments on real
+copy; that comparison page has since been removed, and the rejected treatments are
+recoverable from the git history.
 
 - Self-hosted latin-subset woff2, `font-display: swap`; see `scripts/fetch-fonts.py`.
 - Measure capped at 68–72 characters. Body at 18–19 px, 1.6 line height.

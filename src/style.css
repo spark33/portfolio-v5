@@ -14,10 +14,15 @@ body {
   display: block;
 }
 
+.site-nav {
+  position: relative;
+  z-index: 2;
+}
+
 main {
   position: relative;
   z-index: 1;
-  height: 100vh;
+  height: calc(100vh - 6rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
