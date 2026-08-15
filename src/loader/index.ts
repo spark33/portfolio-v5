@@ -27,9 +27,10 @@ import {
  * the animation is specific to *this* name, in *this* script, and would have
  * to be rebuilt from scratch for any other.
  *
- * Real text throughout, in a 3.6 KB subset of Pretendard Variable, animated
- * along its weight axis: the parts arrive hairline and gain weight as they
- * lock, so the letterforms and the counter are two readings of one signal.
+ * Every form is baked outline data rather than live text — the whole point is
+ * that a jamo turns into its share of a syllable and then into a Latin letter,
+ * and only matched contours can do that. `scripts/build-loader.mjs` does the
+ * matching once, at build time, against Pretendard Variable.
  *
  * The whole animation is a pure function of normalised time, `apply(t)`. Any
  * frame can be rendered on demand, which is what makes it possible to
@@ -124,13 +125,6 @@ if (LAST > REST) {
 if (LAST_FUSE > T.flowFrom + 1e-9) {
   throw new Error(`fuse runs to ${LAST_FUSE.toFixed(3)}, past the flow at ${T.flowFrom}`);
 }
-
-/** The weight axis, per layer. */
-const WEIGHT = {
-  parts: { from: 45, to: 200 },
-  composed: { from: 200, to: 340 },
-  latin: { from: 300, to: 930 },
-};
 
 /** CSS-style cubic bézier, solved for y given x. */
 function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
@@ -347,7 +341,6 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     "aria-hidden": "true",
     focusable: "false",
   });
-  svg.setAttribute("font-family", "Pretendard Loader, system-ui, sans-serif");
 
   /**
    * The mask, and the single plane of ink seen through it.
@@ -623,12 +616,6 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     if (flowing) {
       field.setAttribute("d", blend(chain.mid, chain.end, flowed, fieldContours, toPath));
     }
-
-    partGroup.style.fontVariationSettings = `"wght" ${lerp(
-      WEIGHT.parts.from,
-      WEIGHT.parts.to,
-      progress,
-    ).toFixed(1)}`;
 
     // --- Frames ------------------------------------------------------------
     // Present while there is something to assemble, gone once each block has.

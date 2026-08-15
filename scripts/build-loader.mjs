@@ -1,179 +1,31 @@
 #!/usr/bin/env node
 /**
- * Subsets Pretendard Variable down to the glyphs the loader draws.
+ * Bakes the loader's letterforms out of Pretendard Variable.
  *
  *   npm run build:loader
  *
- * The whole point is the weight axis. Pretendard Variable carries wght 45–930,
- * and the loader animates along it — the name gains weight as the page loads —
- * so the subset has to keep `fvar` and `gvar` rather than flattening to a
- * static instance.
+ * The animation turns nine jamo into three syllables and then into SEAN PARK
+ * as one continuous chain of the same twenty outlines. Nothing about that is
+ * possible with live text: it needs every contour of one form paired with a
+ * contour of the next, resampled to a shared point count and rotation-aligned
+ * so a straight lerp between them is a valid outline at every step. That
+ * matching is what this script does, once, so the runtime only interpolates.
  *
- * Eleven glyphs and a space come to under 3 KB as woff2, which is less than
- * the SVG path data this replaced, and it buys real selectable text instead of
- * a wall of <path> elements.
- *
- * Needs fonttools and brotli:  python3 -m pip install fonttools brotli
+ * Emits src/loader/morphs.ts. No font ships — the outlines are the asset.
  */
-import { execFileSync } from "node:child_process";
 import fs from "node:fs";
-import path from "node:path";
 
 import opentype from "opentype.js";
 
 const SOURCE = "node_modules/pretendard/dist/public/variable/PretendardVariable.ttf";
-/**
- * Deliberately not in public/fonts/.
- *
- * scripts/fetch-fonts.py rebuilds that directory from scratch and unlinks every
- * *.woff2 it finds, so a font living there that it does not know about is one
- * `python3 scripts/fetch-fonts.py` away from vanishing — and the loader would
- * quietly fall back to a system face with the weight axis animating nothing.
- */
-const OUT = path.join("public", "loader", "pretendard-var.woff2");
-
-/**
- * Every character the loader can render.
- *
- * The nine jamo of 박상현 as well as the composed syllables: the animation
- * assembles each block from its parts before showing the block itself, which
- * is how Korean actually works and is the whole idea of the piece.
- */
-const JAMO = "ㅂㅏㄱㅅㅇㅎㅕㄴ";
-const TEXT = `박상현SEANPRK ${JAMO}`;
 
 function main() {
   if (!fs.existsSync(SOURCE)) {
     throw new Error(`${SOURCE} is missing — run npm install`);
   }
 
-  fs.mkdirSync(path.dirname(OUT), { recursive: true });
-
-  execFileSync(
-    "python3",
-    [
-      "-m",
-      "fontTools.subset",
-      SOURCE,
-      `--text=${TEXT}`,
-      "--flavor=woff2",
-      // The loader sets plain spans; none of the layout features are reachable,
-      // and dropping them takes the file down by more than half.
-      "--layout-features=",
-      "--no-hinting",
-      "--desubroutinize",
-      `--output-file=${OUT}`,
-    ],
-    { stdio: ["ignore", "ignore", "inherit"] },
-  );
-
-  writeMetrics();
   writeMorphs();
-
-  const bytes = fs.statSync(OUT).size;
-  process.stderr.write(
-    `wrote ${OUT} — ${[...new Set(TEXT.replace(" ", ""))].length} glyphs, ${(bytes / 1024).toFixed(1)} KB\n`,
-  );
 }
-
-/**
- * Emits the ink box of each jamo, in em.
- *
- * The loader fits every jamo into a cell of its syllable block, which needs to
- * know how much ink each one actually has — and a DOM measurement gives the
- * layout box, which is the em square plus sidebearings, not the ink. Measuring
- * here is exact, costs nothing at runtime, and removes a font-load race from
- * mount.
- *
- * Taken at weight 300, near where the jamo are drawn. The axis moves the ink
- * box slightly; at the scale these are rendered the difference is under a
- * pixel and not worth carrying a table of boxes per weight.
- */
-function writeMetrics() {
-  const font = opentype.parse(fs.readFileSync(SOURCE).buffer);
-  font.variation.set({ wght: 300 });
-
-  const em = font.unitsPerEm;
-  const round = (n) => +(n / em).toFixed(4);
-
-  const inkOf = (char) => {
-    const box = font.charToGlyph(char).getBoundingBox();
-    return `{ x1: ${round(box.x1)}, y1: ${round(box.y1)}, x2: ${round(box.x2)}, y2: ${round(box.y2)} }`;
-  };
-
-  const syllables = [..."박상현"]
-    .map((char) => `  ${JSON.stringify(char)}: ${inkOf(char)},`)
-    .join("\n");
-
-  const entries = [...JAMO]
-    .map((char) => {
-      const box = font.charToGlyph(char).getBoundingBox();
-      return (
-        `  ${JSON.stringify(char)}: ` +
-        `{ x1: ${round(box.x1)}, y1: ${round(box.y1)}, x2: ${round(box.x2)}, y2: ${round(box.y2)} },`
-      );
-    })
-    .join("\n");
-
-  // Outlines for the jamo, as SVG path data at font-size 1 with the glyph
-  // origin at (0, 0). getPath already returns y-down, which is what SVG wants.
-  //
-  // These are paths rather than <text> because the assembly stage draws itself
-  // on: stroke-dasharray needs getTotalLength(), and SVG text has no length to
-  // ask for. The composed syllables stay as real text — construction is drawn,
-  // the result is set.
-  const outlines = [...JAMO]
-    .map((char) => {
-      const d = font.charToGlyph(char).getPath(0, 0, 1).toPathData(4);
-      return `  ${JSON.stringify(char)}: ${JSON.stringify(d)},`;
-    })
-    .join("\n");
-
-  const module = `/**
- * Ink boxes for the jamo, in em, y-up with the baseline at 0. Generated by
- * scripts/build-loader.mjs — do not edit by hand; re-run the script.
- *
- * The loader fits each jamo into a cell of its syllable block, and a cell fit
- * needs ink bounds rather than layout bounds.
- */
-
-export interface InkBox {
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
-}
-
-export const JAMO_INK: Record<string, InkBox> = {
-${entries}
-};
-
-/**
- * The composed syllables, measured the same way.
- *
- * The animation crossfades a block's assembled parts into the syllable itself,
- * and the two have to occupy the same box for that to read as tightening
- * rather than as one image ghosting over another.
- */
-export const SYLLABLE_INK: Record<string, InkBox> = {
-${syllables}
-};
-
-/**
- * Jamo outlines as SVG path data, at font-size 1 with the glyph origin at
- * (0, 0).
- *
- * Paths rather than text, because the assembly draws itself on with
- * stroke-dasharray and that needs a length the browser can measure.
- */
-export const JAMO_PATH: Record<string, string> = {
-${outlines}
-};
-`;
-
-  fs.writeFileSync(path.join("src", "loader", "metrics.ts"), module);
-}
-
 
 // ---------------------------------------------------------------------------
 // Morph pairs
@@ -622,7 +474,13 @@ ${serialised}
 ];
 `;
 
-  fs.writeFileSync(path.join("src", "loader", "morphs.ts"), module);
+  fs.writeFileSync("src/loader/morphs.ts", module);
+
+  const contours = entries.reduce((sum, entry) => sum + entry.contours, 0);
+  process.stderr.write(
+    `wrote src/loader/morphs.ts — ${entries.length} parts, ${contours} contours,` +
+      ` ${MORPH_N} points each, ${(fs.statSync("src/loader/morphs.ts").size / 1024).toFixed(1)} KB\n`,
+  );
 }
 
 /**
@@ -675,7 +533,23 @@ function latinContours(font) {
 const BLOCK_GAP = 0.14;
 const TOTAL_BLOCK_WIDTH = 3 * 1 + 2 * BLOCK_GAP;
 
-/** Cells, kept in step with src/loader/layout.ts. */
+/**
+ * The regions of the square, for an initial + vertical vowel + final.
+ *
+ * The substance of the whole piece, and the one table worth reading if the
+ * block proportions ever look wrong. Hangul is an assembly system: a syllable
+ * is not a character that happens to look busy, it is a *block* built from two
+ * or three jamo placed in fixed regions of a square. 박 is ㅂ over ㄱ with ㅏ
+ * down the right-hand side.
+ *
+ * All three syllables of 박상현 share this structure, so one set of cells
+ * covers the name. The proportions that matter: the vowel takes the right ~40%
+ * and runs nearly the full height, because a vertical vowel is the tallest
+ * thing in a block; it stops short of the bottom because the final sits under
+ * the *whole* block rather than under the initial alone.
+ *
+ * In block units — one block is 1 × 1, origin top-left, y down as in SVG.
+ */
 const CELL_TABLE = {
   initial: { x: 0.05, y: 0.05, width: 0.47, height: 0.53 },
   vowel: { x: 0.58, y: 0.02, width: 0.37, height: 0.62 },
@@ -696,7 +570,17 @@ function fitPoint(x, y, ink, box) {
   return [box.x + (x - ink.x1) * scaleX, box.y + (y + ink.y2) * scaleY];
 }
 
-/** Maps a y-down point through a uniform, centred fit of `ink` into `cell`. */
+/**
+ * Maps a y-down point through a uniform, centred fit of `ink` into `cell`.
+ *
+ * Uniform is the point. Stretching each jamo to fill its cell is what a real
+ * Korean typeface does — it redraws the form for the position — but doing it by
+ * scaling one drawing gives anisotropic strokes: ㄱ squashed into a wide flat
+ * cell comes out with hairline horizontals and heavy verticals, and reads as
+ * clunky no matter how well it is animated. A uniform scale keeps every stroke
+ * the weight it was drawn at, at the cost of the parts sitting a little smaller
+ * than the block they build. They read as parts, which is what they are.
+ */
 function fitPointUniform(x, y, ink, cell) {
   const inkWidth = ink.x2 - ink.x1;
   const inkHeight = ink.y2 - ink.y1;

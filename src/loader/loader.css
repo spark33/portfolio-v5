@@ -1,17 +1,10 @@
 /**
  * The loading animation.
  *
- * Real text in a subset of Pretendard Variable, so the weight axis is
- * animatable and the names are text rather than paths.
+ * No webfont: every letterform in the sequence is baked outline data, matched
+ * contour to contour at build time so one script can morph into another. The
+ * only type here is the meter, which uses the site's own mono.
  */
-
-@font-face {
-  font-family: "Pretendard Loader";
-  src: url("/loader/pretendard-var.woff2") format("woff2-variations");
-  /* The whole axis, because the animation travels the whole axis. */
-  font-weight: 45 930;
-  font-display: block;
-}
 
 .loader {
   width: 100%;

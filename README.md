@@ -29,7 +29,7 @@ npm run storybook  # component workbench on http://localhost:6006
 | `plugins/blog.ts`    | Generates `blog/` and reloads it in dev                   |
 | `src/blog.css`       | Blog index and post styles                                |
 | `src/loader/`        | The loading animation; see [Loader](#loader)             |
-| `scripts/build-loader.mjs` | Bakes its glyph outlines to SVG path data          |
+| `scripts/build-loader.mjs` | Bakes and contour-matches its letterforms         |
 | `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
 | `.mcp.json`          | Design-reference MCP servers                              |
 
@@ -81,14 +81,36 @@ That is also why it cannot be a stock preloader wearing someone's name: this
 animation is specific to *this* name in *this* script, and would have to be
 rebuilt from scratch for any other.
 
-**The camera moves.** A viewBox that opens inside a single stroke — so the
-first thing on screen is an abstract mark, not a name — pulls back as the parts
-arrive, then pushes in through the morph. That push is doing real work: twenty
-contours becoming twelve means eight shrink to nothing, and on a fixed camera
-the field visibly collapsed and came back, which read as a fault. Moving in as
-it contracts keeps it filling the frame and the same moment reads as a dive
-into the transformation. The aspect ratio is fixed — animating it would change
-the element's own height and shift the page every frame.
+**The type is a window, not a mark.** Nothing is painted directly. Every form
+— the parts, the construction squares, the name — is a white shape inside one
+`<mask>`, and the only thing on screen with colour is a single plane behind it.
+That costs nothing at rest and buys the interior: a *black* shape added to the
+mask takes ink away, so a letterform can be cut into as well as drawn.
+
+What shows through is the piece itself, enlarged and running ahead of where it
+currently is — the visible form is always filled with the form it is about to
+become. That is what pays for the still moments. 박상현 holds legible for a
+beat in the middle and SEAN PARK holds at the end, and on flat ink both read as
+the animation having stopped; filled with their own future they are the most
+interesting frames in the run. A sheen crosses the plane once over the run for
+the same reason. Every gradient stop is `currentColor` and only the opacity
+varies, so the piece still takes its colour entirely from the page.
+
+**The camera moves.** A viewBox that opens hard inside a single stroke — so
+the first thing on screen is an abstract mass, not a name — pulls back as the
+parts arrive, then pushes in through the morph. That push is doing real work:
+twenty contours becoming twelve means eight shrink to nothing, and on a fixed
+camera the field visibly collapsed and came back, which read as a fault. Moving
+in as it contracts keeps it filling the frame and the same moment reads as a
+dive into the transformation. The aspect ratio is fixed — animating it would
+change the element's own height and shift the page every frame.
+
+The run ends where it began: the camera dives back into the stroke it opened
+on while the frame blinks out, so a loop dissolves into the next pass instead
+of cutting from a resolved name to an empty one, and a single run hands off to
+the page rather than switching off. `REST` — not 1 — marks where the sequence
+actually lands, which is the frame reduced motion draws and the one to
+screenshot.
 
 **Nothing in the sequence is a cut.** Nine jamo become three syllables become
 SEAN PARK, as one continuous chain of the same twenty contours. Twenty become
@@ -105,16 +127,28 @@ possible because the counts line up exactly: 박 has five contours and ㅂㅏㄱ
 have 2 + 2 + 1; 상 has six and 2 + 2 + 2; 현 has nine and 4 + 3 + 2. The font
 redraws each jamo for its position but keeps its structure, so every contour of
 a syllable has exactly one counterpart among its parts — no topology to absorb,
-nothing appearing from nowhere or collapsing to a point, and no seam to hide
-because there is no seam. Contours are matched by centroid proximity and only
-where the winding agrees, then point order is rotation-aligned; without that
-last step a morph unwinds and cartwheels.
+nothing appearing from nowhere, and no seam to hide because there is no seam.
+Contours are matched by centroid proximity and only where the winding agrees,
+then point order is rotation-aligned; without that last step a morph unwinds
+and cartwheels.
 
-**Construction is drawn; the result is set.** Each jamo is a baked outline that
-draws itself on with `stroke-dashoffset`, the fill catching up behind the line
-— the one thing here that could not be done any other way, and what makes the
-parts read as drawn rather than as glyphs being faded up. The composed
-syllables and SEAN PARK are real text.
+**Construction is drawn.** Each jamo draws itself on with `stroke-dashoffset`,
+the fill catching up behind the line — what makes the parts read as drawn
+rather than as glyphs being faded up.
+
+**No webfont ships.** Every letterform is baked outline data. Live text cannot
+do any of the above: the morph needs each contour of one form paired with a
+contour of the next, resampled to a shared point count and rotation-aligned so
+a straight lerp between them is a valid outline at every step. `npm run
+build:loader` does that matching once against Pretendard Variable (OFL, pinned
+as a devDependency) and writes `src/loader/morphs.ts`. The whole chain is 53 KB
+of source and needs nothing at runtime but arithmetic.
+
+Every stage is baked in **frame** coordinates, not block-local ones. The final
+morph has to be a single path — a letter's counter only punches a hole when it
+shares a path with its outline — and a single path can carry no per-block
+transform, so block-local geometry put all three syllables on top of one
+another the instant that path took over. `tests/loader.spec.ts` guards it.
 
 Each jamo is fitted to its cell at a **uniform** scale. A real Korean typeface
 redraws a jamo for its position; scaling one drawing to fill a cell instead
@@ -122,41 +156,38 @@ gives anisotropic strokes — ㄱ squashed into a wide flat cell comes out with
 hairline horizontals and heavy verticals — and no amount of easing rescues
 that. Uniform keeps every stroke the weight it was drawn at, at the cost of the
 parts sitting a little smaller than the block they build. They read as parts,
-which is what they are.
+which is what they are. The cell table lives in `scripts/build-loader.mjs`,
+which is what consumes it, and is the part worth reading if the block
+proportions ever look wrong.
 
-The composed syllables and SEAN PARK are real text in a 3.6 KB subset of
-Pretendard Variable, animated along its `wght` axis: the parts arrive hairline and gain weight as they lock,
-landing at 930 exactly as the counter reaches 100, so the letterforms and the
-number are two readings of one signal. `src/loader/layout.ts` holds the cell
-table — the regions of the square each role occupies — which is the part worth
-reading if the block proportions ever look wrong.
-
-The assembly is drawn in SVG rather than HTML because an SVG `<text>` at
+The assembly is drawn in SVG rather than HTML because an SVG glyph outline at
 font-size 1 with its origin at (0, 0) puts its ink exactly where the font says
 it is, so a jamo can be fitted to a cell arithmetically. The same placement in
 HTML would depend on line-height and half-leading.
 
 ```sh
 npm run storybook
-npm run film              # 12-frame filmstrip, dark
+npm run film              # 12 seeked frames, dark
 npm run film -- 20 light  # 20 frames, light ground
+npm run play              # 16 frames of real playback
 ```
 
 The animation is a pure function of normalised time — `apply(t)` derives every
 visual property and nothing else touches them — so `npm run film` seeks frame
 by frame through `window.__loader` rather than waiting on wall-clock time. The
 strip is exact and reproducible, which is what makes the motion iterable rather
-than guessable. It is what caught the counter stalling at 100 for the last
-quarter of the run, a lone S sitting in an empty frame while the rest of the
-word queued behind it, SEAN PARK losing its word space, and the composed
-syllables ghosting over their own parts. Frames land in `shots/loader/`
-(gitignored).
+than guessable. It caught the counter stalling at 100 for the last quarter of
+the run, a lone S sitting in an empty frame, and SEAN PARK losing its word
+space.
 
-`npm run build:loader` re-subsets the font from Pretendard Variable (OFL),
-pinned as a devDependency, and re-emits `metrics.ts` — the ink boxes the cell
-fitting needs. Needs `python3 -m pip install fonttools brotli`. Output goes to
-`public/loader/` and **not** `public/fonts/`: `fetch-fonts.py` rebuilds that
-directory and unlinks every woff2 it finds, which would take this one with it.
+`npm run play` is its counterpart and not a duplicate: it shoots real rAF
+playback on a wall clock, so it sees what seeking cannot. Every fault that
+survived into the finished piece was found this way — the field collapsing to a
+cluster halfway through, the three syllables landing on top of one another at
+the flow handover, three hundred milliseconds of one hairline in an empty frame
+at the start, and the SVG spilling across the page whenever the camera pushed
+in. None of them appear in a single seeked still. Frames land in `shots/loader/`
+(gitignored).
 
 Stories: `Frame` (seek one moment), `Playing`, `OnLight`, `Small`.
 `prefers-reduced-motion: reduce` draws the resolved state once and never starts
@@ -222,8 +253,10 @@ guards the things a stylesheet or pipeline change can silently break: that the t
 face resolves rather than falling back to a system stack, that the canvas tracks the
 theme, that nav reaches every page, that posts render their frontmatter and markdown,
 that drafts stay out of a production build, and that nothing scrolls horizontally on
-a phone. `tests/blog-content.spec.ts` exercises the loader directly, without a
-browser.
+a phone. `tests/blog-content.spec.ts` exercises the post loader directly, without a
+browser, and `tests/loader.spec.ts` asserts on the baked morph geometry — `npm run
+build:loader` is a manual step whose output is committed, so nothing in the build
+fails if it drifts.
 
 Chromium resolution is handled in `playwright.config.ts`: it prefers
 `/opt/pw-browsers/chromium` when present — cloud sessions ship one and cannot run
