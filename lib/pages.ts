@@ -90,7 +90,7 @@ function workIndex() {
                 <span class="index-constraint display-m">${copy(study.constraint)}</span>
                 <span class="index-title">${copy(study.title)}</span>
               </span>
-              <span class="index-meta">
+              <span class="index-meta" aria-hidden="true">
                 ${study.meta
                   .slice(2)
                   .map((m) => `<span class="micro">${copy(m.value)}</span>`)
@@ -115,12 +115,12 @@ function artifactIndex() {
     .map(
       (item) => `          <li class="index-row">
             <a class="index-link" href="/${item.slug}/">
-              <span class="index-n index-n-blank micro">&mdash;</span>
+              <span class="index-n index-n-blank micro" aria-hidden="true">&mdash;</span>
               <span class="index-body">
                 <span class="index-constraint display-s">${copy(item.constraint)}</span>
                 <span class="index-title">${copy(item.title)}</span>
               </span>
-              <span class="index-meta">
+              <span class="index-meta" aria-hidden="true">
                 <span class="index-arrow" aria-hidden="true">&rarr;</span>
               </span>
             </a>
@@ -148,7 +148,7 @@ export function renderHome() {
     module: "/src/main.ts",
     sequence: true,
     jsonLd: personJsonLd(),
-    body: `    <main class="main" id="main">
+    body: `    <main class="main" id="main" tabindex="-1">
 ${nameSequenceMarkup()}
 
       <section class="page thesis">
@@ -208,7 +208,7 @@ function nextLink(index: number) {
             <span class="index-constraint display-s">${copy(next.constraint)}</span>
             <span class="index-title">${copy(next.title)}</span>
           </span>
-          <span class="index-meta"><span class="index-arrow" aria-hidden="true">&rarr;</span></span>
+          <span class="index-meta" aria-hidden="true"><span class="index-arrow" aria-hidden="true">&rarr;</span></span>
         </a>
       </nav>`;
 }
@@ -232,7 +232,7 @@ export function renderCaseStudy(study: CaseStudy, index: number) {
       about: study.constraint,
       isPartOf: { "@type": "CreativeWorkSeries", name: "Three constraints" },
     },
-    body: `    <main class="main page" id="main">
+    body: `    <main class="main page" id="main" tabindex="-1">
       <article class="case">
         <header class="case-head">
           <p class="case-topline">
@@ -312,7 +312,7 @@ ${table}
       author: personJsonLd(),
       about: item.constraint,
     },
-    body: `    <main class="main page" id="main">
+    body: `    <main class="main page" id="main" tabindex="-1">
       <article class="case doc">
         <header class="case-head">
           <p class="case-topline">
@@ -345,7 +345,7 @@ export function renderAbout() {
     path: "/about/",
     stylesheet: "/src/case.css",
     jsonLd: personJsonLd(),
-    body: `    <main class="main page" id="main">
+    body: `    <main class="main page" id="main" tabindex="-1">
       <article class="case">
         <header class="case-head">
           <p class="case-topline">

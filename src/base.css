@@ -152,9 +152,7 @@ code {
   white-space: nowrap;
 }
 
-.pending::before {
-  content: "not yet measured";
-}
+
 
 /* Strips ------------------------------------------------------------------
 
@@ -248,6 +246,9 @@ a:hover {
   text-decoration: none;
   font-weight: 500;
   color: var(--ink);
+  padding-block: 0.45rem;
+  margin-block: -0.45rem;
+  justify-self: start;
 }
 
 .site-nav {
@@ -256,6 +257,10 @@ a:hover {
   gap: var(--space-4) var(--space-5);
 }
 
+/* 11px mono set these 18px tall, which fails WCAG 2.2 SC 2.5.8 (target size,
+   24×24 minimum) on every nav item. Padding takes the hit area to 24px
+   without changing the type; the negative margin keeps the optical alignment
+   of the baseline row it sits in. */
 .site-nav a {
   font-family: var(--font-mono);
   font-size: var(--size-label);
@@ -264,6 +269,8 @@ a:hover {
   text-decoration: none;
   color: var(--ink-secondary);
   transition: color var(--dur-state) var(--ease-exit);
+  padding-block: 0.45rem;
+  margin-block: -0.45rem;
 }
 
 .site-nav a:hover {
@@ -312,4 +319,6 @@ a:hover {
 
 .site-foot a {
   text-decoration-color: var(--ink-secondary);
+  display: inline-block;
+  padding-block: 0.15rem;
 }

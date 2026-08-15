@@ -156,7 +156,7 @@ export function renderPost(post: Post) {
       datePublished: post.date.iso,
       author: personJsonLd(),
     },
-    body: `    <main class="main page" id="main">
+    body: `    <main class="main page" id="main" tabindex="-1">
       <article class="prose">
         <header class="masthead">
           ${postMeta(post)}
@@ -199,7 +199,7 @@ export function renderIndex(posts: Post[]) {
         url: `/blog/${post.slug}/`,
       })),
     },
-    body: `    <main class="main page" id="main">
+    body: `    <main class="main page" id="main" tabindex="-1">
       <header class="prose">
         <p class="label">Writing</p>
         <h1 class="display-l">Notes on delivery, design systems, and working inside constraints.</h1>

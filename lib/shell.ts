@@ -33,7 +33,7 @@ export function ko(value: string) {
 export function copy(value: string) {
   return ko(esc(value))
     .replace(/`([^`]+)`/g, "<code>$1</code>")
-    .replace(/\{\{\?\}\}/g, '<span class="pending"></span>');
+    .replace(/\{\{\?\}\}/g, '<span class="pending">not yet measured</span>');
 }
 
 /**

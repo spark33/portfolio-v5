@@ -142,8 +142,57 @@ test.describe("accessible", () => {
     await expect(skip).toBeFocused();
     await expect(skip).toBeInViewport();
 
+    // Assert focus, not the URL. An earlier version of this test checked only
+    // the hash — which passed while <main> had no tabindex and focus was
+    // silently resetting to <body>, i.e. the skip link did nothing at all.
     await page.keyboard.press("Enter");
-    await expect(page).toHaveURL(/#main$/);
+    await expect(page.locator("main#main")).toBeFocused();
+  });
+
+  test("interactive targets meet the WCAG 2.2 minimum", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/");
+
+    const undersized = await page.evaluate(() =>
+      [...document.querySelectorAll("a, button")]
+        .map((el) => ({ text: el.textContent!.trim().slice(0, 30), box: el.getBoundingClientRect() }))
+        .filter((x) => x.box.width > 0 && x.box.height < 24)
+        .map((x) => `${x.text} (${Math.round(x.box.width)}x${Math.round(x.box.height)})`),
+    );
+
+    expect(undersized).toEqual([]);
+  });
+
+  test("unknown metrics carry real text, not generated content", async ({ page }) => {
+    await page.goto("/logician-ui/");
+
+    // A CSS ::before is invisible to reader mode, text extraction and the
+    // automated screening the site is partly written for. The chip has to be
+    // in the DOM.
+    const chips = page.locator(".pending");
+    expect(await chips.count()).toBeGreaterThan(0);
+    for (const text of await chips.allTextContents()) {
+      expect(text.trim()).toBe("not yet measured");
+    }
+  });
+
+  test("index links are named by their argument, not their metadata", async ({ page }) => {
+    await page.goto("/");
+
+    const names = await page.locator(".index-link").evaluateAll((els) =>
+      els.map((el) => {
+        const clone = el.cloneNode(true) as HTMLElement;
+        clone.querySelectorAll('[aria-hidden="true"]').forEach((n) => n.remove());
+        return clone.textContent!.replace(/\s+/g, " ").trim();
+      }),
+    );
+
+    expect(names.length).toBeGreaterThan(0);
+    for (const name of names) {
+      // The year and scope repeat on the destination page; in a link name they
+      // are noise a screen-reader user has to sit through on every row.
+      expect(name).not.toMatch(/\d{4} — \d{4}|INSTITUTIONS|TENANTS|→/i);
+    }
   });
 
   test("focus is always visible", async ({ page }) => {
