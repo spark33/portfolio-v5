@@ -81,6 +81,17 @@ That is also why it cannot be a stock preloader wearing someone's name: this
 animation is specific to *this* name in *this* script, and would have to be
 rebuilt from scratch for any other.
 
+**The parts do not cut to the syllable — they become it.** Each jamo's outline
+morphs into its share of the composed block, contour by contour. That is
+possible because the counts line up exactly: 박 has five contours and ㅂㅏㄱ
+have 2 + 2 + 1; 상 has six and 2 + 2 + 2; 현 has nine and 4 + 3 + 2. The font
+redraws each jamo for its position but keeps its structure, so every contour of
+a syllable has exactly one counterpart among its parts — no topology to absorb,
+nothing appearing from nowhere or collapsing to a point, and no seam to hide
+because there is no seam. Contours are matched by centroid proximity and only
+where the winding agrees, then point order is rotation-aligned; without that
+last step a morph unwinds and cartwheels.
+
 **Construction is drawn; the result is set.** Each jamo is a baked outline that
 draws itself on with `stroke-dashoffset`, the fill catching up behind the line
 — the one thing here that could not be done any other way, and what makes the

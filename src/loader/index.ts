@@ -1,9 +1,9 @@
 import "./loader.css";
+import { MORPH_POINTS, MORPHS } from "./morphs.ts";
 import {
   BLOCK,
   blockX,
   buildParts,
-  fitSyllable,
   LOCK_ORDER,
   SYLLABLES,
   TOTAL_WIDTH,
@@ -49,16 +49,15 @@ const T = {
   assembleStagger: 0.028,
 
   /**
-   * Parts give way to the composed syllable.
+   * Parts fuse into their syllable.
    *
-   * Short on purpose. A standalone jamo is not drawn the same as the same jamo
-   * inside a block — the font redraws it to fit — so however well the two are
-   * fitted to one box, a slow crossfade shows both forms at once. Making it a
-   * snap turns that from a ghost into the moment the block locks.
+   * A real morph, so it can take its time: earlier cuts had to snap here to
+   * hide a crossfade between two different drawings of the same block. There
+   * is nothing to hide now.
    */
-  composeFrom: 0.4,
-  composeSpan: 0.04,
-  composeStagger: 0.05,
+  fuseFrom: 0.36,
+  fuseSpan: 0.2,
+  fuseStagger: 0.06,
 
   /** The composed name gives way to the Latin one. */
   exitFrom: 0.64,
@@ -113,6 +112,14 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
 
 /** A part travelling to its cell: covers ground fast, then seats. */
 const lockEase = cubicBezier(0.16, 1, 0.3, 1);
+/**
+ * The fuse.
+ *
+ * Symmetric and unhurried. This is the one moment the piece exists for — nine
+ * parts becoming three blocks — and rushing it wastes the only thing that
+ * makes the animation this name's and not anyone else's.
+ */
+const fuseEase = cubicBezier(0.65, 0, 0.35, 1);
 /** Leaving: accelerates away, so an exit reads as decisive rather than sad. */
 const exitEase = cubicBezier(0.55, 0, 0.85, 0.3);
 /** The counter, and with it the weight. Has to actually finish. */
@@ -125,6 +132,19 @@ function phase(t: number, from: number, span: number, stagger: number, index: nu
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
+}
+
+/** Interpolates a morph pair and renders it as path data. */
+function blend(
+  morph: { from: number[]; to: number[]; contours: number },
+  t: number,
+  render: (points: number[], contours: number) => string,
+): string {
+  const points = new Array<number>(morph.from.length);
+  for (let i = 0; i < points.length; i++) {
+    points[i] = morph.from[i] + (morph.to[i] - morph.from[i]) * t;
+  }
+  return render(points, morph.contours);
 }
 
 export interface LoaderOptions {
@@ -202,16 +222,36 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   frameGroup.append(...frames);
   svg.append(frameGroup);
 
-  // --- The nine parts ------------------------------------------------------
+  // --- The nine parts, which become the three syllables --------------------
   const parts = buildParts();
+
+  /** Builds path data from a flat run of x, y pairs. */
+  function toPath(points: number[], contours: number): string {
+    let d = "";
+    for (let c = 0; c < contours; c++) {
+      const base = c * MORPH_POINTS * 2;
+      d += `M${points[base].toFixed(3)} ${points[base + 1].toFixed(3)}`;
+      for (let i = 1; i < MORPH_POINTS; i++) {
+        d += `L${points[base + i * 2].toFixed(3)} ${points[base + i * 2 + 1].toFixed(3)}`;
+      }
+      d += "Z";
+    }
+    return d;
+  }
+
   const partGroup = svgEl("g");
   const partNodes = parts.map((part) => {
-    // An outer group carries the approach; the path carries the fit, so the
-    // two never have to be composed by hand.
+    const morph = MORPHS.find(
+      (entry) => entry.char === part.char && entry.syllable === SYLLABLES[part.syllable],
+    );
+    if (!morph) throw new Error(`no morph for ${part.char} — run npm run build:loader`);
+
+    const from = toPath(morph.from, morph.contours);
+    const to = toPath(morph.to, morph.contours);
+
     const outer = svgEl("g");
     const path = svgEl("path", {
-      d: part.d,
-      transform: part.transform,
+      d: from,
       fill: "currentColor",
       stroke: "currentColor",
       // Butt, not round. A round cap on a zero-length dash renders as a dot,
@@ -219,47 +259,25 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
       // every contour start left a speck on screen.
       "stroke-linecap": "butt",
       "stroke-linejoin": "round",
-      // The fit scales the path, and stroke scales with it, so this undoes
-      // that — every jamo draws with the same weight of line whatever size its
-      // cell made it.
-      "stroke-width": (STROKE / part.scale).toFixed(4),
+      "stroke-width": STROKE,
     });
 
-    // Each block is offset here rather than in the fit, so the fit stays in
-    // block-local units and is readable next to the cell table.
+    // The morph points are already in block units, so the only transform left
+    // is which block this part belongs to.
     const positioned = svgEl("g", { transform: `translate(${blockX(part.syllable)} 0)` });
     positioned.append(path);
     outer.append(positioned);
     partGroup.append(outer);
 
-    // Total outline length, for the draw-on. Read once; a jamo with several
-    // contours returns their sum, so they draw one after another, which is
-    // roughly how the strokes would be written by hand.
+    // Total outline length, for the draw-on. Read once, from the state the
+    // part is drawn in. A jamo with several contours returns their sum, so
+    // they draw one after another — roughly the order they would be written.
     const length = path.getTotalLength();
     path.setAttribute("stroke-dasharray", String(length));
 
-    return { outer, path, length };
+    return { outer, path, length, morph, from, to, current: from };
   });
   svg.append(partGroup);
-
-  // --- The three composed syllables ---------------------------------------
-  const composedGroup = svgEl("g");
-  const composedNodes = SYLLABLES.map((char, index) => {
-    // Fitted to the box the parts filled, not set at a nominal size, so the
-    // handover is the same shape tightening rather than a second image
-    // ghosting over the first.
-    const text = svgEl("text", { x: 0, y: 0, "font-size": 1, transform: fitSyllable(char) });
-    text.textContent = char;
-
-    const positioned = svgEl("g", { transform: `translate(${blockX(index)} 0)` });
-    positioned.append(text);
-
-    const outer = svgEl("g");
-    outer.append(positioned);
-    composedGroup.append(outer);
-    return outer;
-  });
-  svg.append(composedGroup);
 
   // --- SEAN PARK -----------------------------------------------------------
   const latinGroup = svgEl("g");
@@ -338,32 +356,52 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
     // --- Parts -------------------------------------------------------------
     LOCK_ORDER.forEach((partIndex, order) => {
-      const { outer, path, length } = partNodes[partIndex];
+      const node = partNodes[partIndex];
       const part = parts[partIndex];
 
       const locked = lockEase(phase(t, T.assembleFrom, T.assembleSpan, T.assembleStagger, order));
-      const gone = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, part.syllable);
 
+      // The part travels to its cell...
       const away = 1 - locked;
-      outer.setAttribute(
-        "transform",
-        `translate(${(part.approach.x * away).toFixed(4)} ${(part.approach.y * away).toFixed(4)})`,
-      );
-      outer.setAttribute("opacity", (1 - gone).toFixed(3));
+      const leaving = exitEase(phase(t, T.exitFrom, T.exitSpan, T.exitStagger, part.syllable));
 
-      // The outline draws itself on, and the fill catches up behind it. This
-      // is the one thing here that could not be done any other way — a stroke
-      // that runs along the letterform is what makes it read as drawn rather
-      // than as a glyph being faded up.
+      node.outer.setAttribute(
+        "transform",
+        `translate(${(part.approach.x * away - 0.12 * leaving).toFixed(4)} ` +
+          `${(part.approach.y * away - 0.22 * leaving).toFixed(4)})`,
+      );
+      node.outer.setAttribute("opacity", (1 - leaving).toFixed(3));
+
+      // ...its outline draws itself on, and the fill catches up behind it.
+      // This is the one thing here that could not be done any other way — a
+      // stroke running along the letterform is what makes it read as drawn
+      // rather than as a glyph being faded up.
       const drawn = Math.min(1, locked / DRAW.span);
-      path.setAttribute("stroke-dashoffset", (length * (1 - drawn)).toFixed(3));
+      node.path.setAttribute("stroke-dashoffset", (node.length * (1 - drawn)).toFixed(3));
 
       const filled = Math.max(0, (locked - DRAW.fillFrom) / (1 - DRAW.fillFrom));
-      path.setAttribute("fill-opacity", filled.toFixed(3));
-      // The line fades as the fill arrives, so the part ends as a solid form
+      node.path.setAttribute("fill-opacity", filled.toFixed(3));
+      // The line fades as the fill arrives, so a part ends as a solid form
       // rather than a solid form wearing an outline. Gated on the draw having
-      // started at all, so nothing is painted before the part exists.
-      path.setAttribute("stroke-opacity", (drawn > 0 ? 1 - filled : 0).toFixed(3));
+      // begun, so nothing is painted before the part exists.
+      node.path.setAttribute("stroke-opacity", (drawn > 0 ? 1 - filled : 0).toFixed(3));
+
+      // ...and then it *becomes* its share of the syllable.
+      //
+      // Not a crossfade to a second drawing of the block — the same contours,
+      // moved. The font redraws a jamo for its position but keeps its contour
+      // structure, so every contour of 박 has exactly one counterpart among
+      // ㅂㅏㄱ, and the whole assembly resolves with nothing appearing or
+      // disappearing. It is also the only way the seam can be invisible: there
+      // is no seam.
+      const fused = fuseEase(phase(t, T.fuseFrom, T.fuseSpan, T.fuseStagger, part.syllable));
+      const wanted =
+        fused <= 0 ? node.from : fused >= 1 ? node.to : blend(node.morph, fused, toPath);
+
+      if (wanted !== node.current) {
+        node.path.setAttribute("d", wanted);
+        node.current = wanted;
+      }
     });
 
     partGroup.style.fontVariationSettings = `"wght" ${lerp(
@@ -376,38 +414,11 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     // Present while there is something to assemble, gone once each block has.
     frames.forEach((frame, index) => {
       const drawn = lockEase(phase(t, T.assembleFrom, 0.16, 0.05, index));
-      const gone = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, index);
+      const gone = phase(t, T.fuseFrom, T.fuseSpan * 0.5, T.fuseStagger, index);
       frame.setAttribute("opacity", (drawn * (1 - gone) * 0.22).toFixed(3));
     });
 
     // --- Composed syllables -------------------------------------------------
-    composedNodes.forEach((node, index) => {
-      // Takes over exactly as its parts give way. Both are the same size in
-      // the same place, so the handover is a tightening rather than a cut.
-      const shown = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, index);
-      const left = exitEase(phase(t, T.exitFrom, T.exitSpan, T.exitStagger, index));
-      node.setAttribute("opacity", (shown * (1 - left)).toFixed(3));
-
-      // A settle on the way in: the block overshoots very slightly and comes
-      // back, which is what a part seating into place does and what covers the
-      // last of the swap.
-      const settle = 1 + 0.035 * Math.exp(-7 * shown) * Math.sin(Math.PI * 2.4 * shown);
-      const centre = blockX(index) + BLOCK.size / 2;
-      node.setAttribute(
-        "transform",
-        `translate(${(-0.12 * left).toFixed(4)} ${(-0.2 * left).toFixed(4)}) ` +
-          `translate(${centre.toFixed(4)} ${(BLOCK.size / 2).toFixed(4)}) ` +
-          `scale(${settle.toFixed(4)}) ` +
-          `translate(${(-centre).toFixed(4)} ${(-BLOCK.size / 2).toFixed(4)})`,
-      );
-    });
-
-    composedGroup.style.fontVariationSettings = `"wght" ${lerp(
-      WEIGHT.composed.from,
-      WEIGHT.composed.to,
-      progress,
-    ).toFixed(1)}`;
-
     // --- SEAN PARK ----------------------------------------------------------
     latinNodes.forEach((node, index) => {
       const arrived = lockEase(phase(t, T.arriveFrom, T.arriveSpan, T.arriveStagger, index));
