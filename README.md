@@ -94,11 +94,13 @@ become. That is what pays for the still moments. 박상현 holds legible for a
 beat in the middle and SEAN PARK holds at the end, and on flat ink both read as
 the animation having stopped; filled with their own future they are the most
 interesting frames in the run. A sheen crosses the plane once over the run for
-the same reason. Every gradient stop is `currentColor` and only the opacity
-varies, so the piece still takes its colour entirely from the page — and the
-sheen is a dip across full ink rather than a highlight across a held-back
-plane, so the resolved frame the whole thing builds to lands at full weight
-instead of at whatever the gradient's floor happens to be.
+the same reason: dark edges around a lit core, so it reads as light catching an
+edge rather than as a wash. That core is the site's own `--accent` and the only
+colour in the piece — everything else is the page's ink on the page's ground —
+and it follows the theme for free, because that token is already a different
+value on each. It is a dip across full ink rather than a highlight across a
+held-back plane, so the resolved frame the whole thing builds to lands at full
+weight instead of at whatever the gradient's floor happens to be.
 
 The cuts are scaled to how big the loader is being drawn. Left in viewBox
 units they are a constant *fraction* of the letterform, which is right at hero

@@ -8,8 +8,8 @@
 import fs from "node:fs";
 
 export const GROUNDS = {
-  dark: { background: "#0a0a0c", ink: "#e9e6e1" },
-  light: { background: "#f4f2ee", ink: "#14151a" },
+  dark: { background: "#0a0a0f", ink: "#f4f4f5", accent: "#9aa6ff" },
+  light: { background: "#fcfcfb", ink: "#16161a", accent: "#3f4fc4" },
 };
 
 /**
@@ -71,6 +71,10 @@ export async function paintGround(page, ground) {
   // its own background inline, and a selector into Storybook's tree is one that
   // silently stops matching. The loader takes its fill from `currentColor`.
   await page.addStyleTag({
-    content: `div { background: ${colours.background} !important; color: ${colours.ink} !important }`,
+    content:
+      `div { background: ${colours.background} !important; color: ${colours.ink} !important }` +
+      // The one colour the loader does not take from `currentColor`, and it is
+      // a different value on each ground by design.
+      `:root { --accent: ${colours.accent} }`,
   });
 }

@@ -30,10 +30,26 @@ function sweep() {
   }
 }
 
-function stage(): { root: HTMLElement; host: HTMLElement } {
+/**
+ * The site's own tokens, set on the stage rather than inherited.
+ *
+ * The loader takes every colour from `currentColor` and `--accent`, and
+ * `--accent` is deliberately a different value on each ground — so a stage that
+ * hardcodes a dark background while the document is in light mode shows the
+ * animation a colour it would never actually be given.
+ */
+const GROUNDS = {
+  dark: { "--bg": "#0a0a0f", "--fg": "#f4f4f5", "--accent": "#9aa6ff" },
+  light: { "--bg": "#fcfcfb", "--fg": "#16161a", "--accent": "#3f4fc4" },
+};
+
+function stage(ground: keyof typeof GROUNDS = "dark"): { root: HTMLElement; host: HTMLElement } {
   const root = document.createElement("div");
   root.style.cssText =
-    "min-height:100vh;display:grid;place-items:center;background:#0a0a0c;color:#e9e6e1";
+    "min-height:100vh;display:grid;place-items:center;background:var(--bg);color:var(--fg)";
+  for (const [token, value] of Object.entries(GROUNDS[ground])) {
+    root.style.setProperty(token, value);
+  }
 
   const host = document.createElement("div");
   host.style.cssText = "width:min(46rem,72vw)";
@@ -91,9 +107,7 @@ export const Playing: StoryObj = {
 export const OnLight: StoryObj = {
   render: () => {
     sweep();
-    const { root, host } = stage();
-    root.style.background = "#f4f2ee";
-    root.style.color = "#14151a";
+    const { root, host } = stage("light");
     const handle = mountLoader(host, { autoplay: true, loop: true });
     live.add({ host, handle });
     return root;

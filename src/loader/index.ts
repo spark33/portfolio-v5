@@ -492,6 +492,11 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
    * The sheen: a soft band crossing a plane that is otherwise full ink,
    * travelling the width once over the run.
    *
+   * Dark edges around a lit core, so it reads as light catching an edge rather
+   * than as a wash. The core is the site's own accent — the one place colour
+   * enters a piece that is otherwise entirely the page's ink on the page's
+   * ground, and it follows the theme because that token already does.
+   *
    * A dip rather than a highlight, which matters at the ends. Sweeping a
    * *bright* band across a held-back plane means that once it has passed, the
    * name sits at whatever the gradient's floor is forever — the resolved frame
@@ -512,14 +517,21 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     x2: TOTAL_WIDTH * 0.62,
     y2: 0,
   });
-  for (const [offset, opacity] of [
-    [0, 1],
-    [0.5, 0.72],
-    [1, 1],
-  ]) {
-    sheen.append(
-      svgEl("stop", { offset, "stop-color": "currentColor", "stop-opacity": opacity }),
-    );
+  const INK = "currentColor";
+  // The site's own accent, and monochrome wherever that token is not defined.
+  // Theme-aware for free: `--accent` is already a different colour on each
+  // ground, chosen there for contrast against it.
+  const LIT = "var(--accent, currentColor)";
+  for (const [offset, colour, opacity] of [
+    [0, INK, 1],
+    [0.3, INK, 1],
+    [0.42, INK, 0.7],
+    [0.5, LIT, 1],
+    [0.58, INK, 0.7],
+    [0.7, INK, 1],
+    [1, INK, 1],
+  ] as Array<[number, string, number]>) {
+    sheen.append(svgEl("stop", { offset, "stop-color": colour, "stop-opacity": opacity }));
   }
 
   defs.append(mask, sheen);
