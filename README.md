@@ -9,6 +9,7 @@ npm run build      # typecheck + production build to dist/
 npm run preview    # serve the production build
 npm test           # Playwright tests (starts its own preview server)
 npm run shots      # regenerate page screenshots into shots/
+npm run storybook  # component workbench on http://localhost:6006
 ```
 
 ## Layout
@@ -17,6 +18,8 @@ npm run shots      # regenerate page screenshots into shots/
 | -------------------- | -------------------------------------------------------- |
 | `src/main.ts`        | Entry point; boots the scene, disposes it on HMR          |
 | `src/scene.ts`       | WebGL scene, render loop, and teardown                    |
+| `stories/`           | Storybook stories for the shared pieces                   |
+| `.storybook/`        | Storybook config; `preview.ts` loads the real stylesheets |
 | `tests/`             | Playwright specs for nav, the home page, and the blog     |
 | `src/type.css`       | Type, colour, and nav — the shared system                 |
 | `src/article.css`    | Case-study template: masthead, facts, figure, decisions    |
@@ -85,6 +88,27 @@ hashing and CSS injection. `plugins/blog.ts` rewrites it from scratch on every
 config load, so renaming or deleting a post cannot leave a stale page behind, and
 watches `content/posts/` in dev. Change the route by editing `OUT_DIR` in
 `lib/blog.ts`.
+
+## Storybook
+
+`npm run storybook` for the workbench, `npm run build-storybook` for a static build
+into `storybook-static/` (gitignored).
+
+`.storybook/preview.ts` imports the site's own stylesheets, so a story renders in the
+real system rather than a Storybook-only copy of it — if a token changes, the stories
+change with it. `staticDirs` serves `public/`, so the webfonts are the real ones. A
+toolbar control sets `data-theme` on the document, driving the same selectors the
+site uses.
+
+Seeded with the pieces that already exist: the type scale, the full range of prose
+markdown can emit, the article masthead and decision block, the figure frame, the
+blog index row, and the nav. The figure story takes args for its caption, poster
+text, controls, and bleed, which is the shape interactive figures will need when they
+land — each one is a component with parameters and a mount/dispose lifecycle, and
+this is where they get developed in isolation.
+
+Nothing type-checks stories at build time beyond `npm run typecheck`, which does
+cover `stories/` and `.storybook/`. There is no visual-regression job.
 
 ## Tests
 
