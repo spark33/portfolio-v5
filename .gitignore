@@ -1,0 +1,12 @@
+node_modules
+dist
+dist-ssr
+*.local
+.DS_Store
+
+# Local MCP secrets (SERPER_API_KEY, etc.)
+.env
+.env.*
+!.env.example
+.mcp.local.json
+.claude/settings.local.json

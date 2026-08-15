@@ -3,6 +3,14 @@
     "mobbin": {
       "type": "http",
       "url": "https://api.mobbin.com/mcp"
+    },
+    "design-inspiration": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["${DESIGN_MCP_HOME}/dist/index.js"],
+      "env": {
+        "SERPER_API_KEY": "${SERPER_API_KEY}"
+      }
     }
   }
 }
