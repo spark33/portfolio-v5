@@ -1,0 +1,109 @@
+@import "./type.css";
+@import "./article.css";
+
+/* Blog index and post pages. Typography comes from type.css; this file only
+   adds what the list and the post chrome need on top. */
+
+.post-list {
+  list-style: none;
+  padding: 0;
+  margin: calc(var(--rhythm) * 2) 0 0;
+  max-width: var(--measure);
+}
+
+.post-item {
+  border-top: 1px solid var(--rule);
+  padding: calc(var(--rhythm) * 1.2) 0;
+  margin: 0;
+}
+
+.post-item > a {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: var(--display-weight);
+  letter-spacing: var(--heading-tracking);
+  line-height: 1.2;
+  color: var(--fg);
+  text-decoration: none;
+  display: inline-block;
+}
+
+.post-item > a:hover {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+.post-item .meta {
+  display: block;
+  margin-top: 0.35rem;
+}
+
+.post-item .summary {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  padding: 0;
+  margin: var(--rhythm) 0 0;
+}
+
+.tags li {
+  margin: 0;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  padding: 0.12rem 0.6rem;
+}
+
+.draft-flag {
+  color: var(--accent);
+  font-style: normal;
+}
+
+/* Markdown emits bare headings and blockquotes; give them the article's rhythm. */
+.prose blockquote {
+  margin: var(--rhythm) 0;
+  padding-left: 1.1rem;
+  border-left: 2px solid var(--rule);
+  color: var(--muted);
+}
+
+.prose blockquote > :last-child {
+  margin-bottom: 0;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin: calc(var(--rhythm) * 2) 0;
+}
+
+.prose img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: var(--rhythm);
+}
+
+.prose th,
+.prose td {
+  text-align: left;
+  padding: 0.5rem 0.75rem 0.5rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.back {
+  margin-top: calc(var(--rhythm) * 3);
+  padding-top: var(--rhythm);
+  border-top: 1px solid var(--rule);
+  max-width: var(--measure);
+}

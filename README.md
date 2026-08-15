@@ -21,6 +21,10 @@ npm run shots      # regenerate specimen screenshots into shots/
 | `src/type.css`       | Type and colour system — the chosen Editorial treatment    |
 | `src/article.css`    | Case-study template: masthead, facts, figure, decisions    |
 | `src/style.css`      | Home page chrome layered over the canvas                   |
+| `content/posts/`     | Blog posts — markdown with frontmatter, the only place you write |
+| `lib/blog.ts`        | Loads posts and renders the blog's HTML                   |
+| `plugins/blog.ts`    | Generates `blog/` and reloads it in dev                   |
+| `src/blog.css`       | Blog index and post styles                                |
 | `specimen/`          | Type specimen page, served at `/specimen/`                |
 | `src/specimen.css`   | The three typographic treatments; all type lives in CSS   |
 | `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
@@ -41,11 +45,44 @@ scheme changes, so the canvas never fights the type for contrast.
 interactive-figure system, content model, and performance budget. Written before
 implementation; the starter scene in `src/scene.ts` predates it.
 
+## Blog
+
+Posts are markdown files in `content/posts/`. Nothing else needs touching — the
+build discovers them, renders them, and adds them to the index.
+
+```md
+---
+title: Cutting transcript latency from 4.2s to 380ms
+date: 2026-03-14
+summary: One sentence, shown on the index and used as the meta description.
+tags: [realtime, latency]
+draft: false
+---
+
+Body copy in markdown.
+```
+
+`title` and `date` are required; everything else is optional. The filename may carry
+a date prefix for ordering on disk (`2026-03-14-cutting-transcript-latency.md`) — it
+is stripped from the URL, giving `/blog/cutting-transcript-latency/`. Override it
+with a `slug` in frontmatter.
+
+`draft: true` renders in `npm run dev`, flagged in the index, and is left out of
+`npm run build` entirely.
+
+The `blog/` directory at the repository root is **generated and gitignored** — Vite
+needs real HTML files on disk to treat pages as MPA entries and give them asset
+hashing and CSS injection. `plugins/blog.ts` rewrites it from scratch on every
+config load, so renaming or deleting a post cannot leave a stale page behind, and
+watches `content/posts/` in dev. Change the route by editing `OUT_DIR` in
+`lib/blog.ts`.
+
 ## Type specimen
 
-`npm run dev`, then open <http://localhost:5173/specimen/>. It renders the case-study
-template from the design brief under three typographic treatments, so they can be
-compared on real content rather than on lorem ipsum.
+`npm run dev`, then open <http://localhost:5173/specimen/>. It holds a compact
+sample of the case-study template under three typographic treatments, so they can be
+compared on real content rather than on lorem ipsum. It is a design tool, not a page
+of the site — the long-form version of that sample now lives in the blog.
 
 **Editorial (Newsreader) is the chosen system**; it lives in `src/type.css` and is
 what the rest of the site uses. The specimen defaults to it and keeps the two
@@ -68,10 +105,12 @@ the set.
 ## Tests
 
 `npm test` runs Playwright against a production preview it starts itself. The suite
-guards the things a stylesheet change can silently break: that each treatment
-resolves to a real webfont rather than a system fallback, that the dark accent
-clears AA, that settings survive a reload, and that nothing scrolls horizontally on
-a phone.
+guards the things a stylesheet or pipeline change can silently break: that each
+treatment resolves to a real webfont rather than a system fallback, that the dark
+accent clears AA, that settings survive a reload, that nothing scrolls horizontally
+on a phone, that posts render their frontmatter and markdown, and that drafts stay
+out of a production build. `tests/blog-content.spec.ts` exercises the loader
+directly, without a browser.
 
 Chromium resolution is handled in `playwright.config.ts`: it prefers
 `/opt/pw-browsers/chromium` when present — cloud sessions ship one and cannot run
