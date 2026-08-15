@@ -7,8 +7,8 @@ summary: >-
 tags: [placeholder, realtime, latency]
 ---
 
-> Placeholder copy, carried over from the type specimen. Replace it with a real
-> post — the frontmatter above is the whole authoring contract.
+> Placeholder copy. Replace it with a real post — the frontmatter above is the
+> whole authoring contract.
 
 ## The problem
 

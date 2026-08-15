@@ -11,12 +11,10 @@ import pathlib
 UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120 Safari/537.36"
 OUT = pathlib.Path("public/fonts")
 
+# Newsreader carries the site; IBM Plex Mono is only for code and inline literals.
 FAMILIES = [
-    "Inter:wght@400;500;600",
-    "Inter+Tight:wght@400;500;600",
     "Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400",
-    "IBM+Plex+Sans:wght@400;600",
-    "IBM+Plex+Mono:wght@400;500",
+    "IBM+Plex+Mono:wght@400",
 ]
 
 
@@ -30,6 +28,10 @@ def get(url: str, binary: bool = False):
 
 
 def main() -> None:
+    # Rebuild from scratch so a dropped family cannot leave orphaned files behind.
+    if OUT.exists():
+        for stale in OUT.glob("*.woff2"):
+            stale.unlink()
     OUT.mkdir(parents=True, exist_ok=True)
     css = get(
         "https://fonts.googleapis.com/css2?"

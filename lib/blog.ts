@@ -123,6 +123,19 @@ interface LayoutOptions {
 
 // No <link rel="canonical">: it needs an absolute origin to mean anything, and
 // Vite resolves link hrefs as build assets, which a directory URL is not.
+/** Site navigation. `current` underlines the section the reader is in. */
+function nav(current?: string) {
+  const notes =
+    current === "blog"
+      ? `<a href="/blog/" aria-current="page">Notes</a>`
+      : `<a href="/blog/">Notes</a>`;
+
+  return `    <header class="site-nav">
+      <a class="wordmark" href="/">Portfolio</a>
+      <nav aria-label="Primary">${notes}</nav>
+    </header>`;
+}
+
 function layout({ title, description, body }: LayoutOptions) {
   return `<!doctype html>
 <html lang="en">
@@ -135,6 +148,7 @@ function layout({ title, description, body }: LayoutOptions) {
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
+${nav("blog")}
 ${body}
   </body>
 </html>
