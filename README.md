@@ -25,6 +25,12 @@ geometry — every `dispose()`-able you create should be released there.
 The scene clamps device pixel ratio to 2 and honours
 `prefers-reduced-motion: reduce` by holding the mesh still.
 
+## Design
+
+[`docs/concept.md`](docs/concept.md) is the design brief: site architecture, the
+interactive-figure system, content model, and performance budget. Written before
+implementation; the starter scene in `src/scene.ts` predates it.
+
 ## Design references
 
 Mobbin and a Dribbble/Behance/Awwwards search server are wired up as MCP servers for
