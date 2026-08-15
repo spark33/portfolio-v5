@@ -1,0 +1,88 @@
+/**
+ * The loading animation.
+ *
+ * Real text in a subset of Pretendard Variable, so the weight axis is
+ * animatable and the names are text rather than paths.
+ */
+
+@font-face {
+  font-family: "Pretendard Loader";
+  src: url("/loader/pretendard-var.woff2") format("woff2-variations");
+  /* The whole axis, because the animation travels the whole axis. */
+  font-weight: 45 930;
+  font-display: block;
+}
+
+.loader {
+  --loader-size: clamp(2.6rem, 9vw, 5.5rem);
+  width: 100%;
+  color: inherit;
+}
+
+.loader__stage {
+  position: relative;
+  height: calc(var(--loader-size) * 1.25);
+}
+
+/**
+ * Both runs occupy the same place, so the handoff is one name replacing
+ * another rather than a layout shift.
+ */
+.loader__run {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Pretendard Loader", system-ui, sans-serif;
+  font-size: var(--loader-size);
+  line-height: 1;
+  white-space: pre;
+  /* Set per frame; these are the resting values. */
+  font-variation-settings: "wght" 45;
+}
+
+/* Three syllables set light need air, or they read as one word. */
+.loader__run--ko {
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+}
+
+/* A heavy weight at display size sets too loose at its native sidebearings. */
+.loader__run--en {
+  letter-spacing: -0.02em;
+}
+
+.loader__glyph {
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+.loader__meter {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.4rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+}
+
+.loader__track {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.18;
+}
+
+.loader__fill {
+  height: 1px;
+  background: currentColor;
+}
+
+.loader__percent {
+  opacity: 0.62;
+  min-width: 3ch;
+  text-align: right;
+}

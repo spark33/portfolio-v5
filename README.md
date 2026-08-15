@@ -61,29 +61,24 @@ directory first, so dropping a family leaves nothing behind.
 
 ## Loader
 
-`src/loader/` is the loading animation: 박상현 is uncovered by a wipe, holds,
-then hands off to **SEAN PARK**, in 2.6s. A counter runs 000 → 100 beneath it.
+`src/loader/` is the loading animation: 박상현 is uncovered by a wipe and gains
+weight as the load progresses, then hands off to **SEAN PARK**. 2.6s, looping.
+A counter runs 000 → 100 beneath it.
 
-The two names are set in two weights of one family — the Hangul in Light and
-widely tracked, the Latin in Black and tight. Same letterforms underneath, so
-the swap cannot read as a change of typeface, only of voice: the name on the
-family register, then the name he goes by.
+**The weight axis is the idea, not an effect.** Both names are real text in a
+subset of Pretendard Variable, animated along `wght`: the Hangul sits in the
+thin end of the axis and the Latin lands at 930 exactly as the counter reaches
+100, so the letterforms and the number are two readings of one signal.
 
-It is inline SVG paths and transforms. No webfont, no canvas, no WebGL, no
-geometry: 4.3 KB of committed path data and nothing to fetch before it can
-start. It inherits `currentColor`, so it takes the page's theme rather than
-carrying its own, and the counter is real DOM text in the site's mono.
+Eleven glyphs and a space subset to **2.8 KB** of woff2 — smaller than the SVG
+path data it replaced, and it buys selectable text and a real
+`role="progressbar"` instead of a wall of `<path>` elements. It inherits
+`currentColor`, so it takes the page's theme rather than carrying its own.
 
-Three techniques carry it, all of which separate a directed preloader from a
-defaulted one: a **mask wipe** rather than a fade, so the letters are uncovered
-rather than faded up; a **counter** as the one honest indicator, with the name
-resolving above it as decoration; and a **held beat** on each state, because a
-preloader has to be legible twice over.
-
-**The animation is a pure function of normalised time.** `apply(t)` derives
-every visual property and nothing else touches them, so seeking and playing
-cannot disagree about what a given moment looks like. That is what makes the
-motion iterable rather than guessable:
+Three techniques carry the motion, all of which separate a directed preloader
+from a defaulted one: a **mask wipe** rather than a fade, so the letters are
+uncovered rather than faded up; a **counter** as the one honest indicator; and
+a **held beat** on each state, because a preloader has to be legible twice over.
 
 ```sh
 npm run storybook
@@ -91,13 +86,19 @@ npm run film              # 12-frame filmstrip, dark
 npm run film -- 20 light  # 20 frames, light ground
 ```
 
-`npm run film` seeks the animation frame by frame through `window.__loader`
-rather than waiting on wall-clock time, so the strip is exact and reproducible.
-Frames land in `shots/loader/` (gitignored). The `Frame` story exposes the same
-seek on a slider.
+The animation is a pure function of normalised time — `apply(t)` derives every
+visual property and nothing else touches them — so `npm run film` seeks frame
+by frame through `window.__loader` rather than waiting on wall-clock time. The
+strip is exact and reproducible, which is what makes the motion iterable rather
+than guessable; it is what caught the counter stalling at 100 for the last
+quarter of the run, and a lone S sitting in an empty frame while the rest of
+the word queued up behind it. Frames land in `shots/loader/` (gitignored).
 
-`npm run build:loader` re-bakes the outlines from Pretendard Bold (OFL), pinned
-as a devDependency. The font is a build input; it is never shipped.
+`npm run build:loader` re-subsets the font from Pretendard Variable (OFL),
+pinned as a devDependency. Needs `python3 -m pip install fonttools brotli`. The
+output goes to `public/loader/` and **not** `public/fonts/` — `fetch-fonts.py`
+rebuilds that directory and unlinks every woff2 it finds, which would take this
+one with it.
 
 Stories: `Frame` (seek one moment), `Playing`, `OnLight`, `Small`.
 `prefers-reduced-motion: reduce` draws the resolved state once and never starts

@@ -1,71 +1,84 @@
-import { HANGUL, LATIN, VIEW } from "./glyphs.ts";
-import type { Run } from "./glyphs.ts";
+import "./loader.css";
 
 /**
- * The loading animation: 박상현 resolves into Sean Park.
+ * The loading animation: 박상현 gains weight as the page loads, then hands off
+ * to SEAN PARK.
  *
- * Inline SVG paths and transforms. No font to download, no WebGL context, no
- * geometry — which is the point: a loader that costs anything to start has
- * failed at the one job it has.
+ * Real text in a subset of Pretendard Variable — eleven glyphs, under 3 KB —
+ * animated along its weight axis. The axis is the idea rather than an effect:
+ * the name arrives hairline and thickens as loading progresses, so the counter
+ * and the letterforms are two readings of one signal, and the type reaches its
+ * heaviest exactly as the load finishes.
  *
  * The whole animation is a pure function of normalised time, `apply(t)`.
- * Nothing is stateful, nothing depends on having been played from the start,
- * and any frame can be rendered on demand. That is what makes it possible to
- * screenshot a filmstrip and iterate on the motion instead of guessing at it.
+ * Nothing is stateful and any frame can be rendered on demand, which is what
+ * makes it possible to screenshot a filmstrip and iterate on the motion
+ * instead of guessing at it.
  */
 
 /**
  * Total duration in milliseconds.
  *
- * The first cut ran at 1150ms and read as a flicker — the eye registered that
+ * An earlier cut ran at 1150ms and read as a flicker — the eye registered that
  * something had changed without ever reading either name. A preloader has to
- * be legible twice over, which needs a real hold on each state; the rest of
- * the budget goes to the handoff.
+ * be legible twice over, which needs a real hold on each state.
  */
 export const DURATION = 2600;
 
-/** How far a glyph travels vertically as it enters or leaves, in viewBox units. */
-const RISE = 34;
+const KOREAN = [..."박상현"];
+const LATIN = [..."SEAN PARK"];
+
+/** How far a glyph travels as it enters or leaves, as a fraction of its size. */
+const RISE = 0.42;
 
 /**
- * Sideways drift on the swap, in viewBox units.
+ * Sideways drift on the swap, in em.
  *
- * The old name leaves slightly to the left and the new one comes in slightly
- * from the right, so the exchange has a direction. Without it both runs travel
- * on the same axis and the middle of the animation reads as two words
- * occupying one space rather than as one replacing the other.
+ * The old name leaves slightly to the left and the new one comes in from the
+ * right, so the exchange has a direction rather than both names occupying one
+ * space.
  */
-const DRIFT = { out: -9, in: 11 };
+const DRIFT = { out: -0.1, in: 0.12 };
 
 /**
- * Beats, in normalised time.
+ * The weight axis, per run.
  *
- * The windows are deliberately tight against each other. An earlier cut had
- * the exit running to 0.77 while the arrival began at 0.53, and for a quarter
- * of the animation "Sean Park" was drawn straight through 박상현 — legible as
- * neither. The handoff wants to be a brief pass, not a dissolve.
+ * Two ranges rather than one sweep across the whole axis. A single ramp puts
+ * the Hangul near 500 by the time it hands off, which is nowhere — too heavy
+ * to read as delicate, too light to read as deliberate. Holding it in the thin
+ * end and giving the Latin the heavy end keeps each name at a weight that
+ * means something, while both still gain weight as the load progresses.
  */
+const WEIGHT = {
+  korean: { from: 45, to: 250 },
+  latin: { from: 280, to: 930 },
+};
+
+/** Beats, in normalised time. */
 const T = {
   enterFrom: 0.03,
   enterSpan: 0.2,
   enterStagger: 0.05,
 
   exitFrom: 0.44,
-  exitSpan: 0.12,
-  exitStagger: 0.02,
+  exitSpan: 0.1,
+  exitStagger: 0.018,
 
-  arriveFrom: 0.52,
+  // Nine glyphs at the old stagger spread the arrival over a third of the run,
+  // which left a lone S sitting in an empty frame while the rest queued up. A
+  // word should arrive as a word.
+  arriveFrom: 0.5,
   arriveSpan: 0.26,
-  arriveStagger: 0.022,
+  arriveStagger: 0.013,
 } as const;
 
 /**
  * The wipe that reveals each run.
  *
- * A mask edge travelling across the type, rather than opacity alone. It is the
- * technique that separates a preloader that looks directed from one that looks
- * defaulted: the letters are already there and something uncovers them, which
- * is a different event from them fading up out of nothing.
+ * A mask edge travelling across the type rather than opacity alone. It is what
+ * separates a preloader that looks directed from one that looks defaulted: the
+ * letters are already there and something uncovers them, which is a different
+ * event from them fading up out of nothing.
  */
 const WIPE = { enterSpan: 0.28, exitSpan: 0.15 };
 
@@ -75,9 +88,10 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
     const u = 1 - t;
     return 3 * u * u * t * a + 3 * u * t * t * b + t * t * t;
   };
-  const slope = (a: number, b: number, t: number) =>
-    3 * u2(t) * a + 6 * (1 - t) * t * (b - a) + 3 * t * t * (1 - b);
-  const u2 = (t: number) => (1 - t) * (1 - t);
+  const slope = (a: number, b: number, t: number) => {
+    const u = 1 - t;
+    return 3 * u * u * a + 6 * u * t * (b - a) + 3 * t * t * (1 - b);
+  };
 
   return (x: number) => {
     if (x <= 0) return 0;
@@ -99,22 +113,24 @@ const enterEase = cubicBezier(0.16, 1, 0.3, 1);
 /** Leaving: accelerates away, so the exit reads as decisive rather than sad. */
 const exitEase = cubicBezier(0.55, 0, 0.85, 0.3);
 /**
- * The counter.
+ * The counter, and with it the weight.
  *
- * Not linear — a real load never is — but it has to *finish*. An earlier curve
- * reached 100 at 0.91 and then sat there for the last quarter of the run,
- * which reads as the animation having stalled with the number stuck. This one
- * moves steadily, hesitates in the last fifth the way a real one does, and
- * lands on 100 at the end rather than before it.
+ * Not linear — a real load never is — but it has to finish. An earlier curve
+ * reached 100 at 0.91 and sat there for the last quarter, which reads as a
+ * stall with the number stuck.
  */
-const ruleEase = cubicBezier(0.22, 0.55, 0.3, 1);
-/** The wipe edge. Slower out of the gate than the glyphs, so it leads them. */
+const progressEase = cubicBezier(0.22, 0.55, 0.3, 1);
+/** The wipe edge. Leads the glyphs, so it uncovers rather than accompanies. */
 const wipeEase = cubicBezier(0.33, 0.9, 0.2, 1);
 
 /** Normalised progress of one staggered item within a window. */
 function phase(t: number, from: number, span: number, stagger: number, index: number): number {
   const start = from + index * stagger;
   return Math.min(1, Math.max(0, (t - start) / span));
+}
+
+function lerp(a: number, b: number, t: number) {
+  return a + (b - a) * t;
 }
 
 export interface LoaderOptions {
@@ -134,27 +150,25 @@ export interface LoaderHandle {
   readonly duration: number;
 }
 
-const NS = "http://www.w3.org/2000/svg";
+/** Builds one run as real text, one span per glyph so it can be staggered. */
+function buildRun(text: string[], modifier: string) {
+  const run = document.createElement("div");
+  run.className = `loader__run loader__run--${modifier}`;
+  // The names duplicate copy that is already on the page, so they are not
+  // announced. The meter below carries the state a reader actually needs.
+  run.setAttribute("aria-hidden", "true");
 
-function el<K extends keyof SVGElementTagNameMap>(
-  name: K,
-  attrs: Record<string, string | number> = {},
-): SVGElementTagNameMap[K] {
-  const node = document.createElementNS(NS, name);
-  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
-  return node;
-}
-
-/** Builds one run's glyph groups, centred on the viewBox. */
-function buildRun(run: Run, width: number): { group: SVGGElement; glyphs: SVGGElement[] } {
-  const group = el("g", { transform: `translate(${(width - run.width) / 2} 0)` });
-  const glyphs = run.glyphs.map((glyph) => {
-    const wrapper = el("g");
-    wrapper.append(el("path", { d: glyph.d }));
-    group.append(wrapper);
-    return wrapper;
+  const glyphs = text.map((char) => {
+    const span = document.createElement("span");
+    span.className = "loader__glyph";
+    // A space would collapse without this; the run is set with `white-space:
+    // pre` and each glyph is its own inline-block.
+    span.textContent = char;
+    run.append(span);
+    return span;
   });
-  return { group, glyphs };
+
+  return { run, glyphs };
 }
 
 export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): LoaderHandle {
@@ -162,150 +176,93 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  const width = Math.max(HANGUL.width, LATIN.width) + 40;
-  const height = VIEW.height + 26;
+  const wrap = document.createElement("div");
+  wrap.className = "loader";
 
-  const svg = el("svg", {
-    viewBox: `0 ${VIEW.top} ${width} ${height}`,
-    width: "100%",
-    height: "100%",
-    fill: "currentColor",
-    // The animation carries no information the surrounding copy does not, and
-    // the name is in the DOM beside it. Nothing here is announced.
-    "aria-hidden": "true",
-    focusable: "false",
-  });
-  svg.style.cssText = "display:block;overflow:visible";
+  const stage = document.createElement("div");
+  stage.className = "loader__stage";
 
-  // Both runs share one clip band, so a glyph part-way through its travel is
-  // cut off cleanly at the top and bottom of the type area rather than sliding
-  // over whatever sits above it.
-  const clipId = `loader-clip-${Math.random().toString(36).slice(2, 9)}`;
-  const clip = el("clipPath", { id: clipId });
-  clip.append(el("rect", { x: -20, y: VIEW.top - 4, width: width + 40, height: VIEW.height + 4 }));
-  svg.append(clip);
+  const korean = buildRun(KOREAN, "ko");
+  const latin = buildRun(LATIN, "en");
+  stage.append(korean.run, latin.run);
 
-  // Each run also gets its own wipe rect, nested inside the shared band. The
-  // band stops a travelling glyph spilling above or below the type area; the
-  // wipe is what uncovers the run left to right.
-  const uid = clipId.slice(-6);
-  const wipes: Record<"hangul" | "latin", SVGRectElement> = {
-    hangul: el("rect", { y: VIEW.top - 8, height: VIEW.height + 16 }),
-    latin: el("rect", { y: VIEW.top - 8, height: VIEW.height + 16 }),
-  };
-
-  const clipped = el("g", { "clip-path": `url(#${clipId})` });
-  const hangul = buildRun(HANGUL, width);
-  const latin = buildRun(LATIN, width);
-
-  for (const [key, run] of [
-    ["hangul", hangul],
-    ["latin", latin],
-  ] as const) {
-    const wipeClip = el("clipPath", { id: `${key}-wipe-${uid}` });
-    wipeClip.append(wipes[key]);
-    svg.append(wipeClip);
-    const wrapper = el("g", { "clip-path": `url(#${key}-wipe-${uid})` });
-    wrapper.append(run.group);
-    clipped.append(wrapper);
-  }
-
-  svg.append(clipped);
-
-  // The rule. A loader needs one honest indicator of progress, and this is it —
-  // everything above it is the name resolving, which is decoration.
-  const ruleY = VIEW.top + VIEW.height + 14;
-  const ruleWidth = Math.min(HANGUL.width, LATIN.width);
-  const ruleX = (width - ruleWidth) / 2;
-  svg.append(
-    el("rect", {
-      x: ruleX,
-      y: ruleY,
-      width: ruleWidth,
-      height: 1.5,
-      opacity: 0.16,
-    }),
-  );
-  const rule = el("rect", { x: ruleX, y: ruleY, width: ruleWidth, height: 1.5 });
-  svg.append(rule);
-
-  // --- The meter -----------------------------------------------------------
-  // A counter and a rule, in real DOM rather than in the SVG: it is the one
-  // part of this that carries information, so it is real text in the site's
-  // mono, selectable and readable, and it inherits the page's colour.
+  // The meter is the part that carries information, so it is the part with a
+  // role. A progressbar is what a loader actually is.
   const meter = document.createElement("div");
-  meter.style.cssText =
-    "display:flex;align-items:center;gap:.9rem;margin-top:1.4rem;" +
-    'font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;' +
-    "letter-spacing:.14em;font-variant-numeric:tabular-nums";
+  meter.className = "loader__meter";
+  meter.setAttribute("role", "progressbar");
+  meter.setAttribute("aria-valuemin", "0");
+  meter.setAttribute("aria-valuemax", "100");
+  meter.setAttribute("aria-label", "Loading");
 
   const track = document.createElement("div");
-  track.style.cssText = "flex:1;height:1px;background:currentColor;opacity:.18";
+  track.className = "loader__track";
   const fill = document.createElement("div");
-  fill.style.cssText = "height:1px;background:currentColor;transform-origin:left";
+  fill.className = "loader__fill";
   track.append(fill);
 
   const percent = document.createElement("span");
-  percent.style.cssText = "opacity:.62;min-width:3ch;text-align:right";
+  percent.className = "loader__percent";
 
   meter.append(track, percent);
-
-  const wrap = document.createElement("div");
-  wrap.style.cssText = "width:100%";
-  wrap.append(svg, meter);
+  wrap.append(stage, meter);
   root.append(wrap);
 
   /**
-   * Renders the frame at normalised time `t`.
+   * Renders the frame at normalised time.
    *
    * Every visual property is derived here and nowhere else, so seeking and
    * playing cannot disagree about what a given moment looks like.
    */
   function apply(t: number) {
-    hangul.glyphs.forEach((glyph, index) => {
+    korean.glyphs.forEach((glyph, index) => {
       const entered = enterEase(phase(t, T.enterFrom, T.enterSpan, T.enterStagger, index));
       const left = exitEase(phase(t, T.exitFrom, T.exitSpan, T.exitStagger, index));
 
-      // One expression for both halves of the glyph's life: it rises into
-      // place, then keeps going the same way and leaves. Reversing direction
-      // on exit would read as a mistake being undone.
+      // One expression for both halves of a glyph's life: it rises into place,
+      // then keeps going the same way and leaves. Reversing direction on exit
+      // would read as a mistake being undone.
       const y = RISE * (1 - entered) - RISE * left;
       const x = DRIFT.out * left;
-      glyph.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
-      glyph.setAttribute("opacity", (entered * (1 - left)).toFixed(3));
+      glyph.style.transform = `translate(${x.toFixed(3)}em, ${y.toFixed(3)}em)`;
+      glyph.style.opacity = (entered * (1 - left)).toFixed(3);
     });
 
     latin.glyphs.forEach((glyph, index) => {
       const arrived = enterEase(phase(t, T.arriveFrom, T.arriveSpan, T.arriveStagger, index));
       const y = RISE * (1 - arrived);
       const x = DRIFT.in * (1 - arrived);
-      glyph.setAttribute("transform", `translate(${x.toFixed(2)} ${y.toFixed(2)})`);
-      glyph.setAttribute("opacity", arrived.toFixed(3));
+      glyph.style.transform = `translate(${x.toFixed(3)}em, ${y.toFixed(3)}em)`;
+      glyph.style.opacity = arrived.toFixed(3);
     });
 
-    // The wipes lead the glyphs: the edge has already passed by the time a
-    // letter finishes rising, so the reveal reads as uncovering rather than as
-    // two effects running at once.
+    const progress = progressEase(t);
+
+    // Weight is set on the run rather than per glyph. Changing
+    // font-variation-settings reflows the text it applies to, so two writes a
+    // frame is the difference between this and twelve.
+    const weight = (range: { from: number; to: number }) =>
+      `"wght" ${lerp(range.from, range.to, progress).toFixed(1)}`;
+    korean.run.style.fontVariationSettings = weight(WEIGHT.korean);
+    latin.run.style.fontVariationSettings = weight(WEIGHT.latin);
+
+    // Wipes lead the glyphs, so the reveal reads as uncovering rather than as
+    // two effects running at once. The Hangul is uncovered from the left and
+    // then covered again from the left, so the edge carries straight on in one
+    // direction across the whole run.
     const enterWipe = wipeEase(phase(t, T.enterFrom, WIPE.enterSpan, 0, 0));
     const exitWipe = wipeEase(phase(t, T.exitFrom, WIPE.exitSpan, 0, 0));
     const arriveWipe = wipeEase(phase(t, T.arriveFrom, WIPE.enterSpan, 0, 0));
 
-    // The Hangul is uncovered from the left, then covered again from the left,
-    // so the wipe carries straight on in one direction across the whole run.
-    const hangulLeft = ruleX - 12 + (ruleWidth + 24) * exitWipe;
-    wipes.hangul.setAttribute("x", hangulLeft.toFixed(2));
-    wipes.hangul.setAttribute(
-      "width",
-      Math.max(0, ruleX - 12 + (ruleWidth + 24) * enterWipe - hangulLeft).toFixed(2),
-    );
+    const inset = (right: number, left: number) =>
+      `inset(-25% ${(right * 100).toFixed(2)}% -25% ${(left * 100).toFixed(2)}%)`;
+    korean.run.style.clipPath = inset(1 - enterWipe, exitWipe);
+    latin.run.style.clipPath = inset(1 - arriveWipe, 0);
 
-    wipes.latin.setAttribute("x", (-20).toFixed(2));
-    wipes.latin.setAttribute("width", ((width + 40) * arriveWipe).toFixed(2));
-
-    const progress = ruleEase(t);
-    rule.setAttribute("width", (ruleWidth * progress).toFixed(2));
+    const shown = Math.round(progress * 100);
     fill.style.width = `${(progress * 100).toFixed(2)}%`;
-    percent.textContent = String(Math.round(progress * 100)).padStart(3, "0");
+    percent.textContent = String(shown).padStart(3, "0");
+    meter.setAttribute("aria-valuenow", String(shown));
   }
 
   let frameId = 0;
@@ -313,8 +270,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   let running = false;
 
   function tick(now: number) {
-    const elapsed = now - startedAt;
-    const t = elapsed / DURATION;
+    const t = (now - startedAt) / DURATION;
 
     if (t >= 1) {
       apply(1);
