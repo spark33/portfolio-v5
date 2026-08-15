@@ -1,0 +1,110 @@
+import type { Meta, StoryObj } from "@storybook/html-vite";
+
+import { DURATION, mountLoader } from "../src/loader/index.ts";
+import type { LoaderHandle } from "../src/loader/index.ts";
+
+/**
+ * The loading animation: 박상현 resolves into Sean Park, in just over a second.
+ *
+ * `Frame` is the working view — it seeks a single frame, so the motion can be
+ * judged one moment at a time. `npm run film` drives that same story to build
+ * a filmstrip. `Playing` is the real thing.
+ */
+const meta: Meta = {
+  title: "Loader",
+  parameters: { layout: "fullscreen", backgrounds: { disable: true } },
+};
+
+export default meta;
+
+// Storybook re-runs render on every arg change and never signals unmount, so a
+// detached host is the only unmount signal there is.
+const live = new Set<{ host: HTMLElement; handle: LoaderHandle }>();
+
+function sweep() {
+  for (const entry of live) {
+    if (!entry.host.isConnected) {
+      entry.handle.dispose();
+      live.delete(entry);
+    }
+  }
+}
+
+function stage(): { root: HTMLElement; host: HTMLElement } {
+  const root = document.createElement("div");
+  root.style.cssText =
+    "min-height:100vh;display:grid;place-items:center;background:#0a0a0c;color:#e9e6e1";
+
+  const host = document.createElement("div");
+  host.style.cssText = "width:min(46rem,72vw)";
+  root.append(host);
+
+  return { root, host };
+}
+
+/**
+ * One frame, seeked.
+ *
+ * The animation is a pure function of normalised time, so this renders exactly
+ * what playback renders at the same moment — no waiting, no flake, and the
+ * filmstrip harness drives this same story through `window.__loader`.
+ */
+export const Frame: StoryObj = {
+  args: { t: 0.5 },
+  argTypes: {
+    t: {
+      control: { type: "range", min: 0, max: 1, step: 0.001 },
+      description: `Normalised time. 0 → 1 spans ${DURATION}ms.`,
+    },
+  },
+
+  render: (args) => {
+    sweep();
+    const { root, host } = stage();
+    const handle = mountLoader(host, { autoplay: false, loop: false });
+    live.add({ host, handle });
+
+    handle.seek(Number(args.t ?? 0));
+    // The filmstrip harness seeks through this rather than through timing,
+    // which is what makes the frames deterministic.
+    (window as unknown as { __loader?: LoaderHandle }).__loader = handle;
+
+    return root;
+  },
+};
+
+/** The real thing, looping. */
+export const Playing: StoryObj = {
+  render: () => {
+    sweep();
+    const { root, host } = stage();
+    const handle = mountLoader(host, { autoplay: true, loop: true });
+    live.add({ host, handle });
+    return root;
+  },
+};
+
+/** On a light ground, to check it is not relying on the dark background. */
+export const OnLight: StoryObj = {
+  render: () => {
+    sweep();
+    const { root, host } = stage();
+    root.style.background = "#f4f2ee";
+    root.style.color = "#14151a";
+    const handle = mountLoader(host, { autoplay: true, loop: true });
+    live.add({ host, handle });
+    return root;
+  },
+};
+
+/** Small, to check the silhouette survives — a loader is often 200px wide. */
+export const Small: StoryObj = {
+  render: () => {
+    sweep();
+    const { root, host } = stage();
+    host.style.width = "13rem";
+    const handle = mountLoader(host, { autoplay: true, loop: true });
+    live.add({ host, handle });
+    return root;
+  },
+};
