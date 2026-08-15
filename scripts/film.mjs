@@ -11,12 +11,17 @@
  * the strip is reproducible — which is the difference between iterating on
  * motion and guessing at it.
  *
+ * Blind, though, to anything that happens between the moments it asks for. Use
+ * `npm run play` to shoot real playback; the two are a pair.
+ *
  * Development tool; output is gitignored.
  */
 import fs from "node:fs";
 import path from "node:path";
 
 import { chromium } from "@playwright/test";
+
+import { paintGround, writeSheet } from "./lib/sheet.mjs";
 
 const BASE = process.env.STORYBOOK_URL ?? "http://localhost:6006";
 const COUNT = Number(process.argv[2] ?? 12);
@@ -44,15 +49,7 @@ async function main() {
   });
   await page.waitForFunction(() => Boolean(window.__loader));
 
-  if (GROUND === "light") {
-    // Injected rather than set on a node: the story paints its own background
-    // inline, and reaching for a particular element in Storybook's tree is a
-    // selector that silently stops matching. The loader inherits its fill from
-    // `currentColor`, so overriding the colour is all it takes.
-    await page.addStyleTag({
-      content: "div { background: #f4f2ee !important; color: #14151a !important; }",
-    });
-  }
+  await paintGround(page, GROUND);
 
   const shots = [];
   for (let i = 0; i < COUNT; i++) {
@@ -65,51 +62,16 @@ async function main() {
 
     const file = path.join(OUT, `f${String(i).padStart(2, "0")}.png`);
     await page.screenshot({ path: file });
-    shots.push({ t, file });
+    shots.push({ label: t.toFixed(2), file });
   }
 
-  const sheet = await page.evaluate(
-    async ({ shots, frame, cols, ground }) => {
-      const rows = Math.ceil(shots.length / cols);
-      const canvas = document.createElement("canvas");
-      canvas.width = frame.width * cols;
-      canvas.height = frame.height * rows;
-      const ctx = canvas.getContext("2d");
-      ctx.fillStyle = ground === "light" ? "#f4f2ee" : "#0a0a0c";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      for (const [i, shot] of shots.entries()) {
-        const img = new Image();
-        await new Promise((ok, no) => {
-          img.onload = ok;
-          img.onerror = no;
-          img.src = shot.dataUrl;
-        });
-        const x = (i % cols) * frame.width;
-        const y = Math.floor(i / cols) * frame.height;
-        ctx.drawImage(img, x, y, frame.width, frame.height);
-        ctx.fillStyle = ground === "light" ? "#14151a" : "#e9e6e1";
-        ctx.font = "600 15px monospace";
-        ctx.globalAlpha = 0.55;
-        ctx.fillText(shot.t.toFixed(2), x + 12, y + 24);
-        ctx.globalAlpha = 1;
-      }
-      return canvas.toDataURL("image/png");
-    },
-    {
-      frame: FRAME,
-      cols: COLS,
-      ground: GROUND,
-      shots: shots.map((s) => ({
-        t: s.t,
-        dataUrl: `data:image/png;base64,${fs.readFileSync(s.file).toString("base64")}`,
-      })),
-    },
-  );
-
-  const sheetPath = path.join(OUT, `film-${GROUND}.png`);
-  fs.writeFileSync(sheetPath, Buffer.from(sheet.split(",")[1], "base64"));
-  process.stderr.write(`wrote ${sheetPath} (${COUNT} frames)\n`);
+  const out = await writeSheet(page, shots, {
+    frame: FRAME,
+    cols: COLS,
+    ground: GROUND,
+    out: path.join(OUT, `film-${GROUND}.png`),
+  });
+  process.stderr.write(`wrote ${out} (${COUNT} frames)\n`);
 
   await browser.close();
 }

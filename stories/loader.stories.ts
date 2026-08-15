@@ -80,6 +80,9 @@ export const Playing: StoryObj = {
     const { root, host } = stage();
     const handle = mountLoader(host, { autoplay: true, loop: true });
     live.add({ host, handle });
+    // `npm run play` shoots this on a wall clock rather than seeking it, and
+    // restarts the loop first so a strip begins where the animation does.
+    (window as unknown as { __loader?: LoaderHandle }).__loader = handle;
     return root;
   },
 };
