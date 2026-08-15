@@ -395,12 +395,28 @@ function writeMorphs() {
     return { x1: box.x1 / em, y1: box.y1 / em, x2: box.x2 / em, y2: box.y2 / em };
   };
 
-  for (const block of blocks) {
+  for (const [blockIndex, block] of blocks.entries()) {
+    /**
+     * Everything is emitted in *frame* coordinates, not block-local ones.
+     *
+     * The runtime concatenates all twenty contours into one path for the final
+     * morph — it has to, because a letter's counter only punches a hole when it
+     * shares a path with its outline — and that path can carry no per-block
+     * transform. Emitted block-local, the three syllables landed on top of one
+     * another the instant that path took over.
+     *
+     * It also fixes the Latin assignment, which sorts contours by x to keep the
+     * mapping monotonic: block-local, ㅂ from 박 and ㅎ from 현 both sat at
+     * x ≈ 0.2 and the sort interleaved the three blocks.
+     */
+    const dx = blockIndex * (1 + BLOCK_GAP);
+    const place = ([x, y]) => [x + dx, y];
+
     // The syllable's contours, fitted into the same box the assembled parts
     // occupy, so the morph is a change of shape and not also of scale.
     const syllableInk = inkOfEm(block.syllable);
     const target = contoursOf(font, block.syllable).map((points) =>
-      resample(points, MORPH_N).map(([x, y]) => fitPoint(x, y, syllableInk, ASSEMBLED_BOX)),
+      resample(points, MORPH_N).map(([x, y]) => place(fitPoint(x, y, syllableInk, ASSEMBLED_BOX))),
     );
 
     // Each jamo's contours, already at their cell.
@@ -410,7 +426,7 @@ function writeMorphs() {
       return {
         char,
         contours: contoursOf(font, char).map((points) =>
-          resample(points, MORPH_N).map(([x, y]) => fitPointUniform(x, y, ink, cell)),
+          resample(points, MORPH_N).map(([x, y]) => place(fitPointUniform(x, y, ink, cell))),
         ),
       };
     });
@@ -656,7 +672,8 @@ function latinContours(font) {
 }
 
 /** Kept in step with src/loader/layout.ts. */
-const TOTAL_BLOCK_WIDTH = 3 * 1 + 2 * 0.14;
+const BLOCK_GAP = 0.14;
+const TOTAL_BLOCK_WIDTH = 3 * 1 + 2 * BLOCK_GAP;
 
 /** Cells, kept in step with src/loader/layout.ts. */
 const CELL_TABLE = {
