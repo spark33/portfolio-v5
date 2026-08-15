@@ -95,7 +95,15 @@ beat in the middle and SEAN PARK holds at the end, and on flat ink both read as
 the animation having stopped; filled with their own future they are the most
 interesting frames in the run. A sheen crosses the plane once over the run for
 the same reason. Every gradient stop is `currentColor` and only the opacity
-varies, so the piece still takes its colour entirely from the page.
+varies, so the piece still takes its colour entirely from the page — and the
+sheen is a dip across full ink rather than a highlight across a held-back
+plane, so the resolved frame the whole thing builds to lands at full weight
+instead of at whatever the gradient's floor happens to be.
+
+The cuts are scaled to how big the loader is being drawn. Left in viewBox
+units they are a constant *fraction* of the letterform, which is right at hero
+size and wrong at two hundred pixels — taking a third out of a stroke fourteen
+pixels tall stops being a treatment and starts being damage.
 
 **The camera moves.** A viewBox that opens hard inside a single stroke — so
 the first thing on screen is an abstract mass, not a name — pulls back as the

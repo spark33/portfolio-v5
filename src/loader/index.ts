@@ -536,6 +536,28 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   });
   svg.append(defs, plane);
 
+  /**
+   * How hard to cut, given how big this is being drawn.
+   *
+   * The cuts are in viewBox units, so left alone they are a constant *fraction*
+   * of the letterform — which is right at hero size and wrong at two hundred
+   * pixels, where taking a third out of a stroke fourteen pixels tall stops
+   * being a treatment and starts being damage. Eased toward a floor rather than
+   * switched at a breakpoint, and clamped at both ends: unmeasured, or drawn
+   * large, it is simply 1.
+   *
+   * Read from a resize observer rather than inside `apply`, which stays a pure
+   * function of time.
+   */
+  let cutScale = 1;
+  const REFERENCE_WIDTH = 640;
+
+  const resize = new ResizeObserver(([entry]) => {
+    const width = entry.contentRect.width;
+    if (width > 0) cutScale = Math.min(1, Math.max(0.42, width / REFERENCE_WIDTH));
+  });
+  resize.observe(wrap);
+
   // --- The meter -----------------------------------------------------------
   const meter = document.createElement("div");
   meter.className = "loader__meter";
@@ -683,7 +705,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     // The cuts fine down as the name arrives. They keep moving — that is what
     // the resting frames are for — but a name this piece spent four seconds
     // resolving should land crisp, not chewed.
-    const settle = 1 - 0.55 * phase(t, 0.74, 0.12, 0, 0);
+    const settle = (1 - 0.55 * phase(t, 0.74, 0.12, 0, 0)) * cutScale;
     ECHOES.forEach((echo, index) => {
       const node = echoNodes[index];
       node.setAttribute("d", chainAt(Math.min(REST, t + echo.lead)));
@@ -774,6 +796,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     stop,
     dispose() {
       stop();
+      resize.disconnect();
       wrap.remove();
     },
     duration: DURATION,
