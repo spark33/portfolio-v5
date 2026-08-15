@@ -40,6 +40,10 @@ claude mcp add mobbin --scope user --transport http https://api.mobbin.com/mcp
 
 ## Web sessions
 
-`.claude/hooks/session-start.sh` runs on session start in remote containers only. It
-installs project dependencies and, when `SERPER_API_KEY` is present, builds the
-design-inspiration MCP server. It no-ops on local machines.
+Two pieces, in the order they run:
+
+1. `.claude/cloud-setup.sh` — a reference copy of the cloud environment's **Setup
+   script**, which lives in the environment dialog at claude.ai/code. Provisions the
+   VM before Claude Code launches; its filesystem is cached and reused.
+2. `.claude/hooks/session-start.sh` — installs project dependencies on every session.
+   Remote only; no-ops on local machines.
