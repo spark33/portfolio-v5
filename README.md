@@ -81,6 +81,15 @@ That is also why it cannot be a stock preloader wearing someone's name: this
 animation is specific to *this* name in *this* script, and would have to be
 rebuilt from scratch for any other.
 
+**The camera moves.** A viewBox that opens inside a single stroke — so the
+first thing on screen is an abstract mark, not a name — pulls back as the parts
+arrive, then pushes in through the morph. That push is doing real work: twenty
+contours becoming twelve means eight shrink to nothing, and on a fixed camera
+the field visibly collapsed and came back, which read as a fault. Moving in as
+it contracts keeps it filling the frame and the same moment reads as a dive
+into the transformation. The aspect ratio is fixed — animating it would change
+the element's own height and shift the page every frame.
+
 **Nothing in the sequence is a cut.** Nine jamo become three syllables become
 SEAN PARK, as one continuous chain of the same twenty contours. Twenty become
 twelve: the eight with no counterpart collapse to a point inside themselves and

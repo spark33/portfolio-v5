@@ -134,6 +134,9 @@ const fuseEase = cubicBezier(0.65, 0, 0.35, 1);
  * gets the time.
  */
 const flowEase = cubicBezier(0.5, 0.02, 0.5, 0.98);
+/** Camera moves. Eased at both ends; a camera that snaps reads as a cut. */
+const shotEase = cubicBezier(0.4, 0, 0.2, 1);
+
 /** The counter, and with it the weight. Has to actually finish. */
 const progressEase = cubicBezier(0.22, 0.55, 0.3, 1);
 
@@ -190,6 +193,48 @@ function svgEl<K extends keyof SVGElementTagNameMap>(
 /** Vertical padding around the blocks, in block units. */
 const PAD = 0.34;
 
+/**
+ * The camera.
+ *
+ * A viewBox that moves, which is the difference between type appearing on a
+ * screen and a space you are moved through. It opens inside a single stroke —
+ * so the first thing on screen is an abstract mark, not a name — pulls back as
+ * the parts arrive, and then pushes in through the morph.
+ *
+ * That push is doing real work. Twenty contours becoming twelve means eight of
+ * them shrink to nothing, and the field loses mass through the middle: on a
+ * fixed camera the name visibly collapses and comes back, which reads as a
+ * fault. Moving in as it contracts keeps it filling the frame, and the same
+ * moment reads as a dive into the transformation instead.
+ *
+ * The aspect ratio is fixed. Animating it would change the element's own
+ * height — `width: 100%; height: auto` takes its ratio from the viewBox — and
+ * the whole page would shift on every frame.
+ */
+const FRAME = {
+  width: TOTAL_WIDTH + PAD * 2,
+  height: BLOCK.size + PAD * 2,
+};
+
+interface Shot {
+  at: number;
+  /** 1 is the whole frame; higher is closer. */
+  zoom: number;
+  /** Centre, in block units. */
+  x: number;
+  y: number;
+}
+
+const SHOTS: Shot[] = [
+  // Inside the first stroke of ㅂ.
+  { at: 0, zoom: 3.4, x: 0.28, y: 0.3 },
+  { at: 0.3, zoom: 1, x: TOTAL_WIDTH / 2, y: BLOCK.size / 2 },
+  { at: 0.56, zoom: 1, x: TOTAL_WIDTH / 2, y: BLOCK.size / 2 },
+  // In through the collapse, and back out as the name resolves.
+  { at: 0.76, zoom: 1.32, x: TOTAL_WIDTH / 2, y: BLOCK.size * 0.52 },
+  { at: 1, zoom: 1.02, x: TOTAL_WIDTH / 2, y: BLOCK.size * 0.55 },
+];
+
 /** Line weight of the drawn outlines, in block units. */
 const STROKE = 0.011;
 
@@ -229,6 +274,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
       fill: "none",
       stroke: "currentColor",
       "stroke-width": 0.006,
+      // Constant on screen regardless of where the camera is.
       "vector-effect": "non-scaling-stroke",
     }),
   );
@@ -422,6 +468,38 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     });
 
     // --- Composed syllables -------------------------------------------------
+    // --- Camera -------------------------------------------------------------
+    let shot = SHOTS[SHOTS.length - 1];
+    for (let i = 0; i < SHOTS.length - 1; i++) {
+      const a = SHOTS[i];
+      const b = SHOTS[i + 1];
+      if (t <= b.at) {
+        const k = shotEase(Math.min(1, Math.max(0, (t - a.at) / (b.at - a.at))));
+        shot = {
+          at: t,
+          zoom: lerp(a.zoom, b.zoom, k),
+          x: lerp(a.x, b.x, k),
+          y: lerp(a.y, b.y, k),
+        };
+        break;
+      }
+    }
+
+    const vw = FRAME.width / shot.zoom;
+    const vh = FRAME.height / shot.zoom;
+    svg.setAttribute(
+      "viewBox",
+      `${(shot.x - vw / 2).toFixed(4)} ${(shot.y - vh / 2).toFixed(4)} ${vw.toFixed(4)} ${vh.toFixed(4)}`,
+    );
+
+    // Stroke weight is in viewBox units, so it would thicken as the camera
+    // pulls out. Scaling it by the zoom keeps the drawn line the same weight
+    // on screen wherever the camera is.
+    const strokeAt = STROKE / shot.zoom;
+    for (const node of partNodes) {
+      node.path.setAttribute("stroke-width", strokeAt.toFixed(5));
+    }
+
     // --- Meter --------------------------------------------------------------
     const shown = Math.round(progress * 100);
     fill.style.width = `${(progress * 100).toFixed(2)}%`;
