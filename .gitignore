@@ -10,3 +10,8 @@ dist-ssr
 !.env.example
 .mcp.local.json
 .claude/settings.local.json
+
+# Playwright
+test-results
+playwright-report
+shots

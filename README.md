@@ -7,6 +7,8 @@ npm install
 npm run dev        # http://localhost:5173
 npm run build      # typecheck + production build to dist/
 npm run preview    # serve the production build
+npm test           # Playwright tests (starts its own preview server)
+npm run shots      # regenerate specimen screenshots into shots/
 ```
 
 ## Layout
@@ -15,7 +17,10 @@ npm run preview    # serve the production build
 | -------------------- | -------------------------------------------------------- |
 | `src/main.ts`        | Entry point; boots the scene, disposes it on HMR          |
 | `src/scene.ts`       | WebGL scene, render loop, and teardown                    |
-| `src/style.css`      | Page chrome layered over the canvas                       |
+| `tests/`             | Playwright specs for the home page and the specimen       |
+| `src/type.css`       | Type and colour system — the chosen Editorial treatment    |
+| `src/article.css`    | Case-study template: masthead, facts, figure, decisions    |
+| `src/style.css`      | Home page chrome layered over the canvas                   |
 | `specimen/`          | Type specimen page, served at `/specimen/`                |
 | `src/specimen.css`   | The three typographic treatments; all type lives in CSS   |
 | `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
@@ -26,7 +31,9 @@ loop, removes listeners, and frees GPU resources. Keep that contract when adding
 geometry — every `dispose()`-able you create should be released there.
 
 The scene clamps device pixel ratio to 2 and honours
-`prefers-reduced-motion: reduce` by holding the mesh still.
+`prefers-reduced-motion: reduce` by holding both the mesh and the camera still. It
+clears to the page's computed background colour and re-reads it when the colour
+scheme changes, so the canvas never fights the type for contrast.
 
 ## Design
 
@@ -40,11 +47,15 @@ implementation; the starter scene in `src/scene.ts` predates it.
 template from the design brief under three typographic treatments, so they can be
 compared on real content rather than on lorem ipsum.
 
-| Treatment | Faces                         | Register                         |
+**Editorial (Newsreader) is the chosen system**; it lives in `src/type.css` and is
+what the rest of the site uses. The specimen defaults to it and keeps the two
+rejected alternatives so the decision stays re-checkable against real content.
+
+| Treatment | Faces                         | Status                           |
 | --------- | ----------------------------- | -------------------------------- |
-| Swiss     | Inter Tight + Inter           | Neutral, tight, product-adjacent |
-| Editorial | Newsreader                    | Long-form, magazine              |
-| Technical | IBM Plex Sans + IBM Plex Mono | Engineering documentation        |
+| Editorial | Newsreader                    | **Chosen** — long-form, magazine |
+| Swiss     | Inter Tight + Inter           | Rejected — neutral, product-adjacent |
+| Technical | IBM Plex Sans + IBM Plex Mono | Rejected — engineering docs      |
 
 Controls across the top change treatment, theme, body size, and measure, and the
 choice persists across reloads. `1` `2` `3` switch treatment, `g` overlays the
@@ -53,6 +64,19 @@ twelve-column grid, `r` hides the chrome for an undistracted read.
 Fonts are self-hosted latin-subset woff2 under `public/fonts/` (SIL Open Font
 License). Re-run `python3 scripts/fetch-fonts.py` from the repository root to change
 the set.
+
+## Tests
+
+`npm test` runs Playwright against a production preview it starts itself. The suite
+guards the things a stylesheet change can silently break: that each treatment
+resolves to a real webfont rather than a system fallback, that the dark accent
+clears AA, that settings survive a reload, and that nothing scrolls horizontally on
+a phone.
+
+Chromium resolution is handled in `playwright.config.ts`: it prefers
+`/opt/pw-browsers/chromium` when present — cloud sessions ship one and cannot run
+`playwright install` — and otherwise falls back to Playwright's own download.
+Override with `CHROMIUM_PATH`.
 
 ## Design references
 

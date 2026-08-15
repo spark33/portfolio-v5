@@ -1,15 +1,15 @@
-@import "./fonts.css";
+@import "./type.css";
+@import "./article.css";
 
-/* ---------------------------------------------------------------- treatments
-   Each treatment is a complete typographic proposal for the case-study
-   template. Switching `data-treatment` on <html> swaps the whole system. */
+/* Specimen-only chrome. The page defaults to Editorial — the chosen system in
+   type.css — and the two alternatives below exist so the decision stays
+   re-checkable against real content. */
 
 [data-treatment="swiss"] {
   --font-display: "Inter Tight", system-ui, sans-serif;
   --font-body: "Inter", system-ui, sans-serif;
   --font-meta: "Inter", system-ui, sans-serif;
 
-  --display-weight: 600;
   --display-tracking: -0.035em;
   --display-leading: 0.98;
   --heading-tracking: -0.02em;
@@ -17,24 +17,8 @@
   --meta-tracking: 0.08em;
   --meta-transform: uppercase;
   --meta-weight: 500;
+  --meta-style: normal;
   --meta-size: 0.72em;
-}
-
-[data-treatment="editorial"] {
-  --font-display: "Newsreader", Georgia, serif;
-  --font-body: "Newsreader", Georgia, serif;
-  --font-meta: "Newsreader", Georgia, serif;
-
-  --display-weight: 600;
-  --display-tracking: -0.015em;
-  --display-leading: 1.02;
-  --heading-tracking: -0.005em;
-  --body-leading: 1.55;
-  --meta-tracking: 0.02em;
-  --meta-transform: none;
-  --meta-weight: 400;
-  --meta-size: 0.85em;
-  --meta-style: italic;
 }
 
 [data-treatment="technical"] {
@@ -42,7 +26,6 @@
   --font-body: "IBM Plex Sans", system-ui, sans-serif;
   --font-meta: "IBM Plex Mono", ui-monospace, Menlo, monospace;
 
-  --display-weight: 600;
   --display-tracking: -0.02em;
   --display-leading: 1.04;
   --heading-tracking: -0.01em;
@@ -50,295 +33,8 @@
   --meta-tracking: 0.04em;
   --meta-transform: uppercase;
   --meta-weight: 400;
-  --meta-size: 0.7em;
-}
-
-/* --------------------------------------------------------------------- base */
-
-:root {
   --meta-style: normal;
-  --font-mono: "IBM Plex Mono", ui-monospace, Menlo, monospace;
-
-  /* Set by the controls; see specimen.ts. */
-  --body-size: 18px;
-  --measure: 68ch;
-
-  --step-0: var(--body-size);
-  --step-1: calc(var(--body-size) * 1.25);
-  --step-2: calc(var(--body-size) * 1.6);
-  --step-3: calc(var(--body-size) * 2.1);
-  --display: clamp(2.6rem, 7vw, 4.6rem);
-
-  --gutter: clamp(1.25rem, 4vw, 3rem);
-  --rhythm: 1.6rem;
-
-  /* Light is the default; a text-heavy site cannot be dark-only. */
-  --bg: #fcfcfb;
-  --surface: #f2f2ef;
-  --fg: #16161a;
-  --muted: #5f5f6b;
-  --rule: #e2e2dc;
-  --accent: #3f4fc4;
-
-  color-scheme: light;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --bg: #0a0a0f;
-    --surface: #14141b;
-    --fg: #f4f4f5;
-    --muted: #a1a1aa;
-    --rule: #26262f;
-    /* #5b6cff from the starter scene fails AA on this background; lightened. */
-    --accent: #9aa6ff;
-
-    color-scheme: dark;
-  }
-}
-
-:root[data-theme="dark"] {
-  --bg: #0a0a0f;
-  --surface: #14141b;
-  --fg: #f4f4f5;
-  --muted: #a1a1aa;
-  --rule: #26262f;
-  --accent: #9aa6ff;
-
-  color-scheme: dark;
-}
-
-html {
-  scroll-padding-top: 5.5rem;
-}
-
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
-
-body {
-  margin: 0;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: var(--font-body);
-  font-size: var(--step-0);
-  line-height: var(--body-leading);
-  font-optical-sizing: auto;
-  -webkit-font-smoothing: antialiased;
-  accent-color: var(--accent);
-}
-
-a {
-  color: var(--accent);
-  text-underline-offset: 0.18em;
-  text-decoration-thickness: from-font;
-}
-
-:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 3px;
-  border-radius: 2px;
-}
-
-.skip {
-  position: absolute;
-  left: -9999px;
-}
-
-.skip:focus {
-  left: var(--gutter);
-  top: 0.75rem;
-  z-index: 10;
-  background: var(--surface);
-  padding: 0.5rem 0.9rem;
-  border-radius: 4px;
-}
-
-/* ------------------------------------------------------------------- layout */
-
-.page {
-  max-width: 78rem;
-  margin: 0 auto;
-  padding: clamp(2rem, 6vw, 5rem) var(--gutter) 6rem;
-}
-
-/* Body copy holds the measure; figures may break out to the full column. */
-.prose > * {
-  max-width: var(--measure);
-}
-
-.prose > .bleed {
-  max-width: none;
-}
-
-/* ---------------------------------------------------------------- typography */
-
-h1,
-h2,
-h3 {
-  font-family: var(--font-display);
-  font-weight: var(--display-weight);
-  letter-spacing: var(--heading-tracking);
-  line-height: 1.15;
-  margin: calc(var(--rhythm) * 1.9) 0 var(--rhythm);
-  text-wrap: balance;
-}
-
-h1 {
-  font-size: var(--display);
-  letter-spacing: var(--display-tracking);
-  line-height: var(--display-leading);
-  margin-top: 0;
-}
-
-h2 {
-  font-size: var(--step-2);
-}
-
-h3 {
-  font-size: var(--step-1);
-}
-
-p,
-ol,
-ul {
-  margin: 0 0 var(--rhythm);
-}
-
-li {
-  margin-bottom: 0.6rem;
-}
-
-.lede {
-  font-size: var(--step-1);
-  line-height: 1.45;
-  color: var(--fg);
-}
-
-.meta {
-  font-family: var(--font-meta);
-  font-size: var(--meta-size);
-  font-weight: var(--meta-weight);
-  font-style: var(--meta-style);
-  letter-spacing: var(--meta-tracking);
-  text-transform: var(--meta-transform);
-  color: var(--muted);
-}
-
-code {
-  font-family: var(--font-mono);
-  font-size: 0.88em;
-  background: var(--surface);
-  padding: 0.1em 0.35em;
-  border-radius: 3px;
-}
-
-pre {
-  font-family: var(--font-mono);
-  font-size: 0.85em;
-  line-height: 1.55;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: 1rem 1.15rem;
-  overflow-x: auto;
-}
-
-pre code {
-  background: none;
-  padding: 0;
-}
-
-/* --------------------------------------------------------------- case study */
-
-.masthead {
-  border-bottom: 1px solid var(--rule);
-  padding-bottom: var(--rhythm);
-  margin-bottom: calc(var(--rhythm) * 2);
-}
-
-.facts {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
-  gap: 1rem 2rem;
-  margin-top: calc(var(--rhythm) * 1.4);
-  padding: 0;
-  list-style: none;
-  max-width: none;
-}
-
-.facts div {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.facts dd {
-  margin: 0;
-  font-size: 0.95em;
-}
-
-/* Figure: the box is reserved before mount so nothing shifts (CLS budget). */
-.figure {
-  margin: calc(var(--rhythm) * 2) 0;
-}
-
-.figure-frame {
-  aspect-ratio: 16 / 10;
-  max-width: 62rem;
-  margin-inline: auto;
-  background: var(--surface);
-  border: 1px solid var(--rule);
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-  color: var(--muted);
-  text-align: center;
-  padding: 1.5rem;
-}
-
-.figure figcaption {
-  margin-top: 0.85rem;
-  color: var(--muted);
-  font-size: 0.9em;
-  line-height: 1.5;
-  max-width: var(--measure);
-}
-
-.figure figcaption b {
-  color: var(--fg);
-  font-weight: 600;
-}
-
-.controls-demo {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.9rem 1.4rem;
-  align-items: center;
-  margin-top: 1rem;
-}
-
-.controls-demo label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-/* Decisions: the chosen/rejected pairing from the brief. */
-.decision {
-  border-top: 1px solid var(--rule);
-  padding-top: var(--rhythm);
-  margin-bottom: calc(var(--rhythm) * 1.5);
-}
-
-.decision h3 {
-  margin: 0 0 0.6rem;
-}
-
-.decision .rejected {
-  color: var(--muted);
+  --meta-size: 0.7em;
 }
 
 /* ------------------------------------------------------------ scale display */
@@ -435,10 +131,6 @@ pre code {
   pointer-events: none;
 }
 
-.segmented input:checked + span {
-  color: var(--bg);
-}
-
 .segmented label:has(input:checked) {
   background: var(--fg);
   color: var(--bg);
@@ -460,15 +152,12 @@ pre code {
 }
 
 /* Reading mode hides the chrome so the page can be judged on its own. */
-[data-reading="on"] .panel {
-  display: none;
-}
-
+[data-reading="on"] .panel,
 [data-reading="on"] .scale {
   display: none;
 }
 
-/* --------------------------------------------------------- grid overlay */
+/* ------------------------------------------------------------- grid overlay */
 
 .grid-overlay {
   position: fixed;

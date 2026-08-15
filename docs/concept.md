@@ -123,14 +123,20 @@ Rules the loader enforces, not the figure author:
 
 ### Typography and layout
 
-- A real type pairing, not system-ui: one grotesk for headings, one text face with
-  good numerals for body. Self-host as subset woff2, `font-display: swap`.
+**Decided: Editorial (Newsreader), from the specimen at `/specimen/`.** It gives the
+writing more authority than a grotesk does, and it separates the site from the
+Inter-based default that most engineer portfolios land on. The rejected alternatives
+stay in `src/specimen.css` so the choice can be re-examined against real copy.
+
+- Self-hosted latin-subset woff2, `font-display: swap`; see `scripts/fetch-fonts.py`.
 - Measure capped at 68–72 characters. Body at 18–19 px, 1.6 line height.
 - Twelve-column grid with a generous baseline; figures may break to full width,
   body text never does.
 - Light and dark both supported, driven by `prefers-color-scheme`. The current
   hardcoded dark is fine as the dark half but a text-heavy site needs the light one.
-- Keep the existing accent (`#5b6cff`) for links and figure controls only.
+- Accent is for links and figure controls only: `#3f4fc4` in light, `#9aa6ff` in
+  dark. The starter scene's `#5b6cff` fails AA against the dark background at body
+  sizes and is not used for text.
 
 ### Performance budget
 
