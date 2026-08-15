@@ -1,86 +1,89 @@
 import "./loader.css";
+import {
+  BLOCK,
+  blockX,
+  buildParts,
+  fitSyllable,
+  LOCK_ORDER,
+  SYLLABLES,
+  TOTAL_WIDTH,
+} from "./layout.ts";
 
 /**
- * The loading animation: 박상현 gains weight as the page loads, then hands off
- * to SEAN PARK.
+ * The loading animation.
  *
- * Real text in a subset of Pretendard Variable — eleven glyphs, under 3 KB —
- * animated along its weight axis. The axis is the idea rather than an effect:
- * the name arrives hairline and thickens as loading progresses, so the counter
- * and the letterforms are two readings of one signal, and the type reaches its
- * heaviest exactly as the load finishes.
+ *   ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ   nine parts, arriving
+ *   박 상 현              three blocks, assembled
+ *   SEAN PARK            the name he goes by
  *
- * The whole animation is a pure function of normalised time, `apply(t)`.
- * Nothing is stateful and any frame can be rendered on demand, which is what
- * makes it possible to screenshot a filmstrip and iterate on the motion
- * instead of guessing at it.
+ * The mechanic is the meaning. Hangul is an assembly system — a syllable is a
+ * square built from jamo placed in fixed regions of it — and loading is
+ * assembly, so the animation builds the name the way the writing system builds
+ * it. The parts fly in along the axis their role occupies, the bottom tier of
+ * each block locking before the tier above it, and only once a block is
+ * complete does it resolve into the syllable itself.
+ *
+ * That is also why this cannot be a stock preloader wearing someone's name:
+ * the animation is specific to *this* name, in *this* script, and would have
+ * to be rebuilt from scratch for any other.
+ *
+ * Real text throughout, in a 3.6 KB subset of Pretendard Variable, animated
+ * along its weight axis: the parts arrive hairline and gain weight as they
+ * lock, so the letterforms and the counter are two readings of one signal.
+ *
+ * The whole animation is a pure function of normalised time, `apply(t)`. Any
+ * frame can be rendered on demand, which is what makes it possible to
+ * screenshot a filmstrip and iterate on the motion instead of guessing at it.
  */
 
-/**
- * Total duration in milliseconds.
- *
- * An earlier cut ran at 1150ms and read as a flicker — the eye registered that
- * something had changed without ever reading either name. A preloader has to
- * be legible twice over, which needs a real hold on each state.
- */
-export const DURATION = 2600;
+/** Total duration in milliseconds. */
+export const DURATION = 3200;
 
-const KOREAN = [..."박상현"];
 const LATIN = [..."SEAN PARK"];
-
-/** How far a glyph travels as it enters or leaves, as a fraction of its size. */
-const RISE = 0.42;
-
-/**
- * Sideways drift on the swap, in em.
- *
- * The old name leaves slightly to the left and the new one comes in from the
- * right, so the exchange has a direction rather than both names occupying one
- * space.
- */
-const DRIFT = { out: -0.1, in: 0.12 };
-
-/**
- * The weight axis, per run.
- *
- * Two ranges rather than one sweep across the whole axis. A single ramp puts
- * the Hangul near 500 by the time it hands off, which is nowhere — too heavy
- * to read as delicate, too light to read as deliberate. Holding it in the thin
- * end and giving the Latin the heavy end keeps each name at a weight that
- * means something, while both still gain weight as the load progresses.
- */
-const WEIGHT = {
-  korean: { from: 45, to: 250 },
-  latin: { from: 280, to: 930 },
-};
 
 /** Beats, in normalised time. */
 const T = {
-  enterFrom: 0.03,
-  enterSpan: 0.2,
-  enterStagger: 0.05,
+  /** Parts fly in and lock into their cells. */
+  assembleFrom: 0.02,
+  assembleSpan: 0.26,
+  assembleStagger: 0.028,
 
-  exitFrom: 0.44,
-  exitSpan: 0.1,
+  /**
+   * Parts give way to the composed syllable.
+   *
+   * Short on purpose. A standalone jamo is not drawn the same as the same jamo
+   * inside a block — the font redraws it to fit — so however well the two are
+   * fitted to one box, a slow crossfade shows both forms at once. Making it a
+   * snap turns that from a ghost into the moment the block locks.
+   */
+  composeFrom: 0.4,
+  composeSpan: 0.04,
+  composeStagger: 0.05,
+
+  /** The composed name gives way to the Latin one. */
+  exitFrom: 0.64,
+  exitSpan: 0.09,
   exitStagger: 0.018,
 
-  // Nine glyphs at the old stagger spread the arrival over a third of the run,
-  // which left a lone S sitting in an empty frame while the rest queued up. A
-  // word should arrive as a word.
-  arriveFrom: 0.5,
-  arriveSpan: 0.26,
+  // Starts only once the last block has cleared, so no Latin letter is ever
+  // drawn underneath a syllable that is still on screen.
+  arriveFrom: 0.75,
+  arriveSpan: 0.24,
   arriveStagger: 0.013,
 } as const;
 
-/**
- * The wipe that reveals each run.
- *
- * A mask edge travelling across the type rather than opacity alone. It is what
- * separates a preloader that looks directed from one that looks defaulted: the
- * letters are already there and something uncovers them, which is a different
- * event from them fading up out of nothing.
- */
-const WIPE = { enterSpan: 0.28, exitSpan: 0.15 };
+/** The weight axis, per layer. */
+const WEIGHT = {
+  parts: { from: 45, to: 200 },
+  composed: { from: 200, to: 340 },
+  latin: { from: 300, to: 930 },
+};
+
+/** How far the Latin drifts in, in em. */
+const DRIFT_IN = 0.12;
+
+/** Word space between SEAN and PARK, in block units. */
+const WORD_SPACE = 0.2;
 
 /** CSS-style cubic bézier, solved for y given x. */
 function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
@@ -108,22 +111,13 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
   };
 }
 
-/** Entering: fast out of the gate, long settle. */
-const enterEase = cubicBezier(0.16, 1, 0.3, 1);
-/** Leaving: accelerates away, so the exit reads as decisive rather than sad. */
+/** A part travelling to its cell: covers ground fast, then seats. */
+const lockEase = cubicBezier(0.16, 1, 0.3, 1);
+/** Leaving: accelerates away, so an exit reads as decisive rather than sad. */
 const exitEase = cubicBezier(0.55, 0, 0.85, 0.3);
-/**
- * The counter, and with it the weight.
- *
- * Not linear — a real load never is — but it has to finish. An earlier curve
- * reached 100 at 0.91 and sat there for the last quarter, which reads as a
- * stall with the number stuck.
- */
+/** The counter, and with it the weight. Has to actually finish. */
 const progressEase = cubicBezier(0.22, 0.55, 0.3, 1);
-/** The wipe edge. Leads the glyphs, so it uncovers rather than accompanies. */
-const wipeEase = cubicBezier(0.33, 0.9, 0.2, 1);
 
-/** Normalised progress of one staggered item within a window. */
 function phase(t: number, from: number, span: number, stagger: number, index: number): number {
   const start = from + index * stagger;
   return Math.min(1, Math.max(0, (t - start) / span));
@@ -134,9 +128,7 @@ function lerp(a: number, b: number, t: number) {
 }
 
 export interface LoaderOptions {
-  /** Play on mount. Off for the filmstrip harness, which seeks instead. */
   autoplay?: boolean;
-  /** Loop until `stop()`. A loader usually should. */
   loop?: boolean;
   onComplete?: () => void;
 }
@@ -150,26 +142,19 @@ export interface LoaderHandle {
   readonly duration: number;
 }
 
-/** Builds one run as real text, one span per glyph so it can be staggered. */
-function buildRun(text: string[], modifier: string) {
-  const run = document.createElement("div");
-  run.className = `loader__run loader__run--${modifier}`;
-  // The names duplicate copy that is already on the page, so they are not
-  // announced. The meter below carries the state a reader actually needs.
-  run.setAttribute("aria-hidden", "true");
+const NS = "http://www.w3.org/2000/svg";
 
-  const glyphs = text.map((char) => {
-    const span = document.createElement("span");
-    span.className = "loader__glyph";
-    // A space would collapse without this; the run is set with `white-space:
-    // pre` and each glyph is its own inline-block.
-    span.textContent = char;
-    run.append(span);
-    return span;
-  });
-
-  return { run, glyphs };
+function svgEl<K extends keyof SVGElementTagNameMap>(
+  name: K,
+  attrs: Record<string, string | number> = {},
+): SVGElementTagNameMap[K] {
+  const node = document.createElementNS(NS, name);
+  for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+  return node;
 }
+
+/** Vertical padding around the blocks, in block units. */
+const PAD = 0.34;
 
 export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): LoaderHandle {
   const { autoplay = true, loop = true, onComplete } = options;
@@ -179,15 +164,90 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   const wrap = document.createElement("div");
   wrap.className = "loader";
 
-  const stage = document.createElement("div");
-  stage.className = "loader__stage";
+  const svg = svgEl("svg", {
+    viewBox: `${-PAD} ${-PAD} ${TOTAL_WIDTH + PAD * 2} ${BLOCK.size + PAD * 2}`,
+    width: "100%",
+    fill: "currentColor",
+    // The names duplicate copy that is already on the page. The meter below
+    // carries the state a reader actually needs.
+    "aria-hidden": "true",
+    focusable: "false",
+  });
+  svg.setAttribute("font-family", "Pretendard Loader, system-ui, sans-serif");
 
-  const korean = buildRun(KOREAN, "ko");
-  const latin = buildRun(LATIN, "en");
-  stage.append(korean.run, latin.run);
+  // --- The construction squares -------------------------------------------
+  // One per block, drawn as the parts arrive and gone once the block resolves.
+  // They make the system visible: this is a square being filled, not letters
+  // drifting into place.
+  const frames = SYLLABLES.map((_, index) =>
+    svgEl("rect", {
+      x: blockX(index),
+      y: 0,
+      width: BLOCK.size,
+      height: BLOCK.size,
+      fill: "none",
+      stroke: "currentColor",
+      "stroke-width": 0.006,
+      "vector-effect": "non-scaling-stroke",
+    }),
+  );
+  const frameGroup = svgEl("g");
+  frameGroup.append(...frames);
+  svg.append(frameGroup);
 
-  // The meter is the part that carries information, so it is the part with a
-  // role. A progressbar is what a loader actually is.
+  // --- The nine parts ------------------------------------------------------
+  const parts = buildParts();
+  const partGroup = svgEl("g");
+  const partNodes = parts.map((part) => {
+    // An outer group carries the approach; the inner text carries the fit, so
+    // the two never have to be composed by hand.
+    const outer = svgEl("g");
+    const text = svgEl("text", { x: 0, y: 0, "font-size": 1, transform: part.transform });
+    text.textContent = part.char;
+    // Each block is offset here rather than in the fit, so the fit stays in
+    // block-local units and is readable next to the cell table.
+    const positioned = svgEl("g", { transform: `translate(${blockX(part.syllable)} 0)` });
+    positioned.append(text);
+    outer.append(positioned);
+    partGroup.append(outer);
+    return outer;
+  });
+  svg.append(partGroup);
+
+  // --- The three composed syllables ---------------------------------------
+  const composedGroup = svgEl("g");
+  const composedNodes = SYLLABLES.map((char, index) => {
+    // Fitted to the box the parts filled, not set at a nominal size, so the
+    // handover is the same shape tightening rather than a second image
+    // ghosting over the first.
+    const text = svgEl("text", { x: 0, y: 0, "font-size": 1, transform: fitSyllable(char) });
+    text.textContent = char;
+
+    const positioned = svgEl("g", { transform: `translate(${blockX(index)} 0)` });
+    positioned.append(text);
+
+    const outer = svgEl("g");
+    outer.append(positioned);
+    composedGroup.append(outer);
+    return outer;
+  });
+  svg.append(composedGroup);
+
+  // --- SEAN PARK -----------------------------------------------------------
+  const latinGroup = svgEl("g");
+  const latinNodes = LATIN.map((char) => {
+    const text = svgEl("text", {
+      y: BLOCK.size * 0.78,
+      "font-size": BLOCK.size * 0.62,
+      "text-anchor": "middle",
+    });
+    text.textContent = char;
+    latinGroup.append(text);
+    return text;
+  });
+  svg.append(latinGroup);
+
+  // --- The meter -----------------------------------------------------------
   const meter = document.createElement("div");
   meter.className = "loader__meter";
   meter.setAttribute("role", "progressbar");
@@ -205,60 +265,126 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   percent.className = "loader__percent";
 
   meter.append(track, percent);
-  wrap.append(stage, meter);
+  wrap.append(svg, meter);
   root.append(wrap);
 
   /**
-   * Renders the frame at normalised time.
+   * Lays SEAN PARK out across the full width.
    *
-   * Every visual property is derived here and nowhere else, so seeking and
-   * playing cannot disagree about what a given moment looks like.
+   * Measured rather than assumed: SVG text has no layout engine to ask, and
+   * the advance widths depend on the weight, which moves. Measuring once at
+   * the weight the word settles at is close enough, and it is the only DOM
+   * read in the whole animation.
    */
+  let latinPlaced = false;
+  function placeLatin() {
+    if (latinPlaced || !svg.isConnected) return;
+
+    latinGroup.style.fontVariationSettings = `"wght" ${WEIGHT.latin.to}`;
+
+    // A <text> holding only a space measures zero — SVG has no line box to
+    // hang whitespace on — so the word space is set explicitly. Without this
+    // the two words run together as SEANPARK.
+    const widths = latinNodes.map((node, index) =>
+      LATIN[index] === " " ? WORD_SPACE : node.getComputedTextLength(),
+    );
+    const ink = widths.reduce((sum, width, index) => (LATIN[index] === " " ? sum : sum + width), 0);
+    if (ink === 0) return; // Font has not landed yet; try again next frame.
+
+    const total = widths.reduce((sum, width) => sum + width, 0);
+
+    let pen = (TOTAL_WIDTH - total) / 2;
+    latinNodes.forEach((node, index) => {
+      node.setAttribute("x", (pen + widths[index] / 2).toFixed(4));
+      pen += widths[index];
+    });
+
+    latinPlaced = true;
+  }
+
+  /** Renders the frame at normalised time. */
   function apply(t: number) {
-    korean.glyphs.forEach((glyph, index) => {
-      const entered = enterEase(phase(t, T.enterFrom, T.enterSpan, T.enterStagger, index));
-      const left = exitEase(phase(t, T.exitFrom, T.exitSpan, T.exitStagger, index));
-
-      // One expression for both halves of a glyph's life: it rises into place,
-      // then keeps going the same way and leaves. Reversing direction on exit
-      // would read as a mistake being undone.
-      const y = RISE * (1 - entered) - RISE * left;
-      const x = DRIFT.out * left;
-      glyph.style.transform = `translate(${x.toFixed(3)}em, ${y.toFixed(3)}em)`;
-      glyph.style.opacity = (entered * (1 - left)).toFixed(3);
-    });
-
-    latin.glyphs.forEach((glyph, index) => {
-      const arrived = enterEase(phase(t, T.arriveFrom, T.arriveSpan, T.arriveStagger, index));
-      const y = RISE * (1 - arrived);
-      const x = DRIFT.in * (1 - arrived);
-      glyph.style.transform = `translate(${x.toFixed(3)}em, ${y.toFixed(3)}em)`;
-      glyph.style.opacity = arrived.toFixed(3);
-    });
+    placeLatin();
 
     const progress = progressEase(t);
 
-    // Weight is set on the run rather than per glyph. Changing
-    // font-variation-settings reflows the text it applies to, so two writes a
-    // frame is the difference between this and twelve.
-    const weight = (range: { from: number; to: number }) =>
-      `"wght" ${lerp(range.from, range.to, progress).toFixed(1)}`;
-    korean.run.style.fontVariationSettings = weight(WEIGHT.korean);
-    latin.run.style.fontVariationSettings = weight(WEIGHT.latin);
+    // --- Parts -------------------------------------------------------------
+    LOCK_ORDER.forEach((partIndex, order) => {
+      const node = partNodes[partIndex];
+      const part = parts[partIndex];
 
-    // Wipes lead the glyphs, so the reveal reads as uncovering rather than as
-    // two effects running at once. The Hangul is uncovered from the left and
-    // then covered again from the left, so the edge carries straight on in one
-    // direction across the whole run.
-    const enterWipe = wipeEase(phase(t, T.enterFrom, WIPE.enterSpan, 0, 0));
-    const exitWipe = wipeEase(phase(t, T.exitFrom, WIPE.exitSpan, 0, 0));
-    const arriveWipe = wipeEase(phase(t, T.arriveFrom, WIPE.enterSpan, 0, 0));
+      const locked = lockEase(phase(t, T.assembleFrom, T.assembleSpan, T.assembleStagger, order));
+      const gone = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, part.syllable);
 
-    const inset = (right: number, left: number) =>
-      `inset(-25% ${(right * 100).toFixed(2)}% -25% ${(left * 100).toFixed(2)}%)`;
-    korean.run.style.clipPath = inset(1 - enterWipe, exitWipe);
-    latin.run.style.clipPath = inset(1 - arriveWipe, 0);
+      const away = 1 - locked;
+      node.setAttribute(
+        "transform",
+        `translate(${(part.approach.x * away).toFixed(4)} ${(part.approach.y * away).toFixed(4)})`,
+      );
+      node.setAttribute("opacity", (locked * (1 - gone)).toFixed(3));
+    });
 
+    partGroup.style.fontVariationSettings = `"wght" ${lerp(
+      WEIGHT.parts.from,
+      WEIGHT.parts.to,
+      progress,
+    ).toFixed(1)}`;
+
+    // --- Frames ------------------------------------------------------------
+    // Present while there is something to assemble, gone once each block has.
+    frames.forEach((frame, index) => {
+      const drawn = lockEase(phase(t, T.assembleFrom, 0.16, 0.05, index));
+      const gone = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, index);
+      frame.setAttribute("opacity", (drawn * (1 - gone) * 0.22).toFixed(3));
+    });
+
+    // --- Composed syllables -------------------------------------------------
+    composedNodes.forEach((node, index) => {
+      // Takes over exactly as its parts give way. Both are the same size in
+      // the same place, so the handover is a tightening rather than a cut.
+      const shown = phase(t, T.composeFrom, T.composeSpan, T.composeStagger, index);
+      const left = exitEase(phase(t, T.exitFrom, T.exitSpan, T.exitStagger, index));
+      node.setAttribute("opacity", (shown * (1 - left)).toFixed(3));
+
+      // A settle on the way in: the block overshoots very slightly and comes
+      // back, which is what a part seating into place does and what covers the
+      // last of the swap.
+      const settle = 1 + 0.035 * Math.exp(-7 * shown) * Math.sin(Math.PI * 2.4 * shown);
+      const centre = blockX(index) + BLOCK.size / 2;
+      node.setAttribute(
+        "transform",
+        `translate(${(-0.12 * left).toFixed(4)} ${(-0.2 * left).toFixed(4)}) ` +
+          `translate(${centre.toFixed(4)} ${(BLOCK.size / 2).toFixed(4)}) ` +
+          `scale(${settle.toFixed(4)}) ` +
+          `translate(${(-centre).toFixed(4)} ${(-BLOCK.size / 2).toFixed(4)})`,
+      );
+    });
+
+    composedGroup.style.fontVariationSettings = `"wght" ${lerp(
+      WEIGHT.composed.from,
+      WEIGHT.composed.to,
+      progress,
+    ).toFixed(1)}`;
+
+    // --- SEAN PARK ----------------------------------------------------------
+    latinNodes.forEach((node, index) => {
+      const arrived = lockEase(phase(t, T.arriveFrom, T.arriveSpan, T.arriveStagger, index));
+      node.setAttribute("opacity", arrived.toFixed(3));
+      node.setAttribute(
+        "transform",
+        `translate(${(DRIFT_IN * (1 - arrived)).toFixed(4)} ${(0.26 * (1 - arrived)).toFixed(4)})`,
+      );
+    });
+
+    if (latinPlaced) {
+      latinGroup.style.fontVariationSettings = `"wght" ${lerp(
+        WEIGHT.latin.from,
+        WEIGHT.latin.to,
+        progress,
+      ).toFixed(1)}`;
+    }
+
+    // --- Meter --------------------------------------------------------------
     const shown = Math.round(progress * 100);
     fill.style.width = `${(progress * 100).toFixed(2)}%`;
     percent.textContent = String(shown).padStart(3, "0");

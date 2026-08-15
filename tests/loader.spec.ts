@@ -12,7 +12,12 @@ import { expect, test } from "@playwright/test";
  */
 const FONT = new URL("../public/loader/pretendard-var.woff2", import.meta.url);
 
-function tables(): { axes: Array<[string, number, number]>; glyphs: number; names: string[] } {
+function tables(): {
+  axes: Array<[string, number, number]>;
+  glyphs: number;
+  names: string[];
+  cmap: number[];
+} {
   // fontTools reads the file; parsing woff2 in Node would mean shipping a
   // brotli-aware font parser purely to assert on a build artefact.
   const script = `
@@ -23,6 +28,7 @@ print(json.dumps({
   "axes": [[a.axisTag, a.minValue, a.maxValue] for a in f["fvar"].axes] if "fvar" in f else [],
   "glyphs": f["maxp"].numGlyphs,
   "names": sorted(f.keys()),
+  "cmap": sorted(f.getBestCmap().keys()),
 }))
 `;
   const out = execFileSync("python3", ["-c", script, FONT.pathname], { encoding: "utf8" });
@@ -45,9 +51,14 @@ test.describe("loader font", () => {
     expect(tables().names).toContain("gvar");
   });
 
-  test("carries every glyph the loader renders, and no more", () => {
-    // 박 상 현 S E A N P R K, plus .notdef and the space.
-    expect(tables().glyphs).toBe(12);
+  test("carries the jamo the assembly is built from", () => {
+    // The animation assembles each block from its parts, so the nine jamo have
+    // to survive the subset alongside the syllables they compose into. Losing
+    // them is the failure that would leave the loader assembling nothing.
+    const { cmap } = tables();
+    for (const char of "박상현SEANPRKㅂㅏㄱㅅㅇㅎㅕㄴ") {
+      expect(cmap).toContain(char.codePointAt(0));
+    }
   });
 
   test("stays small enough to block first paint on", () => {

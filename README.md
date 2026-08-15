@@ -61,24 +61,37 @@ directory first, so dropping a family leaves nothing behind.
 
 ## Loader
 
-`src/loader/` is the loading animation: 박상현 is uncovered by a wipe and gains
-weight as the load progresses, then hands off to **SEAN PARK**. 2.6s, looping.
-A counter runs 000 → 100 beneath it.
+`src/loader/` is the loading animation, and the mechanic is the point.
 
-**The weight axis is the idea, not an effect.** Both names are real text in a
-subset of Pretendard Variable, animated along `wght`: the Hangul sits in the
-thin end of the axis and the Latin lands at 930 exactly as the counter reaches
-100, so the letterforms and the number are two readings of one signal.
+```
+ㅂㅏㄱ  ㅅㅏㅇ  ㅎㅕㄴ    nine parts, arriving
+박  상  현              three blocks, assembled
+SEAN PARK              the name he goes by
+```
 
-Eleven glyphs and a space subset to **2.8 KB** of woff2 — smaller than the SVG
-path data it replaced, and it buys selectable text and a real
-`role="progressbar"` instead of a wall of `<path>` elements. It inherits
-`currentColor`, so it takes the page's theme rather than carrying its own.
+Hangul is an assembly system: a syllable is not a busy-looking character, it
+is a **square built from jamo placed in fixed regions of it**. 박 is ㅂ over ㄱ
+with ㅏ down the right-hand side. Loading is assembly — so the loader builds
+the name the way the writing system builds it, rather than sliding some
+letters around. The parts fly in along the axis their role occupies, the
+bottom tier of each block locking before the tier above it, and only once a
+block is complete does it snap into the syllable itself.
 
-Three techniques carry the motion, all of which separate a directed preloader
-from a defaulted one: a **mask wipe** rather than a fade, so the letters are
-uncovered rather than faded up; a **counter** as the one honest indicator; and
-a **held beat** on each state, because a preloader has to be legible twice over.
+That is also why it cannot be a stock preloader wearing someone's name: this
+animation is specific to *this* name in *this* script, and would have to be
+rebuilt from scratch for any other.
+
+Everything is real text in a 3.6 KB subset of Pretendard Variable, animated
+along its `wght` axis: the parts arrive hairline and gain weight as they lock,
+landing at 930 exactly as the counter reaches 100, so the letterforms and the
+number are two readings of one signal. `src/loader/layout.ts` holds the cell
+table — the regions of the square each role occupies — which is the part worth
+reading if the block proportions ever look wrong.
+
+The assembly is drawn in SVG rather than HTML because an SVG `<text>` at
+font-size 1 with its origin at (0, 0) puts its ink exactly where the font says
+it is, so a jamo can be fitted to a cell arithmetically. The same placement in
+HTML would depend on line-height and half-leading.
 
 ```sh
 npm run storybook
@@ -90,15 +103,17 @@ The animation is a pure function of normalised time — `apply(t)` derives every
 visual property and nothing else touches them — so `npm run film` seeks frame
 by frame through `window.__loader` rather than waiting on wall-clock time. The
 strip is exact and reproducible, which is what makes the motion iterable rather
-than guessable; it is what caught the counter stalling at 100 for the last
-quarter of the run, and a lone S sitting in an empty frame while the rest of
-the word queued up behind it. Frames land in `shots/loader/` (gitignored).
+than guessable. It is what caught the counter stalling at 100 for the last
+quarter of the run, a lone S sitting in an empty frame while the rest of the
+word queued behind it, SEAN PARK losing its word space, and the composed
+syllables ghosting over their own parts. Frames land in `shots/loader/`
+(gitignored).
 
 `npm run build:loader` re-subsets the font from Pretendard Variable (OFL),
-pinned as a devDependency. Needs `python3 -m pip install fonttools brotli`. The
-output goes to `public/loader/` and **not** `public/fonts/` — `fetch-fonts.py`
-rebuilds that directory and unlinks every woff2 it finds, which would take this
-one with it.
+pinned as a devDependency, and re-emits `metrics.ts` — the ink boxes the cell
+fitting needs. Needs `python3 -m pip install fonttools brotli`. Output goes to
+`public/loader/` and **not** `public/fonts/`: `fetch-fonts.py` rebuilds that
+directory and unlinks every woff2 it finds, which would take this one with it.
 
 Stories: `Frame` (seek one moment), `Playing`, `OnLight`, `Small`.
 `prefers-reduced-motion: reduce` draws the resolved state once and never starts
