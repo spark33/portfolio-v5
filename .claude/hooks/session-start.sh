@@ -15,6 +15,11 @@ fi
 
 cd "$CLAUDE_PROJECT_DIR"
 
+# Cloud sessions ship Chromium at /opt/pw-browsers, and `playwright install`
+# cannot reach its CDN from here, so stop the postinstall from trying. The
+# executable is selected explicitly in playwright.config.ts.
+export PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1
+
 echo "[session-start] installing project dependencies"
 npm install --no-audit --no-fund
 

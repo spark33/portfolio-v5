@@ -12,6 +12,14 @@ export interface SceneHandle {
  */
 export function createScene(canvas: HTMLCanvasElement): SceneHandle {
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const darkScheme = window.matchMedia("(prefers-color-scheme: dark)");
+
+  // The canvas covers the viewport, so it has to clear to the page's own
+  // background or the type loses its contrast in whichever theme it does not
+  // match. Reading the computed value keeps the scene tied to the CSS tokens.
+  function pageBackground() {
+    return new THREE.Color(getComputedStyle(document.body).backgroundColor);
+  }
 
   const renderer = new THREE.WebGLRenderer({
     canvas,
@@ -21,7 +29,14 @@ export function createScene(canvas: HTMLCanvasElement): SceneHandle {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
 
   const scene = new THREE.Scene();
-  scene.fog = new THREE.FogExp2(0x0a0a0f, 0.11);
+  const fog = new THREE.FogExp2(pageBackground().getHex(), 0.11);
+  scene.fog = fog;
+
+  function syncTheme() {
+    const background = pageBackground();
+    renderer.setClearColor(background);
+    fog.color.copy(background);
+  }
 
   const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
   camera.position.set(0, 0, 6);
@@ -88,27 +103,30 @@ export function createScene(canvas: HTMLCanvasElement): SceneHandle {
     if (!reducedMotion.matches) {
       mesh.rotation.x += delta * 0.15;
       mesh.rotation.y += delta * 0.25;
-    }
 
-    pointer.lerp(pointerTarget, 1 - Math.exp(-6 * delta));
-    camera.position.x = pointer.x * 0.6;
-    camera.position.y = -pointer.y * 0.4;
-    camera.lookAt(scene.position);
+      pointer.lerp(pointerTarget, 1 - Math.exp(-6 * delta));
+      camera.position.x = pointer.x * 0.6;
+      camera.position.y = -pointer.y * 0.4;
+      camera.lookAt(scene.position);
+    }
 
     renderer.render(scene, camera);
   }
 
   resize();
+  syncTheme();
   tick();
 
   window.addEventListener("resize", resize);
   window.addEventListener("pointermove", onPointerMove);
+  darkScheme.addEventListener("change", syncTheme);
 
   return {
     dispose() {
       cancelAnimationFrame(frameId);
       window.removeEventListener("resize", resize);
       window.removeEventListener("pointermove", onPointerMove);
+      darkScheme.removeEventListener("change", syncTheme);
 
       geometry.dispose();
       material.dispose();
