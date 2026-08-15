@@ -14,6 +14,10 @@ Official Mobbin MCP server (`https://api.mobbin.com/mcp`, streamable HTTP, OAuth
 searchable library of real app screens, flows, and UI patterns. Tools:
 `search_screens`, `search_flows`, `search_sections`.
 
+> **Requires a paid Mobbin plan.** As of August 2026 every tool call on a free account
+> returns `Mobbin MCP requires a paid plan`, authenticated or not. The setup below is
+> still correct; it just yields nothing without a subscription.
+
 **On the web: a claude.ai custom connector.** Add it under Settings → Connectors → Add
 custom connector with URL `https://api.mobbin.com/mcp`, then authorize it.
 
