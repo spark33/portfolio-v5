@@ -61,14 +61,24 @@ directory first, so dropping a family leaves nothing behind.
 
 ## Loader
 
-`src/loader/` is the loading animation: 박상현 rises in, then hands off to
-**Sean Park**, in 1.15s. A hairline rule under the type carries the actual
-progress — the name resolving above it is decoration.
+`src/loader/` is the loading animation: 박상현 is uncovered by a wipe, holds,
+then hands off to **SEAN PARK**, in 2.6s. A counter runs 000 → 100 beneath it.
+
+The two names are set in two weights of one family — the Hangul in Light and
+widely tracked, the Latin in Black and tight. Same letterforms underneath, so
+the swap cannot read as a change of typeface, only of voice: the name on the
+family register, then the name he goes by.
 
 It is inline SVG paths and transforms. No webfont, no canvas, no WebGL, no
-geometry: 5.4 KB of committed path data and nothing to fetch before it can
+geometry: 4.3 KB of committed path data and nothing to fetch before it can
 start. It inherits `currentColor`, so it takes the page's theme rather than
-carrying its own.
+carrying its own, and the counter is real DOM text in the site's mono.
+
+Three techniques carry it, all of which separate a directed preloader from a
+defaulted one: a **mask wipe** rather than a fade, so the letters are uncovered
+rather than faded up; a **counter** as the one honest indicator, with the name
+resolving above it as decoration; and a **held beat** on each state, because a
+preloader has to be legible twice over.
 
 **The animation is a pure function of normalised time.** `apply(t)` derives
 every visual property and nothing else touches them, so seeking and playing

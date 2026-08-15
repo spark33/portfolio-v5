@@ -23,7 +23,7 @@ const COUNT = Number(process.argv[2] ?? 12);
 const GROUND = process.argv[3] ?? "dark";
 const OUT = "shots/loader";
 
-const FRAME = { width: 520, height: 260 };
+const FRAME = { width: 560, height: 300 };
 const COLS = 4;
 const EXECUTABLE = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
 

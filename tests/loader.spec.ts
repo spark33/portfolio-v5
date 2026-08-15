@@ -12,9 +12,9 @@ import { HANGUL, LATIN, VIEW } from "../src/loader/glyphs.ts";
 test.describe("loader glyphs", () => {
   test("both runs are present and complete", () => {
     expect(HANGUL.glyphs.map((g) => g.char).join("")).toBe("박상현");
-    // The space carries no outline, so it is not a glyph — "Sean Park" is
+    // The space carries no outline, so it is not a glyph — "SEAN PARK" is
     // eight drawn shapes.
-    expect(LATIN.glyphs.map((g) => g.char).join("")).toBe("SeanPark");
+    expect(LATIN.glyphs.map((g) => g.char).join("")).toBe("SEANPARK");
   });
 
   test("every glyph has real path data", () => {

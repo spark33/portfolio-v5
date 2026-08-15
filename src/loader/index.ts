@@ -14,8 +14,15 @@ import type { Run } from "./glyphs.ts";
  * screenshot a filmstrip and iterate on the motion instead of guessing at it.
  */
 
-/** Total duration in milliseconds. A loader that outstays this is a wait. */
-export const DURATION = 1150;
+/**
+ * Total duration in milliseconds.
+ *
+ * The first cut ran at 1150ms and read as a flicker — the eye registered that
+ * something had changed without ever reading either name. A preloader has to
+ * be legible twice over, which needs a real hold on each state; the rest of
+ * the budget goes to the handoff.
+ */
+export const DURATION = 2600;
 
 /** How far a glyph travels vertically as it enters or leaves, in viewBox units. */
 const RISE = 34;
@@ -39,18 +46,28 @@ const DRIFT = { out: -9, in: 11 };
  * neither. The handoff wants to be a brief pass, not a dissolve.
  */
 const T = {
-  enterFrom: 0,
-  enterSpan: 0.26,
+  enterFrom: 0.03,
+  enterSpan: 0.2,
   enterStagger: 0.05,
 
-  exitFrom: 0.36,
-  exitSpan: 0.17,
-  exitStagger: 0.028,
+  exitFrom: 0.44,
+  exitSpan: 0.12,
+  exitStagger: 0.02,
 
-  arriveFrom: 0.5,
-  arriveSpan: 0.34,
-  arriveStagger: 0.026,
+  arriveFrom: 0.52,
+  arriveSpan: 0.26,
+  arriveStagger: 0.022,
 } as const;
+
+/**
+ * The wipe that reveals each run.
+ *
+ * A mask edge travelling across the type, rather than opacity alone. It is the
+ * technique that separates a preloader that looks directed from one that looks
+ * defaulted: the letters are already there and something uncovers them, which
+ * is a different event from them fading up out of nothing.
+ */
+const WIPE = { enterSpan: 0.28, exitSpan: 0.15 };
 
 /** CSS-style cubic bézier, solved for y given x. */
 function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
@@ -81,8 +98,18 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
 const enterEase = cubicBezier(0.16, 1, 0.3, 1);
 /** Leaving: accelerates away, so the exit reads as decisive rather than sad. */
 const exitEase = cubicBezier(0.55, 0, 0.85, 0.3);
-/** The rule under the type, which is the part that actually says "loading". */
-const ruleEase = cubicBezier(0.4, 0, 0.15, 1);
+/**
+ * The counter.
+ *
+ * Not linear — a real load never is — but it has to *finish*. An earlier curve
+ * reached 100 at 0.91 and then sat there for the last quarter of the run,
+ * which reads as the animation having stalled with the number stuck. This one
+ * moves steadily, hesitates in the last fifth the way a real one does, and
+ * lands on 100 at the end rather than before it.
+ */
+const ruleEase = cubicBezier(0.22, 0.55, 0.3, 1);
+/** The wipe edge. Slower out of the gate than the glyphs, so it leads them. */
+const wipeEase = cubicBezier(0.33, 0.9, 0.2, 1);
 
 /** Normalised progress of one staggered item within a window. */
 function phase(t: number, from: number, span: number, stagger: number, index: number): number {
@@ -158,10 +185,31 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   clip.append(el("rect", { x: -20, y: VIEW.top - 4, width: width + 40, height: VIEW.height + 4 }));
   svg.append(clip);
 
+  // Each run also gets its own wipe rect, nested inside the shared band. The
+  // band stops a travelling glyph spilling above or below the type area; the
+  // wipe is what uncovers the run left to right.
+  const uid = clipId.slice(-6);
+  const wipes: Record<"hangul" | "latin", SVGRectElement> = {
+    hangul: el("rect", { y: VIEW.top - 8, height: VIEW.height + 16 }),
+    latin: el("rect", { y: VIEW.top - 8, height: VIEW.height + 16 }),
+  };
+
   const clipped = el("g", { "clip-path": `url(#${clipId})` });
   const hangul = buildRun(HANGUL, width);
   const latin = buildRun(LATIN, width);
-  clipped.append(hangul.group, latin.group);
+
+  for (const [key, run] of [
+    ["hangul", hangul],
+    ["latin", latin],
+  ] as const) {
+    const wipeClip = el("clipPath", { id: `${key}-wipe-${uid}` });
+    wipeClip.append(wipes[key]);
+    svg.append(wipeClip);
+    const wrapper = el("g", { "clip-path": `url(#${key}-wipe-${uid})` });
+    wrapper.append(run.group);
+    clipped.append(wrapper);
+  }
+
   svg.append(clipped);
 
   // The rule. A loader needs one honest indicator of progress, and this is it —
@@ -181,7 +229,31 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   const rule = el("rect", { x: ruleX, y: ruleY, width: ruleWidth, height: 1.5 });
   svg.append(rule);
 
-  root.append(svg);
+  // --- The meter -----------------------------------------------------------
+  // A counter and a rule, in real DOM rather than in the SVG: it is the one
+  // part of this that carries information, so it is real text in the site's
+  // mono, selectable and readable, and it inherits the page's colour.
+  const meter = document.createElement("div");
+  meter.style.cssText =
+    "display:flex;align-items:center;gap:.9rem;margin-top:1.4rem;" +
+    'font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:.7rem;' +
+    "letter-spacing:.14em;font-variant-numeric:tabular-nums";
+
+  const track = document.createElement("div");
+  track.style.cssText = "flex:1;height:1px;background:currentColor;opacity:.18";
+  const fill = document.createElement("div");
+  fill.style.cssText = "height:1px;background:currentColor;transform-origin:left";
+  track.append(fill);
+
+  const percent = document.createElement("span");
+  percent.style.cssText = "opacity:.62;min-width:3ch;text-align:right";
+
+  meter.append(track, percent);
+
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "width:100%";
+  wrap.append(svg, meter);
+  root.append(wrap);
 
   /**
    * Renders the frame at normalised time `t`.
@@ -211,7 +283,29 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
       glyph.setAttribute("opacity", arrived.toFixed(3));
     });
 
-    rule.setAttribute("width", (ruleWidth * ruleEase(t)).toFixed(2));
+    // The wipes lead the glyphs: the edge has already passed by the time a
+    // letter finishes rising, so the reveal reads as uncovering rather than as
+    // two effects running at once.
+    const enterWipe = wipeEase(phase(t, T.enterFrom, WIPE.enterSpan, 0, 0));
+    const exitWipe = wipeEase(phase(t, T.exitFrom, WIPE.exitSpan, 0, 0));
+    const arriveWipe = wipeEase(phase(t, T.arriveFrom, WIPE.enterSpan, 0, 0));
+
+    // The Hangul is uncovered from the left, then covered again from the left,
+    // so the wipe carries straight on in one direction across the whole run.
+    const hangulLeft = ruleX - 12 + (ruleWidth + 24) * exitWipe;
+    wipes.hangul.setAttribute("x", hangulLeft.toFixed(2));
+    wipes.hangul.setAttribute(
+      "width",
+      Math.max(0, ruleX - 12 + (ruleWidth + 24) * enterWipe - hangulLeft).toFixed(2),
+    );
+
+    wipes.latin.setAttribute("x", (-20).toFixed(2));
+    wipes.latin.setAttribute("width", ((width + 40) * arriveWipe).toFixed(2));
+
+    const progress = ruleEase(t);
+    rule.setAttribute("width", (ruleWidth * progress).toFixed(2));
+    fill.style.width = `${(progress * 100).toFixed(2)}%`;
+    percent.textContent = String(Math.round(progress * 100)).padStart(3, "0");
   }
 
   let frameId = 0;
@@ -268,7 +362,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     stop,
     dispose() {
       stop();
-      svg.remove();
+      wrap.remove();
     },
     duration: DURATION,
   };
