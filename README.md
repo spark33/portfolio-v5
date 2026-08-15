@@ -27,6 +27,19 @@ The scene clamps device pixel ratio to 2 and honours
 
 ## Design references
 
-Mobbin and a Dribbble/Behance/Awwwards search server are wired up as MCP servers
-for pulling UI references while building. Setup, required API keys, and sandbox
-caveats: [`docs/design-inspiration.md`](docs/design-inspiration.md).
+Mobbin and a Dribbble/Behance/Awwwards search server are wired up as MCP servers for
+pulling UI references while building. Where each is configured differs between local
+Claude Code and Claude Code on the web — setup, API keys, and the SessionStart hook
+are covered in [`docs/design-inspiration.md`](docs/design-inspiration.md).
+
+For local use, Mobbin is user-scoped rather than committed:
+
+```sh
+claude mcp add mobbin --scope user --transport http https://api.mobbin.com/mcp
+```
+
+## Web sessions
+
+`.claude/hooks/session-start.sh` runs on session start in remote containers only. It
+installs project dependencies and, when `SERPER_API_KEY` is present, builds the
+design-inspiration MCP server. It no-ops on local machines.
