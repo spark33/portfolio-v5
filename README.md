@@ -16,6 +16,9 @@ npm run preview    # serve the production build
 | `src/main.ts`        | Entry point; boots the scene, disposes it on HMR          |
 | `src/scene.ts`       | WebGL scene, render loop, and teardown                    |
 | `src/style.css`      | Page chrome layered over the canvas                       |
+| `specimen/`          | Type specimen page, served at `/specimen/`                |
+| `src/specimen.css`   | The three typographic treatments; all type lives in CSS   |
+| `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
 | `.mcp.json`          | Design-reference MCP servers                              |
 
 `createScene(canvas)` returns a handle with `dispose()`, which cancels the render
@@ -30,6 +33,26 @@ The scene clamps device pixel ratio to 2 and honours
 [`docs/concept.md`](docs/concept.md) is the design brief: site architecture, the
 interactive-figure system, content model, and performance budget. Written before
 implementation; the starter scene in `src/scene.ts` predates it.
+
+## Type specimen
+
+`npm run dev`, then open <http://localhost:5173/specimen/>. It renders the case-study
+template from the design brief under three typographic treatments, so they can be
+compared on real content rather than on lorem ipsum.
+
+| Treatment | Faces                         | Register                         |
+| --------- | ----------------------------- | -------------------------------- |
+| Swiss     | Inter Tight + Inter           | Neutral, tight, product-adjacent |
+| Editorial | Newsreader                    | Long-form, magazine              |
+| Technical | IBM Plex Sans + IBM Plex Mono | Engineering documentation        |
+
+Controls across the top change treatment, theme, body size, and measure, and the
+choice persists across reloads. `1` `2` `3` switch treatment, `g` overlays the
+twelve-column grid, `r` hides the chrome for an undistracted read.
+
+Fonts are self-hosted latin-subset woff2 under `public/fonts/` (SIL Open Font
+License). Re-run `python3 scripts/fetch-fonts.py` from the repository root to change
+the set.
 
 ## Design references
 

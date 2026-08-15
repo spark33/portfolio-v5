@@ -8,5 +8,12 @@ export default defineConfig({
   build: {
     target: "es2022",
     sourcemap: true,
+    rollupOptions: {
+      // Relative to the project root; keeps the specimen out of the main entry.
+      input: {
+        main: "index.html",
+        specimen: "specimen/index.html",
+      },
+    },
   },
 });
