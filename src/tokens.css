@@ -1,0 +1,94 @@
+/* Design tokens. The one place a value is decided.
+
+   Colour: an archival-board ground rather than the cream that a display
+   serif usually sits on, and deliberately not a cool blue-grey — FactChat's
+   own palette is blue-grey, and the site must not wear its employer's
+   colours. One accent, cinnabar, the colour of the paste in a Korean
+   official seal. It appears in three places on the whole site: the lossy
+   step of the name, the COST field of every decision, and the current page
+   marker. Nowhere else.
+
+   Type: Schibsted Grotesk is a metric twin of Pretendard — cap 703 vs 707,
+   x-height 527 vs 530, an identical 0.750 x/cap ratio — so Korean and Latin
+   share a baseline untouched. IBM Plex Mono carries the machine voice.
+
+   Scale: the display step is set from a measurement of Adcker (Awwwards
+   SOTD, May 2026), whose hero cap height is 15.6% of viewport height. Ours
+   is a little past that, and it is meant to crop. */
+
+:root {
+  color-scheme: light;
+
+  /* ---- colour ---------------------------------------------------------- */
+  --paper: #e9e9e3;
+  --paper-recessed: #deded7;
+  --rule: #c4c4ba;
+  --ink: #1a1a16;
+  --ink-secondary: #5c5c55;
+  --seal: #b4372b;
+
+  /* ---- family ---------------------------------------------------------- */
+  --font-display: "Schibsted Grotesk", "Pretendard", system-ui, sans-serif;
+  --font-text: "Schibsted Grotesk", "Pretendard", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+
+  /* ---- size ------------------------------------------------------------ */
+  --size-display-xl: clamp(3.5rem, 15.5vw, 15rem);
+  --size-display-l: clamp(2.5rem, 8.6vw, 9rem);
+  --size-display-m: clamp(1.9rem, 4.5vw, 4rem);
+  --size-display-s: clamp(1.4rem, 2.6vw, 2.25rem);
+  --size-lede: clamp(1.15rem, 1.5vw, 1.5rem);
+  --size-body: 1.125rem;
+  --size-small: 0.9688rem;
+  --size-label: 0.6875rem;
+  --size-micro: 0.625rem;
+
+  /* ---- leading: tightens as the type grows ----------------------------- */
+  --leading-display-xl: 0.88;
+  --leading-display-l: 0.94;
+  --leading-display-m: 1.02;
+  --leading-lede: 1.35;
+  --leading-body: 1.6;
+  --leading-tight: 1.2;
+
+  /* ---- tracking: tightens as the type grows, opens for mono caps ------- */
+  --track-display-xl: -0.035em;
+  --track-display-l: -0.028em;
+  --track-display-m: -0.018em;
+  --track-lede: -0.005em;
+  --track-body: 0;
+  --track-label: 0.14em;
+  --track-micro: 0.16em;
+  /* Hangul syllable blocks already carry their own internal space. */
+  --track-korean: -0.01em;
+
+  /* ---- space ----------------------------------------------------------- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+  --space-9: 7rem;
+  --space-10: 10rem;
+
+  /* ---- measure and page ------------------------------------------------ */
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --page-max: 90rem;
+  --measure: 34rem;
+
+  /* ---- motion: authored, with overshoot and settle --------------------- */
+  --ease-resolve: cubic-bezier(0.22, 1.12, 0.28, 1);
+  --ease-exit: cubic-bezier(0.62, 0.02, 0.34, 1);
+  --dur-state: 120ms;
+  --dur-reveal: 620ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-state: 1ms;
+    --dur-reveal: 1ms;
+  }
+}

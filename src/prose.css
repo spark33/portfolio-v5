@@ -1,0 +1,79 @@
+/* Long-form body copy: blog posts and anything markdown produces.
+   Measure is capped so the line length stays readable regardless of viewport. */
+
+.prose {
+  max-width: 52rem;
+}
+
+.prose > * {
+  max-width: var(--measure);
+}
+
+.prose > p + p,
+.prose > ul,
+.prose > ol,
+.prose > blockquote,
+.prose > pre,
+.prose > figure {
+  margin-top: var(--space-5);
+}
+
+.prose h2,
+.prose h3 {
+  margin-top: var(--space-7);
+  margin-bottom: var(--space-4);
+}
+
+.prose h2 {
+  font-size: var(--size-display-s);
+  line-height: 1.15;
+  letter-spacing: -0.012em;
+}
+
+.prose h3 {
+  font-size: 1.25rem;
+  line-height: 1.25;
+}
+
+.prose ul,
+.prose ol {
+  padding-left: 1.3em;
+}
+
+.prose li + li {
+  margin-top: var(--space-2);
+}
+
+.prose blockquote {
+  border-left: 2px solid var(--rule);
+  padding-left: var(--space-4);
+  color: var(--ink-secondary);
+}
+
+.prose code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--paper-recessed);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+}
+
+.prose pre {
+  background: var(--paper-recessed);
+  padding: var(--space-4);
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.prose pre code {
+  background: none;
+  padding: 0;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+}
+
+.prose hr {
+  border: 0;
+  border-top: 1px solid var(--rule);
+  margin-block: var(--space-7);
+}

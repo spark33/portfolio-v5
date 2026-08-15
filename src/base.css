@@ -1,0 +1,315 @@
+@import "./tokens.css";
+@import "./fonts.css";
+
+/* Reset ------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  /* The hero name is meant to run past the viewport edge. Clip it there
+     rather than letting it open a horizontal scrollbar. */
+  overflow-x: clip;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: var(--leading-body);
+  letter-spacing: var(--track-body);
+  font-synthesis-weight: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+img,
+svg,
+canvas {
+  display: block;
+  max-width: 100%;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+}
+
+/* Type primitives -------------------------------------------------------- */
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+:lang(ko),
+.ko {
+  font-family: "Pretendard", var(--font-text);
+  letter-spacing: var(--track-korean);
+}
+
+.display-xl {
+  font-size: var(--size-display-xl);
+  line-height: var(--leading-display-xl);
+  letter-spacing: var(--track-display-xl);
+  font-weight: 700;
+}
+
+.display-l {
+  font-size: var(--size-display-l);
+  line-height: var(--leading-display-l);
+  letter-spacing: var(--track-display-l);
+  font-weight: 600;
+}
+
+.display-m {
+  font-size: var(--size-display-m);
+  line-height: var(--leading-display-m);
+  letter-spacing: var(--track-display-m);
+  font-weight: 600;
+}
+
+.display-s {
+  font-size: var(--size-display-s);
+  line-height: 1.1;
+  letter-spacing: -0.012em;
+  font-weight: 600;
+}
+
+.lede {
+  font-size: var(--size-lede);
+  line-height: var(--leading-lede);
+  letter-spacing: var(--track-lede);
+  text-wrap: pretty;
+}
+
+/* The machine voice: field names, metrics, step names. */
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.micro {
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  line-height: var(--leading-tight);
+  letter-spacing: var(--track-micro);
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+
+.measure {
+  max-width: var(--measure);
+  text-wrap: pretty;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--paper-recessed);
+  padding: 0.1em 0.35em;
+  border-radius: 2px;
+}
+
+/* A number that is not known yet. Visible, never invented. */
+.pending {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  color: var(--ink-secondary);
+  border: 1px dashed var(--rule);
+  border-radius: 2px;
+  padding: 0.1em 0.45em;
+  white-space: nowrap;
+}
+
+.pending::before {
+  content: "not yet measured";
+}
+
+/* Strips ------------------------------------------------------------------
+
+   The site's one repeating layout primitive: a row of labelled fields. It
+   carries the name's four encodings, a project's role and period, and the
+   three parts of every decision. The name and the work get the same
+   treatment on purpose — that repetition is the argument. */
+
+.strip {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: var(--space-5);
+  margin: 0;
+}
+
+.strip-cell > dt {
+  margin-bottom: var(--space-2);
+}
+
+/* No tabular figures here. The feature also widens the comma and full stop to
+   figure width in Schibsted Grotesk, which turned "Product, design, delivery"
+   into "Product , design , delivery". Tabular numerals are for columns of
+   digits that have to align; they are applied where that is true and nowhere
+   else. */
+.strip-value {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* Links and focus -------------------------------------------------------- */
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: var(--rule);
+  transition: text-decoration-color var(--dur-state) var(--ease-exit);
+}
+
+a:hover {
+  text-decoration-color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 3px;
+  border-radius: 1px;
+}
+
+.skip {
+  position: absolute;
+  left: var(--gutter);
+  top: 0;
+  padding: var(--space-3) var(--space-4);
+  background: var(--ink);
+  color: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  transform: translateY(-120%);
+  z-index: 10;
+}
+
+.skip:focus-visible {
+  transform: translateY(0);
+}
+
+/* Page frame ------------------------------------------------------------- */
+
+.page {
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.site-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-block: var(--space-5);
+}
+
+.wordmark {
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4) var(--space-5);
+}
+
+.site-nav a {
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ink-secondary);
+  transition: color var(--dur-state) var(--ease-exit);
+}
+
+.site-nav a:hover {
+  color: var(--ink);
+}
+
+.site-nav a[aria-current="page"] {
+  color: var(--ink);
+}
+
+/* The third and last use of the accent. */
+.site-nav a[aria-current="page"]::before {
+  content: "";
+  display: inline-block;
+  width: 0.4em;
+  height: 0.4em;
+  margin-right: 0.55em;
+  vertical-align: 0.1em;
+  background: var(--seal);
+}
+
+/* Side by side, the wordmark and five nav items each wrapped into two lines
+   and tangled. Below this width they stack cleanly instead. */
+@media (max-width: 34rem) {
+  .site-head {
+    display: grid;
+    gap: var(--space-4);
+    padding-block: var(--space-4) var(--space-5);
+  }
+
+  .site-nav {
+    gap: var(--space-3) var(--space-4);
+  }
+}
+
+.site-foot {
+  border-top: 1px solid var(--rule);
+  margin-top: var(--space-8);
+  padding-block: var(--space-6) var(--space-8);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-5) var(--space-7);
+  justify-content: space-between;
+  align-items: end;
+}
+
+.site-foot a {
+  text-decoration-color: var(--ink-secondary);
+}

@@ -1,43 +1,64 @@
 /**
- * Regenerates page screenshots into shots/ (gitignored).
+ * Renders every page at the three widths the site is judged at and writes
+ * them to shots/. Run against a preview server:
  *
- * Uses the same Chromium resolution as playwright.config.ts, and expects a
- * preview server on :4173 — start one with `npm run preview -- --port 4173`.
+ *     npm run build && npm run preview &
+ *     npm run shots
+ *
+ * BASE overrides the origin; CHROME overrides the browser binary, which the
+ * cloud environment needs because its Playwright browsers are pinned to a
+ * different build than the npm package expects.
  */
-import { existsSync, mkdirSync } from "node:fs";
-import { chromium } from "@playwright/test";
+import { mkdirSync, rmSync } from "node:fs";
+import pkg from "@playwright/test";
 
-const BASE = process.env.BASE_URL ?? "http://localhost:4173";
+const { chromium } = pkg;
+
+const BASE = process.env.BASE ?? "http://localhost:4173";
 const OUT = "shots";
-const THEMES = ["light", "dark"];
+
 const PAGES = [
-  { name: "home", path: "/" },
-  { name: "blog", path: "/blog/" },
-  { name: "post", path: "/blog/cutting-transcript-latency/" },
+  ["home", "/"],
+  ["work-1", "/work/inherited-mental-model/"],
+  ["work-2", "/work/two-concepts-one-product/"],
+  ["work-3", "/work/no-reason-to-return/"],
+  ["logician-ui", "/logician-ui/"],
+  ["harness", "/harness/"],
+  ["about", "/about/"],
+  ["writing", "/blog/"],
 ];
 
-const bundled = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
-const executablePath = existsSync(bundled) ? bundled : undefined;
+const WIDTHS = [
+  ["1440", 1440, 900],
+  ["768", 768, 1024],
+  ["390", 390, 844],
+];
 
+rmSync(OUT, { recursive: true, force: true });
 mkdirSync(OUT, { recursive: true });
-const browser = await chromium.launch({ executablePath });
 
-for (const theme of THEMES) {
-  for (const { name, path } of PAGES) {
-    const page = await browser.newPage({
-      viewport: { width: 1280, height: 1000 },
-      deviceScaleFactor: 2,
-      colorScheme: theme,
-    });
+const browser = await chromium.launch({
+  executablePath: process.env.CHROME || undefined,
+});
 
-    await page.goto(`${BASE}${path}`, { waitUntil: "networkidle" });
+for (const [label, width, height] of WIDTHS) {
+  const context = await browser.newContext({
+    viewport: { width, height },
+    deviceScaleFactor: 2,
+  });
+
+  for (const [name, path] of PAGES) {
+    const page = await context.newPage();
+    await page.goto(BASE + path, { waitUntil: "networkidle" });
     await page.evaluate(() => document.fonts.ready);
-
-    const file = `${OUT}/${theme}-${name}.png`;
-    await page.screenshot({ path: file });
-    console.log(file);
+    // Let the first-visit sequence finish so the shot is the settled state.
+    await page.waitForTimeout(1600);
+    await page.screenshot({ path: `${OUT}/${name}-${label}.png`, fullPage: true });
     await page.close();
   }
+
+  await context.close();
 }
 
 await browser.close();
+console.log(`${PAGES.length * WIDTHS.length} shots → ${OUT}/`);

@@ -44,9 +44,9 @@ test.describe("blog", () => {
     const family = await page
       .locator("h1")
       .evaluate((el) => getComputedStyle(el).fontFamily);
-    expect(family).toContain("Newsreader");
+    expect(family).toContain("Schibsted Grotesk");
 
-    await page.getByRole("link", { name: "All notes" }).click();
+    await page.getByRole("link", { name: "All writing" }).click();
     await expect(page).toHaveURL(/\/blog\/$/);
   });
 

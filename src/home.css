@@ -1,0 +1,180 @@
+@import "./base.css";
+@import "./index-rows.css";
+
+/* The name sequence -------------------------------------------------------
+
+   Four encodings of one name. Each row is set at whatever size makes it
+   occupy the same optical width as the others, so the thing that visibly
+   changes down the column is the encoding rather than the person. The sizes
+   below are derived from the set widths of the four strings in Schibsted
+   Grotesk and Pretendard — they are not a scale, and they do not transpose
+   to other content.
+
+     박상현                3.0 em wide  →  largest
+     ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ   9.6 em wide  →  smallest
+     PARK SANGHYEON       8.8 em wide
+     Sean Park            4.6 em wide                                    */
+
+.name {
+  padding-block: var(--space-7) var(--space-8);
+}
+
+/* Armed by the inline script in the head, and only on a first visit with
+   motion allowed. Cleared by the module, or by the script's own failsafe. */
+html[data-seq="pending"] .name-step {
+  opacity: 0;
+}
+
+.name-steps {
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: clamp(var(--space-5), 3vw, var(--space-7));
+}
+
+/* Each row is its own container, so the sizes below are a share of the row's
+   own width and every encoding fills the measure exactly — at 390 and at
+   1440 alike, with no clamp to fall out of step. */
+.name-step {
+  container-type: inline-size;
+}
+
+.name-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.name-value {
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 0.86;
+  letter-spacing: -0.03em;
+  white-space: nowrap;
+  display: flex;
+  gap: 0.5em;
+}
+
+/* Korean and Latin need different leading here, and the floor is arithmetic
+   rather than taste.
+ *
+ * Pretendard declares ascent 0.952 and descent 0.241, so its content box is
+ * 1.193em, and the ink of 박상현 tops out at 0.789em above the baseline. Half
+ * leading is (L − 1.193) / 2, so ink clears the top of the line box only while
+ * L ≥ 0.867. An earlier pass set 0.78, which overflowed by 0.043em — about
+ * 23px at this size — and put 현 straight through the label above it.
+ *
+ * Schibsted's box is 1.235em against ink reaching 0.73em, so its floor is
+ * 0.741 and the Latin rows keep the tighter setting. */
+.name-step[data-step="0"] .name-value,
+.name-step[data-step="1"] .name-value {
+  line-height: 0.95;
+}
+
+.name-note {
+  color: var(--ink-secondary);
+  text-align: right;
+}
+
+/* Measured set widths at weight 700, in em:
+     박상현              2.503   →  100/2.503 = 39.9
+     ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ  8.238   →  100/8.238 = 12.1  (tight, plus two 0.5em gaps)
+     PARK SANGHYEON      8.958   →  100/8.958 = 11.2
+     Sean Park           4.702   →  100/4.702 = 21.3
+   Change a string and these must be re-measured; they are derived from the
+   glyphs, not from a modular scale. */
+.name-step[data-step="0"] .name-value {
+  font-size: 39.9cqw;
+}
+
+.name-step[data-step="1"] .name-value {
+  font-size: 12.1cqw;
+  letter-spacing: -0.06em;
+}
+
+.name-step[data-step="2"] .name-value {
+  font-size: 11.2cqw;
+}
+
+.name-step[data-step="3"] .name-value {
+  font-size: 21.3cqw;
+}
+
+/* The one step nothing produced. First of the accent's three uses. */
+.name-step[data-step="3"] .name-note {
+  color: var(--seal);
+}
+
+/* Thesis ------------------------------------------------------------------ */
+
+/* The role sat in a 9.5rem rail and broke "Head of product and delivery"
+   across four lines, which was the worst-set type on the page. It gets a
+   column wide enough to hold it in two. */
+.thesis {
+  display: grid;
+  grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
+  column-gap: clamp(var(--space-5), 5vw, var(--space-8));
+  row-gap: var(--space-6);
+  align-items: start;
+  padding-block: var(--space-7) var(--space-8);
+  border-top: 1px solid var(--rule);
+}
+
+.thesis-role > .display-s {
+  margin-block: var(--space-3) var(--space-2);
+  text-wrap: balance;
+}
+
+.thesis-role > p:last-child {
+  color: var(--ink-secondary);
+  font-size: var(--size-small);
+}
+
+.thesis-body {
+  max-width: 44rem;
+  font-size: clamp(1.2rem, 1.75vw, 1.7rem);
+}
+
+.position {
+  padding-block: var(--space-6) var(--space-8);
+  border-top: 1px solid var(--rule);
+}
+
+.position .strip-value {
+  font-family: var(--font-display);
+  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  /* Four figures read as one record, so here the digits do align. */
+  font-variant-numeric: tabular-nums;
+}
+
+/* Sections ---------------------------------------------------------------- */
+
+.section {
+  padding-block: var(--space-7) var(--space-8);
+}
+
+.section-label {
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 48rem) {
+  .name-step,
+  .thesis {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .name-label,
+  .name-value,
+  .name-note {
+    grid-column: 1;
+  }
+
+  .name-label {
+    padding-top: 0;
+  }
+}

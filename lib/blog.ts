@@ -10,6 +10,8 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import matter from "gray-matter";
 import MarkdownIt from "markdown-it";
+import { person } from "../content/site.ts";
+import { esc, personJsonLd, shell } from "./shell.ts";
 
 export const POSTS_DIR = "content/posts";
 export const OUT_DIR = "blog";
@@ -40,13 +42,7 @@ export interface Post {
   source: string;
 }
 
-function escapeHtml(value: unknown) {
-  return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
+const escapeHtml = esc;
 
 /** `2026-03-01-cutting-latency.md` and `cutting-latency.md` both slug the same. */
 function slugFromFilename(filename: string) {
@@ -119,40 +115,20 @@ interface LayoutOptions {
   title: string;
   description: string;
   body: string;
+  jsonLd?: Record<string, unknown>;
 }
 
 // No <link rel="canonical">: it needs an absolute origin to mean anything, and
 // Vite resolves link hrefs as build assets, which a directory URL is not.
-/** Site navigation. `current` underlines the section the reader is in. */
-function nav(current?: string) {
-  const notes =
-    current === "blog"
-      ? `<a href="/blog/" aria-current="page">Notes</a>`
-      : `<a href="/blog/">Notes</a>`;
-
-  return `    <header class="site-nav">
-      <a class="wordmark" href="/">Portfolio</a>
-      <nav aria-label="Primary">${notes}</nav>
-    </header>`;
-}
-
-function layout({ title, description, body }: LayoutOptions) {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>${escapeHtml(title)}</title>
-    <meta name="description" content="${escapeHtml(description)}" />
-    <link rel="stylesheet" href="/src/blog.css" />
-  </head>
-  <body>
-    <a class="skip" href="#main">Skip to content</a>
-${nav("blog")}
-${body}
-  </body>
-</html>
-`;
+function layout({ title, description, body, jsonLd }: LayoutOptions) {
+  return shell({
+    title,
+    description,
+    path: "/blog/",
+    stylesheet: "/src/blog.css",
+    body,
+    jsonLd,
+  });
 }
 
 function postMeta(post: Post) {
@@ -170,18 +146,26 @@ export function renderPost(post: Post) {
     : "";
 
   return layout({
-    title: `${post.title} — Notes`,
+    title: `${post.title} — Writing — ${person.nameEn}`,
     description: post.summary,
-    body: `    <main class="page" id="main">
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.title,
+      description: post.summary,
+      datePublished: post.date.iso,
+      author: personJsonLd(),
+    },
+    body: `    <main class="main page" id="main">
       <article class="prose">
         <header class="masthead">
           ${postMeta(post)}
-          <h1>${escapeHtml(post.title)}</h1>
+          <h1 class="display-m">${escapeHtml(post.title)}</h1>
           ${post.summary ? `<p class="lede">${escapeHtml(post.summary)}</p>` : ""}${tags}
         </header>
 ${post.html}
       </article>
-      <p class="back"><a href="/blog/">← All notes</a></p>
+      <p class="back"><a href="/blog/">← All writing</a></p>
     </main>`,
   });
 }
@@ -200,12 +184,25 @@ export function renderIndex(posts: Post[]) {
     : `        <li class="post-item"><p class="summary">No posts yet. Add a markdown file to <code>content/posts/</code>.</p></li>`;
 
   return layout({
-    title: "Notes",
-    description: "Writing on engineering, design, and whatever else is unfinished.",
-    body: `    <main class="page" id="main">
+    title: `Writing — ${person.nameEn}`,
+    description: "Notes on delivery, design systems, and working inside constraints.",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      name: `Writing — ${person.nameEn}`,
+      description: "Notes on delivery, design systems, and working inside constraints.",
+      author: personJsonLd(),
+      blogPost: posts.map((post) => ({
+        "@type": "BlogPosting",
+        headline: post.title,
+        datePublished: post.date.iso,
+        url: `/blog/${post.slug}/`,
+      })),
+    },
+    body: `    <main class="main page" id="main">
       <header class="prose">
-        <h1>Notes</h1>
-        <p class="lede">Writing on engineering, design, and whatever else is unfinished.</p>
+        <p class="label">Writing</p>
+        <h1 class="display-l">Notes on delivery, design systems, and working inside constraints.</h1>
       </header>
       <ul class="post-list">
 ${items}
