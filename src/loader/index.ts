@@ -177,8 +177,15 @@ const flowEase = cubicBezier(0.5, 0.02, 0.5, 0.98);
  */
 const shotEase = cubicBezier(0.22, 0.78, 0.24, 1);
 
-/** The counter, and with it the weight. Has to actually finish. */
-const progressEase = cubicBezier(0.22, 0.55, 0.3, 1);
+/**
+ * The counter.
+ *
+ * Has to actually finish, and has to not finish early. The old curve reached 92
+ * before the parts had even stopped arriving and then crawled the last eight
+ * over two seconds, which reads as a progress bar lying — the one thing a
+ * counter can do that is worse than not being there.
+ */
+const progressEase = cubicBezier(0.5, 0.1, 0.4, 1);
 
 function phase(t: number, from: number, span: number, stagger: number, index: number): number {
   const start = from + index * stagger;
@@ -482,8 +489,15 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   mask.append(forms, voids);
 
   /**
-   * The sheen: one band of full ink crossing a plane that is otherwise held
-   * back, travelling the width once over the run.
+   * The sheen: a soft band crossing a plane that is otherwise full ink,
+   * travelling the width once over the run.
+   *
+   * A dip rather than a highlight, which matters at the ends. Sweeping a
+   * *bright* band across a held-back plane means that once it has passed, the
+   * name sits at whatever the gradient's floor is forever — the resolved frame
+   * the whole piece builds to landed at 72% ink and read as washed out. This
+   * way full ink is the resting state and the band is something that happens
+   * to it.
    *
    * Every stop is `currentColor` and only the opacity varies, so the piece
    * still takes its colour entirely from the page and works on any ground.
@@ -499,9 +513,9 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     y2: 0,
   });
   for (const [offset, opacity] of [
-    [0, 0.72],
-    [0.5, 1],
-    [1, 0.72],
+    [0, 1],
+    [0.5, 0.72],
+    [1, 1],
   ]) {
     sheen.append(
       svgEl("stop", { offset, "stop-color": "currentColor", "stop-opacity": opacity }),

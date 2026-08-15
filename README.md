@@ -29,6 +29,7 @@ npm run storybook  # component workbench on http://localhost:6006
 | `plugins/blog.ts`    | Generates `blog/` and reloads it in dev                   |
 | `src/blog.css`       | Blog index and post styles                                |
 | `src/loader/`        | The loading animation; see [Loader](#loader)             |
+| `src/loader/gate.ts` | Mounts it as the home page's curtain and lifts it again   |
 | `scripts/build-loader.mjs` | Bakes and contour-matches its letterforms         |
 | `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
 | `.mcp.json`          | Design-reference MCP servers                              |
@@ -164,6 +165,24 @@ The assembly is drawn in SVG rather than HTML because an SVG glyph outline at
 font-size 1 with its origin at (0, 0) puts its ink exactly where the font says
 it is, so a jamo can be fitted to a cell arithmetically. The same placement in
 HTML would depend on line-height and half-leading.
+
+**It gates a real load.** `src/loader/gate.ts` mounts the sequence as a
+curtain over the home page and takes it away again. The curtain is in
+`index.html` rather than created by script, so it covers the page from first
+paint instead of flashing the content it introduces, and `src/main.ts` splits
+three.js into its own chunk — bundled together, the loading animation could not
+start until the thing it is covering for had finished downloading.
+
+Everything about the gate is the difference between an intro and an obstacle.
+It plays **once per session**, so a second visit or a back button lands on the
+page itself. Any click, key, scroll or touch **lifts it early**. Reduced motion
+**never sees it at all** — not a static frame; a full-screen panel held over
+the page for four seconds is worse than no animation. And it cannot get stuck:
+the element carries a CSS failsafe that removes it on a timer whatever happens,
+so a script error takes the animation down rather than the site. The whole
+curtain is `aria-hidden` and the counter is not exposed as progress, because it
+counts out an animation and not a download — dressing it up as the latter would
+be a lie told to exactly the people least able to check it.
 
 ```sh
 npm run storybook

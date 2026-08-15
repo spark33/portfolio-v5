@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./gate.ts";
 
 /**
  * The hero canvas covers the viewport, so whatever it clears to is effectively

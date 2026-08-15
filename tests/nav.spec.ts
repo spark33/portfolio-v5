@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./gate.ts";
 
 const PAGES = ["/", "/blog/", "/blog/cutting-transcript-latency/"];
 
