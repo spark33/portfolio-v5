@@ -43,8 +43,14 @@ const MANIFEST = path.join(DIR, "hero-geometry.ts");
  *
  * Every contour in the file has exactly this many points, which is what makes
  * a shared index buffer possible at all.
+ *
+ * The spec calls for 256 on desktop and 128 on mobile. Shipping two bakes
+ * doubles the artefact, and 192 was chosen after comparing all three on the
+ * gate: at hero size the difference between 192 and 256 is not visible, while
+ * 128 facets the bowl of O and the shoulder of S. One bake, sized for the
+ * larger case.
  */
-const N = Number(process.env.HERO_N ?? 256);
+const N = Number(process.env.HERO_N ?? 192);
 
 /**
  * Chordal tolerance for flattening Béziers, in font units.
@@ -380,12 +386,55 @@ function degenerate(at) {
 }
 
 /**
+ * A point guaranteed to lie inside a glyph's ink.
+ *
+ * Where a contour has to be padded, this is where it collapses to — and it has
+ * to be a point inside *the glyph being padded*, not inside its partner.
+ * Collapsing to the partner's centroid means the apex can land outside the ink
+ * altogether, and since the cap triangulation fans from that apex, every
+ * triangle in the fan then sweeps across territory the letterform does not
+ * occupy. ㅂ came out as a solid slab rather than a letter.
+ *
+ * Taken as the centroid of the largest triangle in the glyph's own
+ * triangulation: interior by construction, and the largest triangle is the one
+ * furthest from the outline, which keeps the fan as shallow as it can be.
+ */
+function interiorPoint(classified) {
+  const shell = classified.find((contour) => !contour.isHole) ?? classified[0];
+  const coords = [];
+  for (const point of shell.points) coords.push(point[0], point[1]);
+
+  let best = null;
+  let bestArea = -Infinity;
+  const triangles = earcut(coords);
+
+  for (let i = 0; i < triangles.length; i += 3) {
+    const a = shell.points[triangles[i]];
+    const b = shell.points[triangles[i + 1]];
+    const c = shell.points[triangles[i + 2]];
+    const area = Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) / 2;
+    if (area > bestArea) {
+      bestArea = area;
+      best = [(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3];
+    }
+  }
+
+  return best ?? centroid(shell.points);
+}
+
+/**
  * Pairs two glyphs' contours, padding whichever has fewer with degenerate
  * contours so both end up the same length.
  */
 function matchContours(source, target) {
   const count = Math.max(source.length, target.length);
   const pairs = [];
+
+  // Each side's collapse point, inside its own ink. Computed once: the padded
+  // contours of a glyph all collapse to the same place, which is what makes
+  // the hole shut rather than blink out.
+  const insideSource = interiorPoint(source);
+  const insideTarget = interiorPoint(target);
 
   for (let i = 0; i < count; i++) {
     const from = source[i];
@@ -394,11 +443,9 @@ function matchContours(source, target) {
     if (from && to) {
       pairs.push({ from: from.points, to: alignRotation(from.points, to.points) });
     } else if (from) {
-      // The target has no counterpart, so it collapses to the middle of the
-      // contour it is replacing: the hole shuts rather than blinking out.
-      pairs.push({ from: from.points, to: degenerate(centroid(from.points)) });
+      pairs.push({ from: from.points, to: degenerate(insideTarget) });
     } else {
-      pairs.push({ from: degenerate(centroid(to.points)), to: to.points });
+      pairs.push({ from: degenerate(insideSource), to: to.points });
     }
   }
 
@@ -739,14 +786,44 @@ function buildPair(pairs, classification, random) {
     }
   }
 
+  if (vertexCount > 65535) {
+    throw new Error(`${vertexCount} vertices will not fit a Uint16 index buffer`);
+  }
+
+  const bounds = (rings) => {
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const point of rings[0]) {
+      minX = Math.min(minX, point[0]);
+      maxX = Math.max(maxX, point[0]);
+      minY = Math.min(minY, point[1]);
+      maxY = Math.max(maxY, point[1]);
+    }
+    return [minX, minY, maxX, maxY].map((n) => +n.toFixed(4));
+  };
+
+  // Quantised on the way out. Positions and normals are both bounded by 1 —
+  // coordinates are in cap heights and the largest is 0.67, normals are unit —
+  // so a normalised Int16 covers them directly, with no scale factor to apply
+  // and therefore no shader change. Resolution is 1/32767 of a cap height,
+  // about a hundredth of a pixel at hero size.
+  const quantise = (array) => Int16Array.from(array, (v) => Math.round(v * 32767));
+
   return {
-    position,
-    aTarget,
-    normal,
-    aTargetNormal,
-    aSeed,
-    index: new Uint32Array(indices),
+    position: quantise(position),
+    aTarget: quantise(aTarget),
+    normal: quantise(normal),
+    aTargetNormal: quantise(aTargetNormal),
+    // A byte is plenty for a stagger offset, and it is one quarter the size.
+    aSeed: Uint8Array.from(aSeed, (value) => Math.round(value * 255)),
+    // Uint16 rather than Uint32: no mesh here comes close to 65k vertices, and
+    // indices are a third of the file.
+    index: new Uint16Array(indices),
     contours: pairs.length,
+    sourceBounds: bounds(source.rings),
+    targetBounds: bounds(target.rings),
   };
 }
 
@@ -812,8 +889,16 @@ function main() {
       ]);
     }
 
+    // Where the pen origin sits relative to the recentred geometry, in cap
+    // heights. Typesetting needs it: a glyph centred on its own ink knows
+    // nothing about its sidebearings or its baseline, so placing one at a pen
+    // position means adding this back.
+    classified.origin = [cx * scale, cy * scale];
     return classified;
   };
+
+  /** Advance width in cap heights. */
+  const advance = (char) => +(font.charToGlyph(char).advanceWidth * scale).toFixed(4);
 
   const cache = new Map();
   const glyph = (char) => {
@@ -847,6 +932,10 @@ function main() {
       meshes.push({
         name: `${entry.jamo}-${letter}-${jamoIndex}-${splitIndex}`,
         kind: "morph",
+        sourceAdvance: advance(entry.jamo),
+        targetAdvance: advance(letter),
+        sourceOrigin: source.origin,
+        targetOrigin: target.origin,
         jamo: entry.jamo,
         latin: letter,
         jamoIndex,
@@ -869,6 +958,9 @@ function main() {
     meshes.push({
       name: `arrive-${letter}-${index}`,
       kind: "arrive",
+      targetAdvance: advance(letter),
+      sourceOrigin: source.origin,
+      targetOrigin: source.origin,
       latin: letter,
       arriveIndex: index,
       geometry: buildPair(pairs, source, random),
@@ -908,6 +1000,12 @@ function main() {
       role: mesh.role ?? null,
       arriveIndex: mesh.arriveIndex ?? null,
       contours: g.contours,
+      sourceBounds: g.sourceBounds,
+      targetBounds: g.targetBounds,
+      sourceAdvance: mesh.sourceAdvance ?? null,
+      targetAdvance: mesh.targetAdvance,
+      sourceOrigin: mesh.sourceOrigin,
+      targetOrigin: mesh.targetOrigin,
       vertexCount: g.position.length / 3,
       position: push(g.position),
       aTarget: push(g.aTarget),
@@ -953,6 +1051,19 @@ export interface MeshEntry {
   /** Position in "SEAN", for arriving meshes. */
   arriveIndex: number | null;
   contours: number;
+  /** [minX, minY, maxX, maxY] of the ink, in cap heights, in each state. */
+  sourceBounds: [number, number, number, number];
+  targetBounds: [number, number, number, number];
+  /** Advance widths in cap heights, for typesetting each state. */
+  sourceAdvance: number | null;
+  targetAdvance: number;
+  /**
+   * Pen origin relative to the recentred geometry, in cap heights. Placing a
+   * glyph at pen position X with its baseline on y = 0 means positioning the
+   * mesh at (origin[0] + X, origin[1]).
+   */
+  sourceOrigin: [number, number];
+  targetOrigin: [number, number];
   vertexCount: number;
   indexCount: number;
   /** Byte offsets into the blob. */
@@ -966,6 +1077,9 @@ export interface MeshEntry {
 
 /** Points per contour. Every contour in the file has exactly this many. */
 export const POINTS_PER_CONTOUR = ${N};
+
+/** aSeed is a normalised byte; index buffers are Uint16. */
+export const SEED_BYTES = 1;
 
 /** Extrusion depth, in cap heights. */
 export const DEPTH = ${DEPTH};

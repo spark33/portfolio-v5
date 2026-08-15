@@ -25,18 +25,26 @@ export interface Stage {
   dispose(): void;
 }
 
-export function createStage(canvas: HTMLCanvasElement): Stage {
+export interface StageOptions {
+  /** Off on low-power devices: shadow maps are the single biggest cost here. */
+  shadows?: boolean;
+  maxPixelRatio?: number;
+}
+
+export function createStage(canvas: HTMLCanvasElement, options: StageOptions = {}): Stage {
+  const { shadows = true, maxPixelRatio = MAX_PIXEL_RATIO } = options;
+
   const renderer = new THREE.WebGLRenderer({
     canvas,
     antialias: true,
     powerPreference: "high-performance",
   });
 
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 1.05;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = shadows;
   // VSM, for genuinely soft shadow edges. A hard-edged shadow under type this
   // size announces the shadow map's resolution.
   renderer.shadowMap.type = THREE.VSMShadowMap;
@@ -57,7 +65,7 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
   // The environment does most of the work; these three shape it.
   const key = new THREE.DirectionalLight(0xfff2e0, 1.4);
   key.position.set(-4.2, 5.4, 4.6);
-  key.castShadow = true;
+  key.castShadow = shadows;
   key.shadow.mapSize.set(2048, 2048);
   key.shadow.radius = 6;
   key.shadow.blurSamples = 16;
@@ -90,7 +98,7 @@ export function createStage(canvas: HTMLCanvasElement): Stage {
     if (width === 0 || height === 0) return;
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, MAX_PIXEL_RATIO));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
     renderer.setSize(width, height, false);
   }
 

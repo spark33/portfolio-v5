@@ -15,6 +15,7 @@
     "shots:hero": "node scripts/hero-contact-sheet.mjs",
     "build:hero": "node scripts/build-hero-geometry.mjs",
     "shots:hero-gate": "node scripts/hero-gate-sheet.mjs",
+    "shots:hero-seq": "node scripts/hero-sequence-sheet.mjs",
     "storybook": "storybook dev -p 6006 --no-open",
     "build-storybook": "storybook build"
   },

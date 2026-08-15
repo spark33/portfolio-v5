@@ -50,25 +50,8 @@ export function createMorphMaterial(options: { spread?: number } = {}): MorphMat
     roughness: SURFACE.roughness,
     metalness: SURFACE.metalness,
     envMapIntensity: SURFACE.envMapIntensity,
-    // Front side, deliberately, and the alternative was tried.
-    //
-    // Known limitation: where a glyph has a hole its partner lacks (ㅇ→N,
-    // ㅇ→G, ㅎ→H), the hole collapses to an interior point and the cap
-    // triangulation around it becomes a fan from that point. A fan only
-    // tessellates a star-shaped polygon, and N is not one, so a few triangles
-    // fold over near its concave notch.
-    //
-    // Culling them leaves hairline gaps — faint dark scratches on the face.
-    // Drawing them double-sided looked like the fix, since normals come from
-    // the vertex attribute rather than the winding, but three.js negates the
-    // normal for back-facing fragments in <normal_fragment_begin>: the folded
-    // triangles then light as though they face away, and a subtle dark scratch
-    // becomes an obvious bright fan. Culling is the quieter of the two faults.
-    //
-    // The real fix is a cap triangulation valid in both states rather than in
-    // one; collapsing the hole onto the outer contour as a keyhole slit is the
-    // usual route. Not attempted here — it is a rewrite of the triangulation
-    // step, and the artefact is only visible on three of the thirteen pairs.
+    // Front side. Both options were built and rendered; this is the lesser
+    // fault. See the fragment patch below for the full reasoning.
     side: THREE.FrontSide,
   });
 
@@ -117,7 +100,71 @@ export function createMorphMaterial(options: { spread?: number } = {}): MorphMat
         vec3 transformed = mix(position, aTarget, heroMorph);
         `,
       );
+
+    // On the cap fold-over, and why this material is front-sided.
+    //
+    // Where a glyph has a contour its partner lacks, the missing one collapses
+    // to a point inside its own ink, and the cap triangulation becomes a fan
+    // from that point. A fan only tessellates a star-shaped polygon, and
+    // neither N nor ㅂ is one, so some triangles fold over.
+    //
+    // Three things were tried. Culling them (this) leaves hairline gaps where
+    // the fold is small — a faint scratch across N's diagonal. Drawing them
+    // double-sided lights them as though they faced away, because
+    // <normal_fragment_begin> negates the normal on back faces. Drawing them
+    // double-sided *and* restoring the normal from `vNormal` fixes N
+    // completely — and then renders ㅂ as a solid slab, because its fold is
+    // large enough to sweep well outside the letterform, and a fold you can
+    // see is far worse than a seam you can barely find.
+    //
+    // So the folds are culled. The real fix is a cap triangulation valid in
+    // both states rather than in one — bridging the hole to the outer contour
+    // as a keyhole slit, so there is no fan and no apex. That is a rewrite of
+    // the triangulation step in the bake, not a material setting.
   };
 
   return { material, uniforms };
+}
+
+/**
+ * Depth material for the same morph.
+ *
+ * Shadow maps are drawn with three's own depth material, which knows nothing
+ * about the patch above — so without this the shadow is cast by the *source*
+ * geometry for the whole sequence, and 박상현's shadow sits under "SEAN PARK".
+ * It is the kind of error that reads as "something is wrong with the lighting"
+ * long before anyone works out that the shadow never moved.
+ *
+ * Assign to `mesh.customDepthMaterial`, sharing the surface's uniforms so both
+ * are driven by one write.
+ */
+export function createMorphDepthMaterial(uniforms: MorphUniforms): THREE.MeshDepthMaterial {
+  const depth = new THREE.MeshDepthMaterial({ depthPacking: THREE.RGBADepthPacking });
+
+  depth.onBeforeCompile = (shader) => {
+    Object.assign(shader.uniforms, uniforms);
+
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        /* glsl */ `
+        #include <common>
+        attribute vec3 aTarget;
+        attribute float aSeed;
+        uniform float uProgress;
+        uniform float uSpread;
+        `,
+      )
+      .replace(
+        "#include <begin_vertex>",
+        /* glsl */ `
+        float heroDelay = aSeed * uSpread;
+        float heroMorph = clamp((uProgress - heroDelay) / (1.0 - uSpread), 0.0, 1.0);
+        heroMorph = heroMorph * heroMorph * (3.0 - 2.0 * heroMorph);
+        vec3 transformed = mix(position, aTarget, heroMorph);
+        `,
+      );
+  };
+
+  return depth;
 }

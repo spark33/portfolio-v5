@@ -29,6 +29,19 @@ export interface MeshEntry {
   /** Position in "SEAN", for arriving meshes. */
   arriveIndex: number | null;
   contours: number;
+  /** [minX, minY, maxX, maxY] of the ink, in cap heights, in each state. */
+  sourceBounds: [number, number, number, number];
+  targetBounds: [number, number, number, number];
+  /** Advance widths in cap heights, for typesetting each state. */
+  sourceAdvance: number | null;
+  targetAdvance: number;
+  /**
+   * Pen origin relative to the recentred geometry, in cap heights. Placing a
+   * glyph at pen position X with its baseline on y = 0 means positioning the
+   * mesh at (origin[0] + X, origin[1]).
+   */
+  sourceOrigin: [number, number];
+  targetOrigin: [number, number];
   vertexCount: number;
   indexCount: number;
   /** Byte offsets into the blob. */
@@ -41,7 +54,10 @@ export interface MeshEntry {
 }
 
 /** Points per contour. Every contour in the file has exactly this many. */
-export const POINTS_PER_CONTOUR = 256;
+export const POINTS_PER_CONTOUR = 192;
+
+/** aSeed is a normalised byte; index buffers are Uint16. */
+export const SEED_BYTES = 1;
 
 /** Extrusion depth, in cap heights. */
 export const DEPTH = 0.17;
@@ -61,14 +77,36 @@ export const MESHES: MeshEntry[] = [
     "role": "initial",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
+    "sourceBounds": [
+      -0.3824,
+      -0.3793,
+      0.3852,
+      0.2818
+    ],
+    "targetBounds": [
+      -0.5139,
+      -0.6372,
+      0.2015,
+      0.3306
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 0.8812,
+    "sourceOrigin": [
+      0.613950276243094,
+      0.5644567219152855
+    ],
+    "targetOrigin": [
+      0.6146207306731394,
+      0.6526347034195239
+    ],
+    "vertexCount": 2304,
     "position": 0,
-    "aTarget": 36864,
-    "normal": 73728,
-    "aTargetNormal": 110592,
-    "aSeed": 147456,
-    "index": 159744,
-    "indexCount": 7482
+    "aTarget": 13824,
+    "normal": 27648,
+    "aTargetNormal": 41472,
+    "aSeed": 55296,
+    "index": 57600,
+    "indexCount": 5640
   },
   {
     "name": "ㅏ-A-1-0",
@@ -82,14 +120,36 @@ export const MESHES: MeshEntry[] = [
     "role": "vowel",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 189672,
-    "aTarget": 226536,
-    "normal": 263400,
-    "aTargetNormal": 300264,
-    "aSeed": 337128,
-    "index": 349416,
-    "indexCount": 8304
+    "sourceBounds": [
+      -0.1797,
+      -0.6385,
+      0.2241,
+      0.5687
+    ],
+    "targetBounds": [
+      -0.4627,
+      -0.3845,
+      0.4608,
+      0.5824
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.0152,
+    "sourceOrigin": [
+      0.681975138121547,
+      0.5314226519337016
+    ],
+    "targetOrigin": [
+      0.5077117863720073,
+      0.3996316758747698
+    ],
+    "vertexCount": 2304,
+    "position": 68880,
+    "aTarget": 82704,
+    "normal": 96528,
+    "aTargetNormal": 110352,
+    "aSeed": 124176,
+    "index": 126480,
+    "indexCount": 6318
   },
   {
     "name": "ㄱ-R-2-0",
@@ -103,14 +163,36 @@ export const MESHES: MeshEntry[] = [
     "role": "final",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 382632,
-    "aTarget": 419496,
-    "normal": 456360,
-    "aTargetNormal": 493224,
-    "aSeed": 530088,
-    "index": 542376,
-    "indexCount": 7602
+    "sourceBounds": [
+      -0.462,
+      -0.3882,
+      0.3106,
+      0.2578
+    ],
+    "targetBounds": [
+      -0.53,
+      -0.6572,
+      0.2138,
+      0.3166
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 0.8936,
+    "sourceOrigin": [
+      0.68646408839779,
+      0.572744014732965
+    ],
+    "targetOrigin": [
+      0.6322060083405623,
+      0.665378199441485
+    ],
+    "vertexCount": 2304,
+    "position": 139116,
+    "aTarget": 152940,
+    "normal": 166764,
+    "aTargetNormal": 180588,
+    "aSeed": 194412,
+    "index": 196716,
+    "indexCount": 5736
   },
   {
     "name": "ㄱ-K-2-1",
@@ -124,14 +206,36 @@ export const MESHES: MeshEntry[] = [
     "role": "final",
     "arriveIndex": null,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 572784,
-    "aTarget": 591216,
-    "normal": 609648,
-    "aTargetNormal": 628080,
-    "aSeed": 646512,
-    "index": 652656,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.462,
+      -0.3882,
+      0.3106,
+      0.2578
+    ],
+    "targetBounds": [
+      -0.3412,
+      -0.4746,
+      0.4561,
+      0.5021
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 0.9378,
+    "sourceOrigin": [
+      0.68646408839779,
+      0.572744014732965
+    ],
+    "targetOrigin": [
+      0.4434764130896728,
+      0.4895877603059923
+    ],
+    "vertexCount": 1152,
+    "position": 208188,
+    "aTarget": 215100,
+    "normal": 222012,
+    "aTargetNormal": 228924,
+    "aSeed": 235836,
+    "index": 236988,
+    "indexCount": 3444
   },
   {
     "name": "ㅅ-S-3-0",
@@ -145,14 +249,36 @@ export const MESHES: MeshEntry[] = [
     "role": "initial",
     "arriveIndex": null,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 671040,
-    "aTarget": 689472,
-    "normal": 707904,
-    "aTargetNormal": 726336,
-    "aSeed": 744768,
-    "index": 750912,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.4434,
+      -0.1943,
+      0.4422,
+      0.4877
+    ],
+    "targetBounds": [
+      -0.3821,
+      -0.4942,
+      0.3691,
+      0.4974
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 0.8909,
+    "sourceOrigin": [
+      0.6138674390136252,
+      0.3628075119168778
+    ],
+    "targetOrigin": [
+      0.45233369767457143,
+      0.4984353185785335
+    ],
+    "vertexCount": 1152,
+    "position": 243876,
+    "aTarget": 250788,
+    "normal": 257700,
+    "aTargetNormal": 264612,
+    "aSeed": 271524,
+    "index": 272676,
+    "indexCount": 3444
   },
   {
     "name": "ㅏ-A-4-0",
@@ -166,14 +292,36 @@ export const MESHES: MeshEntry[] = [
     "role": "vowel",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 769296,
-    "aTarget": 806160,
-    "normal": 843024,
-    "aTargetNormal": 879888,
-    "aSeed": 916752,
-    "index": 929040,
-    "indexCount": 8304
+    "sourceBounds": [
+      -0.1797,
+      -0.6385,
+      0.2241,
+      0.5687
+    ],
+    "targetBounds": [
+      -0.4627,
+      -0.3845,
+      0.4608,
+      0.5824
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.0152,
+    "sourceOrigin": [
+      0.681975138121547,
+      0.5314226519337016
+    ],
+    "targetOrigin": [
+      0.5077117863720073,
+      0.3996316758747698
+    ],
+    "vertexCount": 2304,
+    "position": 279564,
+    "aTarget": 293388,
+    "normal": 307212,
+    "aTargetNormal": 321036,
+    "aSeed": 334860,
+    "index": 337164,
+    "indexCount": 6318
   },
   {
     "name": "ㅇ-N-5-0",
@@ -187,14 +335,36 @@ export const MESHES: MeshEntry[] = [
     "role": "final",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 962256,
-    "aTarget": 999120,
-    "normal": 1035984,
-    "aTargetNormal": 1072848,
-    "aSeed": 1109712,
-    "index": 1122000,
-    "indexCount": 9210
+    "sourceBounds": [
+      -0.3842,
+      -0.3357,
+      0.3864,
+      0.3382
+    ],
+    "targetBounds": [
+      -0.3996,
+      -0.482,
+      0.3987,
+      0.482
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.0028,
+    "sourceOrigin": [
+      0.6121373466365245,
+      0.5112222070852037
+    ],
+    "targetOrigin": [
+      0.501841620626151,
+      0.5
+    ],
+    "vertexCount": 2304,
+    "position": 349800,
+    "aTarget": 363624,
+    "normal": 377448,
+    "aTargetNormal": 391272,
+    "aSeed": 405096,
+    "index": 407400,
+    "indexCount": 6912
   },
   {
     "name": "ㅇ-G-5-1",
@@ -208,14 +378,36 @@ export const MESHES: MeshEntry[] = [
     "role": "final",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 1158840,
-    "aTarget": 1195704,
-    "normal": 1232568,
-    "aTargetNormal": 1269432,
-    "aSeed": 1306296,
-    "index": 1318584,
-    "indexCount": 9210
+    "sourceBounds": [
+      -0.3842,
+      -0.3357,
+      0.3864,
+      0.3382
+    ],
+    "targetBounds": [
+      -0.4413,
+      -0.5017,
+      0.426,
+      0.4898
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.0359,
+    "sourceOrigin": [
+      0.6121373466365245,
+      0.5112222070852037
+    ],
+    "targetOrigin": [
+      0.5242403356260981,
+      0.5060064971039457
+    ],
+    "vertexCount": 2304,
+    "position": 421224,
+    "aTarget": 435048,
+    "normal": 448872,
+    "aTargetNormal": 462696,
+    "aSeed": 476520,
+    "index": 478824,
+    "indexCount": 6912
   },
   {
     "name": "ㅎ-H-6-0",
@@ -229,14 +421,36 @@ export const MESHES: MeshEntry[] = [
     "role": "initial",
     "arriveIndex": null,
     "contours": 3,
-    "vertexCount": 4608,
-    "position": 1355424,
-    "aTarget": 1410720,
-    "normal": 1466016,
-    "aTargetNormal": 1521312,
-    "aSeed": 1576608,
-    "index": 1595040,
-    "indexCount": 13794
+    "sourceBounds": [
+      -0.4064,
+      -0.2435,
+      0.4061,
+      0.5816
+    ],
+    "targetBounds": [
+      -0.4063,
+      -0.482,
+      0.4072,
+      0.482
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.018,
+    "sourceOrigin": [
+      0.6157086340249072,
+      0.3623293139605465
+    ],
+    "targetOrigin": [
+      0.5085174953959485,
+      0.5
+    ],
+    "vertexCount": 3456,
+    "position": 492648,
+    "aTarget": 513384,
+    "normal": 534120,
+    "aTargetNormal": 554856,
+    "aSeed": 575592,
+    "index": 579048,
+    "indexCount": 10356
   },
   {
     "name": "ㅕ-Y-7-0",
@@ -250,14 +464,36 @@ export const MESHES: MeshEntry[] = [
     "role": "vowel",
     "arriveIndex": null,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 1650216,
-    "aTarget": 1668648,
-    "normal": 1687080,
-    "aTargetNormal": 1705512,
-    "aSeed": 1723944,
-    "index": 1730088,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.1946,
+      -0.6496,
+      0.2201,
+      0.5577
+    ],
+    "targetBounds": [
+      -0.4483,
+      -0.5676,
+      0.4461,
+      0.4071
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 0.9834,
+    "sourceOrigin": [
+      0.5909300184162062,
+      0.5432780847145487
+    ],
+    "targetOrigin": [
+      0.49185082872928176,
+      0.5850828729281768
+    ],
+    "vertexCount": 1152,
+    "position": 599760,
+    "aTarget": 606672,
+    "normal": 613584,
+    "aTargetNormal": 620496,
+    "aSeed": 627408,
+    "index": 628560,
+    "indexCount": 3444
   },
   {
     "name": "ㅕ-E-7-1",
@@ -271,14 +507,36 @@ export const MESHES: MeshEntry[] = [
     "role": "vowel",
     "arriveIndex": null,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 1748472,
-    "aTarget": 1766904,
-    "normal": 1785336,
-    "aTargetNormal": 1803768,
-    "aSeed": 1822200,
-    "index": 1828344,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.1946,
+      -0.6496,
+      0.2201,
+      0.5577
+    ],
+    "targetBounds": [
+      -0.3812,
+      -0.482,
+      0.2555,
+      0.482
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 0.8329,
+    "sourceOrigin": [
+      0.5909300184162062,
+      0.5432780847145487
+    ],
+    "targetOrigin": [
+      0.48342541436464087,
+      0.5
+    ],
+    "vertexCount": 1152,
+    "position": 635448,
+    "aTarget": 642360,
+    "normal": 649272,
+    "aTargetNormal": 656184,
+    "aSeed": 663096,
+    "index": 664248,
+    "indexCount": 3444
   },
   {
     "name": "ㅕ-O-7-2",
@@ -292,14 +550,36 @@ export const MESHES: MeshEntry[] = [
     "role": "vowel",
     "arriveIndex": null,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 1846728,
-    "aTarget": 1883592,
-    "normal": 1920456,
-    "aTargetNormal": 1957320,
-    "aSeed": 1994184,
-    "index": 2006472,
-    "indexCount": 9216
+    "sourceBounds": [
+      -0.1946,
+      -0.6496,
+      0.2201,
+      0.5577
+    ],
+    "targetBounds": [
+      -0.4497,
+      -0.4958,
+      0.4494,
+      0.4958
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.0649,
+    "sourceOrigin": [
+      0.5909300184162062,
+      0.5432780847145487
+    ],
+    "targetOrigin": [
+      0.5326313840750172,
+      0.5000431208320744
+    ],
+    "vertexCount": 2304,
+    "position": 671136,
+    "aTarget": 684960,
+    "normal": 698784,
+    "aTargetNormal": 712608,
+    "aSeed": 726432,
+    "index": 728736,
+    "indexCount": 6912
   },
   {
     "name": "ㄴ-N-8-0",
@@ -313,14 +593,36 @@ export const MESHES: MeshEntry[] = [
     "role": "final",
     "arriveIndex": null,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 2043336,
-    "aTarget": 2061768,
-    "normal": 2080200,
-    "aTargetNormal": 2098632,
-    "aSeed": 2117064,
-    "index": 2123208,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.3152,
+      -0.2511,
+      0.4699,
+      0.3751
+    ],
+    "targetBounds": [
+      -0.3996,
+      -0.482,
+      0.3987,
+      0.482
+    ],
+    "sourceAdvance": 1.2224,
+    "targetAdvance": 1.0028,
+    "sourceOrigin": [
+      0.5418968692449355,
+      0.45488029465930013
+    ],
+    "targetOrigin": [
+      0.501841620626151,
+      0.5
+    ],
+    "vertexCount": 1152,
+    "position": 742560,
+    "aTarget": 749472,
+    "normal": 756384,
+    "aTargetNormal": 763296,
+    "aSeed": 770208,
+    "index": 771360,
+    "indexCount": 3444
   },
   {
     "name": "arrive-S-0",
@@ -334,14 +636,36 @@ export const MESHES: MeshEntry[] = [
     "role": null,
     "arriveIndex": 0,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 2141592,
-    "aTarget": 2160024,
-    "normal": 2178456,
-    "aTargetNormal": 2196888,
-    "aSeed": 2215320,
-    "index": 2221464,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.3821,
+      -0.4942,
+      0.3691,
+      0.4974
+    ],
+    "targetBounds": [
+      -0.3821,
+      -0.4942,
+      0.3691,
+      0.4974
+    ],
+    "sourceAdvance": null,
+    "targetAdvance": 0.8909,
+    "sourceOrigin": [
+      0.45233369767457143,
+      0.4984353185785335
+    ],
+    "targetOrigin": [
+      0.45233369767457143,
+      0.4984353185785335
+    ],
+    "vertexCount": 1152,
+    "position": 778248,
+    "aTarget": 785160,
+    "normal": 792072,
+    "aTargetNormal": 798984,
+    "aSeed": 805896,
+    "index": 807048,
+    "indexCount": 3444
   },
   {
     "name": "arrive-E-1",
@@ -355,14 +679,36 @@ export const MESHES: MeshEntry[] = [
     "role": null,
     "arriveIndex": 1,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 2239848,
-    "aTarget": 2258280,
-    "normal": 2276712,
-    "aTargetNormal": 2295144,
-    "aSeed": 2313576,
-    "index": 2319720,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.3812,
+      -0.482,
+      0.2555,
+      0.482
+    ],
+    "targetBounds": [
+      -0.3812,
+      -0.482,
+      0.2555,
+      0.482
+    ],
+    "sourceAdvance": null,
+    "targetAdvance": 0.8329,
+    "sourceOrigin": [
+      0.48342541436464087,
+      0.5
+    ],
+    "targetOrigin": [
+      0.48342541436464087,
+      0.5
+    ],
+    "vertexCount": 1152,
+    "position": 813936,
+    "aTarget": 820848,
+    "normal": 827760,
+    "aTargetNormal": 834672,
+    "aSeed": 841584,
+    "index": 842736,
+    "indexCount": 3444
   },
   {
     "name": "arrive-A-2",
@@ -376,14 +722,36 @@ export const MESHES: MeshEntry[] = [
     "role": null,
     "arriveIndex": 2,
     "contours": 2,
-    "vertexCount": 3072,
-    "position": 2338104,
-    "aTarget": 2374968,
-    "normal": 2411832,
-    "aTargetNormal": 2448696,
-    "aSeed": 2485560,
-    "index": 2497848,
-    "indexCount": 8304
+    "sourceBounds": [
+      -0.4627,
+      -0.3845,
+      0.4608,
+      0.5824
+    ],
+    "targetBounds": [
+      -0.4627,
+      -0.3845,
+      0.4608,
+      0.5824
+    ],
+    "sourceAdvance": null,
+    "targetAdvance": 1.0152,
+    "sourceOrigin": [
+      0.5077117863720073,
+      0.3996316758747698
+    ],
+    "targetOrigin": [
+      0.5077117863720073,
+      0.3996316758747698
+    ],
+    "vertexCount": 2304,
+    "position": 849624,
+    "aTarget": 863448,
+    "normal": 877272,
+    "aTargetNormal": 891096,
+    "aSeed": 904920,
+    "index": 907224,
+    "indexCount": 6318
   },
   {
     "name": "arrive-N-3",
@@ -397,13 +765,35 @@ export const MESHES: MeshEntry[] = [
     "role": null,
     "arriveIndex": 3,
     "contours": 1,
-    "vertexCount": 1536,
-    "position": 2531064,
-    "aTarget": 2549496,
-    "normal": 2567928,
-    "aTargetNormal": 2586360,
-    "aSeed": 2604792,
-    "index": 2610936,
-    "indexCount": 4596
+    "sourceBounds": [
+      -0.3996,
+      -0.482,
+      0.3987,
+      0.482
+    ],
+    "targetBounds": [
+      -0.3996,
+      -0.482,
+      0.3987,
+      0.482
+    ],
+    "sourceAdvance": null,
+    "targetAdvance": 1.0028,
+    "sourceOrigin": [
+      0.501841620626151,
+      0.5
+    ],
+    "targetOrigin": [
+      0.501841620626151,
+      0.5
+    ],
+    "vertexCount": 1152,
+    "position": 919860,
+    "aTarget": 926772,
+    "normal": 933684,
+    "aTargetNormal": 940596,
+    "aSeed": 947508,
+    "index": 948660,
+    "indexCount": 3444
   }
 ];

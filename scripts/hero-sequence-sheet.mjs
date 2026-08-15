@@ -1,14 +1,11 @@
 #!/usr/bin/env node
 /**
- * Contact sheet for the hero gate: one morph pair across its whole range,
- * tiled into a single image.
+ * Contact sheet of the whole hero sequence, tiled into one image.
  *
  *   npm run storybook
- *   node scripts/hero-gate-sheet.mjs [pair] [spin]
+ *   node scripts/hero-sequence-sheet.mjs
  *
- * Judging a morph by dragging a slider means never seeing two frames at once,
- * which is exactly what is needed to spot a contour unwinding. Development
- * tool; output is gitignored.
+ * Development tool; output is gitignored.
  */
 import fs from "node:fs";
 import path from "node:path";
@@ -16,45 +13,39 @@ import path from "node:path";
 import { chromium } from "@playwright/test";
 
 const BASE = process.env.STORYBOOK_URL ?? "http://localhost:6006";
-const STORY = process.env.HERO_STORY ?? "figures-hero-gate--one-morph";
-const PAIR = process.argv[2] ?? "6";
-const SPIN = process.argv[3] ?? "0";
-const OUT = "shots/hero-gate";
-
-const STEPS = [0, 0.12, 0.25, 0.38, 0.5, 0.62, 0.75, 0.88, 1];
-const FRAME = { width: 560, height: 520 };
+const STORY = "figures-hero--scrub";
+const OUT = "shots/hero-sequence";
+const STEPS = [0, 0.3, 0.42, 0.52, 0.62, 0.7, 0.78, 0.86, 0.92, 0.96, 0.98, 1];
+const FRAME = { width: 640, height: 470 };
 const EXECUTABLE = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
 
 async function main() {
   fs.mkdirSync(OUT, { recursive: true });
-
   const browser = await chromium.launch({
     executablePath: fs.existsSync(EXECUTABLE) ? EXECUTABLE : undefined,
     args: ["--use-gl=swiftshader", "--enable-unsafe-swiftshader"],
   });
-
   const page = await browser.newPage({ viewport: FRAME, deviceScaleFactor: 1 });
-  page.on("pageerror", (err) => process.stderr.write(`page threw: ${err.message}\n`));
-  page.on("console", (msg) => {
-    if (msg.type() === "error") process.stderr.write(`console: ${msg.text()}\n`);
+  page.on("pageerror", (e) => process.stderr.write(`page threw: ${e.message}\n`));
+  page.on("console", (m) => {
+    if (m.type() === "error") process.stderr.write(`console: ${m.text()}\n`);
   });
 
   const shots = [];
   for (const step of STEPS) {
-    const args = `pair:${PAIR};progress:${step};spin:${SPIN}`;
-    await page.goto(`${BASE}/iframe.html?id=${STORY}&viewMode=story&args=${encodeURIComponent(args)}`, {
-      waitUntil: "networkidle",
-    });
-    await page.waitForTimeout(900);
-
+    await page.goto(
+      `${BASE}/iframe.html?id=${STORY}&viewMode=story&args=progress:${step}`,
+      { waitUntil: "networkidle" },
+    );
+    await page.waitForTimeout(1100);
     const file = path.join(OUT, `p${String(Math.round(step * 100)).padStart(3, "0")}.png`);
     await page.screenshot({ path: file });
     shots.push({ step, file });
   }
 
   const sheet = await page.evaluate(
-    async ({ shots, frame, label }) => {
-      const cols = 3;
+    async ({ shots, frame }) => {
+      const cols = 4;
       const rows = Math.ceil(shots.length / cols);
       const canvas = document.createElement("canvas");
       canvas.width = frame.width * cols;
@@ -62,12 +53,11 @@ async function main() {
       const ctx = canvas.getContext("2d");
       ctx.fillStyle = "#000";
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
       for (const [i, shot] of shots.entries()) {
         const img = new Image();
-        await new Promise((resolve, reject) => {
-          img.onload = resolve;
-          img.onerror = reject;
+        await new Promise((ok, no) => {
+          img.onload = ok;
+          img.onerror = no;
           img.src = shot.dataUrl;
         });
         const x = (i % cols) * frame.width;
@@ -75,13 +65,12 @@ async function main() {
         ctx.drawImage(img, x, y);
         ctx.fillStyle = "#fff";
         ctx.font = "600 20px monospace";
-        ctx.fillText(`${label} ${shot.step.toFixed(2)}`, x + 14, y + 30);
+        ctx.fillText(`${(shot.step * 9.5).toFixed(2)}s`, x + 14, y + 30);
       }
       return canvas.toDataURL("image/png");
     },
     {
       frame: FRAME,
-      label: PAIR,
       shots: shots.map((s) => ({
         step: s.step,
         dataUrl: `data:image/png;base64,${fs.readFileSync(s.file).toString("base64")}`,
@@ -89,10 +78,9 @@ async function main() {
     },
   );
 
-  const sheetPath = path.join(OUT, `sheet-pair${PAIR}-spin${SPIN}.png`);
+  const sheetPath = path.join(OUT, "sheet.png");
   fs.writeFileSync(sheetPath, Buffer.from(sheet.split(",")[1], "base64"));
   process.stderr.write(`wrote ${sheetPath}\n`);
-
   await browser.close();
 }
 
