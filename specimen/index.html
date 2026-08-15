@@ -23,7 +23,7 @@
     <link rel="stylesheet" href="/src/specimen.css" />
   </head>
   <body>
-    <a class="skip" href="#study">Skip to the case study</a>
+    <a class="skip" href="#study">Skip to the sample</a>
 
     <form class="panel" id="panel" aria-label="Specimen controls">
       <div class="panel-inner">
@@ -119,7 +119,7 @@
     <main class="page">
       <article class="prose" id="study">
         <header class="masthead">
-          <p class="meta">Case study — placeholder copy</p>
+          <p class="meta">Specimen — a compact sample, not a real page</p>
           <h1>Cutting transcript latency from 4.2s to 380ms</h1>
           <p class="lede">
             A realtime speech pipeline that buffered too eagerly, rebuilt around
@@ -154,13 +154,9 @@
           time-to-first-token was 4.2 seconds. Users read that delay as the product
           being broken rather than being slow, and support tickets described it as
           "frozen" more often than "laggy" — a distinction that changed how we
-          prioritised the work.
-        </p>
-        <p>
-          The window size was not arbitrary. Shorter windows had been tried and
-          abandoned because accuracy at the boundaries collapsed: the decoder had no
-          context to disambiguate a word cut in half, so <code>recognise</code> came
-          back as <code>wreck a nice</code> often enough to be embarrassing.
+          prioritised the work. Shorter windows had been tried and abandoned because
+          accuracy collapsed at the boundaries, so <code>recognise</code> came back as
+          <code>wreck a nice</code> often enough to be embarrassing.
         </p>
 
         <figure class="figure bleed">
@@ -180,9 +176,8 @@
           </div>
           <figcaption>
             <b>Figure 1.</b> Drag the window size down and watch time-to-first-token
-            fall while boundary errors rise. The overlap band is what makes the
-            bottom-left corner reachable. Controls are native inputs so the figure is
-            keyboard operable and the mechanism is legible without the animation.
+            fall while boundary errors rise. Controls are native inputs so the figure
+            is keyboard operable and the mechanism is legible without the animation.
           </figcaption>
         </figure>
 
@@ -196,21 +191,7 @@
           </p>
           <p class="rejected">
             Rejected: simply shrinking the window to 500ms. It hit the latency target
-            and lost 6 points of word error rate at segment boundaries — a trade the
-            transcript quality could not absorb.
-          </p>
-        </div>
-
-        <div class="decision">
-          <h3>Backpressure the client can see</h3>
-          <p>
-            The stream carries an explicit <code>lag_ms</code> field, so the UI can
-            show that it is behind rather than silently buffering.
-          </p>
-          <p class="rejected">
-            Rejected: dropping audio under load. It kept the numbers healthy and made
-            failures invisible, which is how the original problem survived a year of
-            dashboards that looked fine.
+            and lost 6 points of word error rate at segment boundaries.
           </p>
         </div>
 
@@ -220,19 +201,10 @@ stream.on("hypothesis", ({ tokens, lagMs }) =&gt; {
   meter.report(lagMs);
 });</code></pre>
 
-        <h2>Outcome</h2>
         <p>
           Median time-to-first-token settled at 380ms and p99 at 1.1s, with word error
-          rate within half a point of the original. The unstable-token rendering was
-          the part users noticed: an early build reflowed the paragraph on every
-          correction, which tested worse than the original delay. Freezing layout and
-          correcting in place fixed it.
-        </p>
-        <p>
-          What did not work: an attempt to predict stability from decoder confidence
-          alone. Confidence turned out to be poorly calibrated near boundaries — the
-          exact place it needed to be trustworthy — and we fell back to positional
-          rules. <a href="#study">Read the follow-up note</a>.
+          rate within half a point of the original. The full write-up lives in
+          <a href="/blog/">the notes</a>.
         </p>
       </article>
 

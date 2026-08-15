@@ -51,13 +51,18 @@ image and that is fine — the constraint is what keeps them good.
 /                     Hero + positioning line + 3 featured projects + contact
 /work/<slug>          Case study (one per project)
 /about                Bio, background, what you want to work on
-/notes                Optional: short technical writing. Ship empty or omit.
+/blog                 Index of posts, newest first
+/blog/<slug>          A post
 ```
 
 Static multi-page, built with Vite's MPA support — one HTML entry per page. No
 router, no framework, no client-side navigation. Every page is independently
-crawlable, cacheable, and readable with JS disabled. Case studies are authored as
-markdown with frontmatter and compiled to HTML at build time by a small Vite plugin.
+crawlable, cacheable, and readable with JS disabled.
+
+**Built.** The markdown pipeline described here exists: posts are authored in
+`content/posts/` and compiled at build time by `plugins/blog.ts`. Case studies under
+`/work/<slug>` are not built yet, but they are the same pipeline with a different
+template and frontmatter — `src/article.css` already carries their layout.
 
 ### Case study structure
 
