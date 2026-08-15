@@ -23,11 +23,36 @@ function write(file: string, contents: string) {
   writeFileSync(file, contents);
 }
 
-function sitemap() {
+/**
+ * The origin the sitemap needs, or null if nobody has told us what it is.
+ *
+ * `SITE_ORIGIN` wins; otherwise Vercel's production hostname is used when the
+ * build is running there. A sitemap has to carry absolute URLs, so without one
+ * of these there is nothing truthful to write.
+ */
+function origin(): string | null {
+  const configured = process.env.SITE_ORIGIN?.trim();
+  if (configured) return configured.replace(/\/$/, "");
+
+  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
+  if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
+
+  return null;
+}
+
+function sitemap(base: string) {
   const urls = routes
-    .map((route) => `  <url><loc>https://example.com${route}</loc></url>`)
+    .map((route) => `  <url><loc>${base}${route}</loc></url>`)
     .join("\n");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.w3.org/2000/schemas/sitemap/0.9">\n${urls}\n</urlset>\n`;
+
+  // The namespace is load-bearing: an earlier version of this file used
+  // w3.org/2000/schemas/sitemap/0.9, which does not exist, and a crawler
+  // cannot parse a urlset in a namespace it does not recognise.
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls}
+</urlset>
+`;
 }
 
 /**
@@ -57,8 +82,16 @@ export function generateSite({ includeDrafts = false } = {}): Record<string, str
     inputs[`blog-${post.slug}`] = file;
   }
 
-  write("public/sitemap.xml", sitemap());
-  write("public/robots.txt", "User-agent: *\nAllow: /\n");
+  // A sitemap pointing at example.com is worse than no sitemap, so when the
+  // origin is unknown we write neither it nor a reference to it.
+  const base = origin();
+  if (base) {
+    write("public/sitemap.xml", sitemap(base));
+    write("public/robots.txt", `User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);
+  } else {
+    rmSync("public/sitemap.xml", { force: true });
+    write("public/robots.txt", "User-agent: *\nAllow: /\n");
+  }
 
   return inputs;
 }

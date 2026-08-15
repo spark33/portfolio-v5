@@ -174,6 +174,17 @@ Lighthouse, mobile profile (Moto G-class, 4× CPU throttle, slow 4G):
 
 Total JavaScript is 1.5 KB.
 
+## Deployment
+
+Vercel builds this with no configuration; the generated pages are written at
+build time, and the committed fonts mean the build needs neither Python nor
+network.
+
+Set **`SITE_ORIGIN`** (e.g. `https://seanpark.dev`) to emit `sitemap.xml` and
+have `robots.txt` reference it. Without it — and without Vercel's
+`VERCEL_PROJECT_PRODUCTION_URL` — no sitemap is written at all, because a
+sitemap full of placeholder URLs is worse than none.
+
 ## Unknown metrics
 
 `{{?}}` in `content/site.ts` renders as a visible "not yet measured" chip.

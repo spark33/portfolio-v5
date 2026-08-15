@@ -221,6 +221,35 @@ test.describe("no layout shift", () => {
   }
 });
 
+test.describe("crawlable", () => {
+  test("robots.txt never advertises a placeholder origin", async ({ request }) => {
+    const response = await request.get("/robots.txt");
+    expect(response.status()).toBe(200);
+
+    const body = await response.text();
+    expect(body).toContain("User-agent: *");
+    expect(body).not.toContain("example.com");
+
+    // The sitemap is only written when SITE_ORIGIN (or Vercel's hostname) says
+    // what the origin is, so robots may legitimately not reference one.
+    const advertised = /Sitemap: (\S+)/.test(body);
+    const xml = await (await request.get("/sitemap.xml")).text();
+
+    if (!advertised) {
+      // No origin was configured, so no sitemap should have been written.
+      // `vite preview` answers unmatched paths with the HTML fallback rather
+      // than a 404, so the invariant to check is that no urlset is served —
+      // not the status code, which belongs to the dev server.
+      expect(xml).not.toContain("<urlset");
+      return;
+    }
+
+    // An unrecognised namespace makes the whole file unparseable to a crawler.
+    expect(xml).toContain('xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"');
+    expect(xml).not.toContain("example.com");
+  });
+});
+
 test.describe("every case study is its own URL", () => {
   for (const path of ROUTES) {
     test(`${path} is directly linkable and titled`, async ({ page }) => {
