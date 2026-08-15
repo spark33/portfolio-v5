@@ -29,6 +29,8 @@
     "src",
     "lib",
     "plugins",
+    "stories",
+    ".storybook",
     "tests",
     "vite.config.ts",
     "playwright.config.ts"

@@ -10,18 +10,22 @@
     "typecheck": "tsc --noEmit",
     "test": "playwright test",
     "test:report": "playwright show-report",
-    "shots": "node scripts/screenshots.mjs"
+    "shots": "node scripts/screenshots.mjs",
+    "storybook": "storybook dev -p 6006 --no-open",
+    "build-storybook": "storybook build"
   },
   "dependencies": {
     "three": "^0.180.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
+    "@storybook/html-vite": "^10.5.8",
     "@types/markdown-it": "^14.1.2",
     "@types/node": "^26.2.0",
     "@types/three": "^0.180.0",
     "gray-matter": "^4.0.3",
     "markdown-it": "^15.0.0",
+    "storybook": "^10.5.8",
     "typescript": "^5.9.2",
     "vite": "^7.1.0"
   }
