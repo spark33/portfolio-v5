@@ -469,11 +469,94 @@ function writeMorphs() {
       entries.push({
         char: source.char,
         syllable: block.syllable,
-        from: from.flat(2).map((n) => +n.toFixed(4)),
-        to: to.flat(2).map((n) => +n.toFixed(4)),
+        from,
+        to,
         contours: from.length,
       });
     });
+  }
+
+  // --- and on into SEAN PARK ------------------------------------------------
+  //
+  // Twenty contours become twelve. The eight with no counterpart collapse to a
+  // point inside themselves and simply stop having area — which in 2D is the
+  // whole of it. This is the step the 3D attempt could never land: there, a
+  // collapsed contour turned an extruded cap into a fan and folded it outside
+  // the letterform. Here there is no cap. It is also the lossy half of the
+  // transliteration said in geometry rather than in a caption: 박상현 carries
+  // more than SEAN PARK keeps.
+  const latin = latinContours(font);
+
+  const sourceContours = [];
+  for (const [ei, entry] of entries.entries()) {
+    entry.to.forEach((contour, ci) => sourceContours.push({ ei, ci, contour }));
+  }
+
+  // Assigned left to right, never crossing.
+  //
+  // A greedy nearest-match let contours travel the whole width to find a
+  // partner — ㅎ from 현, on the right, ended up as part of a letter on the
+  // far left — and the result reads as a shuffle rather than as one name
+  // becoming another. Sorting both sides by x and walking them in step makes
+  // the mapping monotonic: whatever is on the left stays on the left.
+  //
+  // Winding is handled separately, because it is not decoration: an outline
+  // and a counter run opposite ways, and pairing one with the other turns a
+  // hole inside out mid-morph.
+  const assigned = new Map();
+
+  for (const sign of [1, -1]) {
+    const sources = sourceContours
+      .filter((source) => Math.sign(signedArea(source.contour)) === sign)
+      .sort((a, b) => centroidOf(a.contour)[0] - centroidOf(b.contour)[0]);
+
+    const targets = latin
+      .map((contour, ti) => ({ contour, ti }))
+      .filter((target) => Math.sign(signedArea(target.contour)) === sign)
+      .sort((a, b) => centroidOf(a.contour)[0] - centroidOf(b.contour)[0]);
+
+    if (targets.length > sources.length) {
+      throw new Error(
+        `${targets.length} Latin contours of winding ${sign} against ${sources.length} sources`,
+      );
+    }
+
+    // Spread the survivors evenly through the sources rather than taking the
+    // first n, so the ones that collapse are distributed across the name
+    // instead of all coming from one syllable.
+    targets.forEach((target, i) => {
+      const pick =
+        targets.length === 1
+          ? Math.floor(sources.length / 2)
+          : Math.round((i * (sources.length - 1)) / (targets.length - 1));
+      const source = sources[pick];
+      assigned.set(`${source.ei}:${source.ci}`, target.ti);
+    });
+  }
+
+  if (new Set(assigned.values()).size !== latin.length) {
+    throw new Error(
+      `only ${new Set(assigned.values()).size} of ${latin.length} Latin contours found a source`,
+    );
+  }
+
+  for (const [ei, entry] of entries.entries()) {
+    entry.latin = entry.to.map((contour, ci) => {
+      const ti = assigned.get(`${ei}:${ci}`);
+      if (ti === undefined) {
+        // No counterpart: collapse to a point inside itself, so it shrinks
+        // away rather than sliding off somewhere.
+        const [cx, cy] = centroidOf(contour);
+        return contour.map(() => [cx, cy]);
+      }
+      return alignRotation(contour, latin[ti]);
+    });
+  }
+
+  for (const entry of entries) {
+    entry.from = entry.from.flat(2).map((n) => +n.toFixed(4));
+    entry.to = entry.to.flat(2).map((n) => +n.toFixed(4));
+    entry.latin = entry.latin.flat(2).map((n) => +n.toFixed(4));
   }
 
   const serialised = entries
@@ -485,6 +568,7 @@ function writeMorphs() {
         `    contours: ${entry.contours},\n` +
         `    from: [${entry.from.join(",")}],\n` +
         `    to: [${entry.to.join(",")}],\n` +
+        `    latin: [${entry.latin.join(",")}],\n` +
         `  },`,
     )
     .join("\n");
@@ -506,8 +590,12 @@ export interface MorphPair {
   char: string;
   syllable: string;
   contours: number;
+  /** The jamo, at its cell. */
   from: number[];
+  /** Its share of the composed syllable. */
   to: number[];
+  /** Where it goes in SEAN PARK, or collapsed to a point if it goes nowhere. */
+  latin: number[];
 }
 
 /** Points per contour. */
@@ -520,6 +608,55 @@ ${serialised}
 
   fs.writeFileSync(path.join("src", "loader", "morphs.ts"), module);
 }
+
+/**
+ * SEAN PARK's contours, typeset across the same width the blocks span.
+ *
+ * Same coordinate space as everything else, so the final morph is a change of
+ * shape and nothing more — no transform, no reframe.
+ */
+function latinContours(font) {
+  const em = font.unitsPerEm;
+  const text = "SEAN PARK";
+  const tracking = -0.012;
+
+  // Measured at size 1 first, then scaled to fit. Set at a fixed size the run
+  // came out wider than the three blocks it has to land inside, so it
+  // overflowed the frame and the letters stacked on top of one another.
+  let natural = 0;
+  const advances = [...text].map((char) => {
+    const advance = font.charToGlyph(char).advanceWidth / em;
+    natural += advance + (char === " " ? 0 : tracking);
+    return advance;
+  });
+
+  const size = (TOTAL_BLOCK_WIDTH * 0.96) / natural;
+  const width = natural * size;
+  const shift = (TOTAL_BLOCK_WIDTH - width) / 2;
+  // Baseline placed so the cap height sits on the block's optical centre.
+  const baseline = 0.82;
+
+  const out = [];
+  let pen = 0;
+  [...text].forEach((char, index) => {
+    if (char !== " ") {
+      for (const contour of contoursOf(font, char)) {
+        out.push(
+          resample(contour, MORPH_N).map(([px, py]) => [
+            shift + pen + px * size,
+            baseline + py * size,
+          ]),
+        );
+      }
+    }
+    pen += (advances[index] + (char === " " ? 0 : tracking)) * size;
+  });
+
+  return out;
+}
+
+/** Kept in step with src/loader/layout.ts. */
+const TOTAL_BLOCK_WIDTH = 3 * 1 + 2 * 0.14;
 
 /** Cells, kept in step with src/loader/layout.ts. */
 const CELL_TABLE = {

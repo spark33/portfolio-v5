@@ -81,6 +81,15 @@ That is also why it cannot be a stock preloader wearing someone's name: this
 animation is specific to *this* name in *this* script, and would have to be
 rebuilt from scratch for any other.
 
+**Nothing in the sequence is a cut.** Nine jamo become three syllables become
+SEAN PARK, as one continuous chain of the same twenty contours. Twenty become
+twelve: the eight with no counterpart collapse to a point inside themselves and
+stop having area, which is the lossy half of the transliteration said in
+geometry rather than in a caption — 박상현 carries more than SEAN PARK keeps.
+The middle of that last morph is the only place the piece is neither Korean nor
+Latin, and it gets the longest beat, because that in-between is the most
+interesting thing in it.
+
 **The parts do not cut to the syllable — they become it.** Each jamo's outline
 morphs into its share of the composed block, contour by contour. That is
 possible because the counts line up exactly: 박 has five contours and ㅂㅏㄱ

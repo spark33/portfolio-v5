@@ -37,9 +37,7 @@ import {
  */
 
 /** Total duration in milliseconds. */
-export const DURATION = 3200;
-
-const LATIN = [..."SEAN PARK"];
+export const DURATION = 3800;
 
 /** Beats, in normalised time. */
 const T = {
@@ -48,28 +46,42 @@ const T = {
   assembleSpan: 0.26,
   assembleStagger: 0.028,
 
+  /** Parts fuse into their syllable. */
+  fuseFrom: 0.3,
+  fuseSpan: 0.18,
+  fuseStagger: 0.05,
+
   /**
-   * Parts fuse into their syllable.
+   * The name flows into the one he goes by.
    *
-   * A real morph, so it can take its time: earlier cuts had to snap here to
-   * hide a crossfade between two different drawings of the same block. There
-   * is nothing to hide now.
+   * The longest beat, and unhurried on purpose: the middle of this morph is
+   * the only place the piece is neither Korean nor Latin, and that in-between
+   * is the most interesting thing in it. Rushing past it to reach a legible
+   * frame throws away the reason for doing the morph at all.
    */
-  fuseFrom: 0.36,
-  fuseSpan: 0.2,
-  fuseStagger: 0.06,
-
-  /** The composed name gives way to the Latin one. */
-  exitFrom: 0.64,
-  exitSpan: 0.09,
-  exitStagger: 0.018,
-
-  // Starts only once the last block has cleared, so no Latin letter is ever
-  // drawn underneath a syllable that is still on screen.
-  arriveFrom: 0.75,
-  arriveSpan: 0.24,
-  arriveStagger: 0.013,
+  flowFrom: 0.58,
+  flowSpan: 0.3,
+  /** Unstaggered: by this point there are no parts left, only the name. */
+  flowStagger: 0,
 } as const;
+
+/**
+ * Every staggered beat has to close before the run ends.
+ *
+ * The flow used to start at 0.58 and stagger nine parts by 0.022 over a span
+ * of 0.3, which puts the last of them finishing at 1.076 — so the final frame
+ * caught them mid-morph and the name rendered as a scramble. Checked here
+ * rather than left as arithmetic in a comment, because it is the kind of thing
+ * that breaks silently every time a beat is retimed.
+ */
+const LAST = Math.max(
+  T.assembleFrom + 8 * T.assembleStagger + T.assembleSpan,
+  T.fuseFrom + 2 * T.fuseStagger + T.fuseSpan,
+  T.flowFrom + T.flowSpan,
+);
+if (LAST > 1) {
+  throw new Error(`loader beats run to ${LAST.toFixed(3)}, past the end of the sequence`);
+}
 
 /** The weight axis, per layer. */
 const WEIGHT = {
@@ -77,12 +89,6 @@ const WEIGHT = {
   composed: { from: 200, to: 340 },
   latin: { from: 300, to: 930 },
 };
-
-/** How far the Latin drifts in, in em. */
-const DRIFT_IN = 0.12;
-
-/** Word space between SEAN and PARK, in block units. */
-const WORD_SPACE = 0.2;
 
 /** CSS-style cubic bézier, solved for y given x. */
 function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
@@ -120,8 +126,14 @@ const lockEase = cubicBezier(0.16, 1, 0.3, 1);
  * makes the animation this name's and not anyone else's.
  */
 const fuseEase = cubicBezier(0.65, 0, 0.35, 1);
-/** Leaving: accelerates away, so an exit reads as decisive rather than sad. */
-const exitEase = cubicBezier(0.55, 0, 0.85, 0.3);
+/**
+ * The flow into Latin.
+ *
+ * Gentler at both ends than the fuse, and slower through the middle, so the
+ * abstract stretch — where the forms are neither script — is the part that
+ * gets the time.
+ */
+const flowEase = cubicBezier(0.5, 0.02, 0.5, 0.98);
 /** The counter, and with it the weight. Has to actually finish. */
 const progressEase = cubicBezier(0.22, 0.55, 0.3, 1);
 
@@ -134,17 +146,19 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-/** Interpolates a morph pair and renders it as path data. */
+/** Interpolates between two point runs and renders the result as path data. */
 function blend(
-  morph: { from: number[]; to: number[]; contours: number },
+  from: number[],
+  to: number[],
   t: number,
+  contours: number,
   render: (points: number[], contours: number) => string,
 ): string {
-  const points = new Array<number>(morph.from.length);
+  const points = new Array<number>(from.length);
   for (let i = 0; i < points.length; i++) {
-    points[i] = morph.from[i] + (morph.to[i] - morph.from[i]) * t;
+    points[i] = from[i] + (to[i] - from[i]) * t;
   }
-  return render(points, morph.contours);
+  return render(points, contours);
 }
 
 export interface LoaderOptions {
@@ -248,6 +262,7 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
     const from = toPath(morph.from, morph.contours);
     const to = toPath(morph.to, morph.contours);
+    const latin = toPath(morph.latin, morph.contours);
 
     const outer = svgEl("g");
     const path = svgEl("path", {
@@ -275,23 +290,34 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     const length = path.getTotalLength();
     path.setAttribute("stroke-dasharray", String(length));
 
-    return { outer, path, length, morph, from, to, current: from };
+    return { outer, path, length, morph, from, to, latin, current: from };
   });
   svg.append(partGroup);
 
-  // --- SEAN PARK -----------------------------------------------------------
-  const latinGroup = svgEl("g");
-  const latinNodes = LATIN.map((char) => {
-    const text = svgEl("text", {
-      y: BLOCK.size * 0.78,
-      "font-size": BLOCK.size * 0.62,
-      "text-anchor": "middle",
-    });
-    text.textContent = char;
-    latinGroup.append(text);
-    return text;
+  // --- The whole field, as one path ----------------------------------------
+  //
+  // The flow into Latin has to be a single element. A letter's outline and its
+  // counter are separate contours, and `fill-rule` only punches a hole when
+  // both live in the same path — split across nine, every counter rendered as
+  // a solid blob and SEAN PARK came out unreadable.
+  //
+  // It also makes the last stage one movement rather than nine, which is what
+  // it should be: by then there are no parts left, only the name.
+  const fieldFrom: number[] = [];
+  const fieldTo: number[] = [];
+  let fieldContours = 0;
+  for (const node of partNodes) {
+    fieldFrom.push(...node.morph.to);
+    fieldTo.push(...node.morph.latin);
+    fieldContours += node.morph.contours;
+  }
+
+  const field = svgEl("path", {
+    d: toPath(fieldFrom, fieldContours),
+    fill: "currentColor",
+    opacity: 0,
   });
-  svg.append(latinGroup);
+  svg.append(field);
 
   // --- The meter -----------------------------------------------------------
   const meter = document.createElement("div");
@@ -322,36 +348,8 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
    * the weight the word settles at is close enough, and it is the only DOM
    * read in the whole animation.
    */
-  let latinPlaced = false;
-  function placeLatin() {
-    if (latinPlaced || !svg.isConnected) return;
-
-    latinGroup.style.fontVariationSettings = `"wght" ${WEIGHT.latin.to}`;
-
-    // A <text> holding only a space measures zero — SVG has no line box to
-    // hang whitespace on — so the word space is set explicitly. Without this
-    // the two words run together as SEANPARK.
-    const widths = latinNodes.map((node, index) =>
-      LATIN[index] === " " ? WORD_SPACE : node.getComputedTextLength(),
-    );
-    const ink = widths.reduce((sum, width, index) => (LATIN[index] === " " ? sum : sum + width), 0);
-    if (ink === 0) return; // Font has not landed yet; try again next frame.
-
-    const total = widths.reduce((sum, width) => sum + width, 0);
-
-    let pen = (TOTAL_WIDTH - total) / 2;
-    latinNodes.forEach((node, index) => {
-      node.setAttribute("x", (pen + widths[index] / 2).toFixed(4));
-      pen += widths[index];
-    });
-
-    latinPlaced = true;
-  }
-
   /** Renders the frame at normalised time. */
   function apply(t: number) {
-    placeLatin();
-
     const progress = progressEase(t);
 
     // --- Parts -------------------------------------------------------------
@@ -361,19 +359,13 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
 
       const locked = lockEase(phase(t, T.assembleFrom, T.assembleSpan, T.assembleStagger, order));
 
-      // The part travels to its cell...
       const away = 1 - locked;
-      const leaving = exitEase(phase(t, T.exitFrom, T.exitSpan, T.exitStagger, part.syllable));
-
       node.outer.setAttribute(
         "transform",
-        `translate(${(part.approach.x * away - 0.12 * leaving).toFixed(4)} ` +
-          `${(part.approach.y * away - 0.22 * leaving).toFixed(4)})`,
+        `translate(${(part.approach.x * away).toFixed(4)} ${(part.approach.y * away).toFixed(4)})`,
       );
-      node.outer.setAttribute("opacity", (1 - leaving).toFixed(3));
 
-      // ...its outline draws itself on, and the fill catches up behind it.
-      // This is the one thing here that could not be done any other way — a
+      // The outline draws itself on, and the fill catches up behind it. A
       // stroke running along the letterform is what makes it read as drawn
       // rather than as a glyph being faded up.
       const drawn = Math.min(1, locked / DRAW.span);
@@ -386,23 +378,34 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
       // begun, so nothing is painted before the part exists.
       node.path.setAttribute("stroke-opacity", (drawn > 0 ? 1 - filled : 0).toFixed(3));
 
-      // ...and then it *becomes* its share of the syllable.
-      //
-      // Not a crossfade to a second drawing of the block — the same contours,
-      // moved. The font redraws a jamo for its position but keeps its contour
-      // structure, so every contour of 박 has exactly one counterpart among
-      // ㅂㅏㄱ, and the whole assembly resolves with nothing appearing or
-      // disappearing. It is also the only way the seam can be invisible: there
-      // is no seam.
+      // Then it becomes its share of the syllable, and the syllable becomes
+      // its share of SEAN PARK. One continuous chain of the same contours —
+      // never a crossfade, never a cut, and nothing on screen that is not the
+      // same twenty outlines it started with.
       const fused = fuseEase(phase(t, T.fuseFrom, T.fuseSpan, T.fuseStagger, part.syllable));
+
       const wanted =
-        fused <= 0 ? node.from : fused >= 1 ? node.to : blend(node.morph, fused, toPath);
+        fused >= 1
+          ? node.to
+          : fused > 0
+            ? blend(node.morph.from, node.morph.to, fused, node.morph.contours, toPath)
+            : node.from;
 
       if (wanted !== node.current) {
         node.path.setAttribute("d", wanted);
         node.current = wanted;
       }
     });
+
+    // The field takes over for the flow. At its first frame it is exactly what
+    // the nine paths were drawing, so the handover is invisible.
+    const flowed = flowEase(phase(t, T.flowFrom, T.flowSpan, 0, 0));
+    const flowing = flowed > 0;
+    partGroup.setAttribute("opacity", flowing ? "0" : "1");
+    field.setAttribute("opacity", flowing ? "1" : "0");
+    if (flowing) {
+      field.setAttribute("d", blend(fieldFrom, fieldTo, flowed, fieldContours, toPath));
+    }
 
     partGroup.style.fontVariationSettings = `"wght" ${lerp(
       WEIGHT.parts.from,
@@ -414,29 +417,11 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     // Present while there is something to assemble, gone once each block has.
     frames.forEach((frame, index) => {
       const drawn = lockEase(phase(t, T.assembleFrom, 0.16, 0.05, index));
-      const gone = phase(t, T.fuseFrom, T.fuseSpan * 0.5, T.fuseStagger, index);
+      const gone = phase(t, T.fuseFrom, T.fuseSpan * 0.6, T.fuseStagger, index);
       frame.setAttribute("opacity", (drawn * (1 - gone) * 0.22).toFixed(3));
     });
 
     // --- Composed syllables -------------------------------------------------
-    // --- SEAN PARK ----------------------------------------------------------
-    latinNodes.forEach((node, index) => {
-      const arrived = lockEase(phase(t, T.arriveFrom, T.arriveSpan, T.arriveStagger, index));
-      node.setAttribute("opacity", arrived.toFixed(3));
-      node.setAttribute(
-        "transform",
-        `translate(${(DRIFT_IN * (1 - arrived)).toFixed(4)} ${(0.26 * (1 - arrived)).toFixed(4)})`,
-      );
-    });
-
-    if (latinPlaced) {
-      latinGroup.style.fontVariationSettings = `"wght" ${lerp(
-        WEIGHT.latin.from,
-        WEIGHT.latin.to,
-        progress,
-      ).toFixed(1)}`;
-    }
-
     // --- Meter --------------------------------------------------------------
     const shown = Math.round(progress * 100);
     fill.style.width = `${(progress * 100).toFixed(2)}%`;
