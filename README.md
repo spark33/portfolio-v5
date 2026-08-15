@@ -28,6 +28,8 @@ npm run storybook  # component workbench on http://localhost:6006
 | `lib/blog.ts`        | Loads posts and renders the blog's HTML                   |
 | `plugins/blog.ts`    | Generates `blog/` and reloads it in dev                   |
 | `src/blog.css`       | Blog index and post styles                                |
+| `src/figures/hangul-hero/` | 박상현 → "Sean Park" morph; see [Hangul hero](#hangul-hero) |
+| `scripts/bake-glyphs.mjs` | Bakes that figure's glyph outlines to a distance-field atlas |
 | `scripts/fetch-fonts.py` | Regenerates `public/fonts/` and `src/fonts.css`       |
 | `.mcp.json`          | Design-reference MCP servers                              |
 
@@ -56,6 +58,51 @@ Tight + Inter, IBM Plex Sans + Mono) are in the git history if it needs revisiti
 Fonts are self-hosted latin-subset woff2 under `public/fonts/` (SIL Open Font
 License). Re-run `python3 scripts/fetch-fonts.py` to change the set; it clears the
 directory first, so dropping a family leaves nothing behind.
+
+## Hangul hero
+
+`src/figures/hangul-hero/` renders 박상현 as a mark that morphs into "Sean Park".
+POC stage: it lives in Storybook only and is not on a page yet.
+
+The name decomposes into its nine jamo — 박 = ㅂㅏㄱ, 상 = ㅅㅏㅇ, 현 = ㅎㅕㄴ — from
+the Hangul Compatibility Jamo block, each of which moves independently. Nine into
+eight does not divide, so eight take a Latin letter each and ㅇ fuses into the "a"
+of "Sean" instead: 상's vowel and final are the "ang" that English spells with one
+letter, and a ring settling into a bowl is a merge the eye can follow.
+
+**It is one distance field, not geometry.** Every glyph is baked to a signed
+distance field tile, and the mark is the smooth-minimum union of all nine sampled
+fields. That is what makes it read as a single connected object while its parts
+cross: where two parts pass close, the union necks them together. Shading comes
+from the field's own screen-space gradient, so the bevel is exact at any zoom and
+antialiases to the pixel — one draw call, no meshes, no lights.
+
+| Piece | Does |
+| ----- | ---- |
+| `layout.ts` | Hangul block cells, the Latin line, and the jamo → letter mapping |
+| `field.glsl.ts` | The shader: sample nine pairs, blend outlines, smooth-union, shade |
+| `ease.ts` | Custom eases, written out rather than picked from presets |
+| `index.ts` | Scene, timeline, and the mount/dispose lifecycle |
+| `glyphs.ts`, `glyphs.sdf.bin` | Generated. Do not edit — re-run the bake |
+
+```sh
+npm run bake:glyphs   # re-bake after changing the glyph set or atlas constants
+npm run shots:hero    # contact sheet of the morph, needs Storybook running
+```
+
+`scripts/bake-glyphs.mjs` downloads Noto Sans KR Bold (OFL) to a gitignored cache,
+extracts outlines with opentype.js, rasterises them, and writes the atlas plus a
+typed metadata module. The 6 MB font is a build input only; nothing parses a font
+at runtime. Output is deterministic, so a no-op re-run leaves the tree clean.
+
+Two stories. **Decomposition** puts the transform on a 0 → 1 slider with no timing
+or camera work around it — that is where the motion gets judged, and the sequence
+plays the same timeline, so the two cannot drift. **Sequence** runs it on its beats
+with the copy fading in beneath.
+
+Known gaps at POC stage: the cells only describe vertical-vowel syllables (고 or 문
+would need a second set), and the reduced-motion path is verified by hand because
+the Playwright config drives the site preview rather than Storybook.
 
 ## Blog
 
