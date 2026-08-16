@@ -1,5 +1,6 @@
 @import "./tokens.css";
 @import "./fonts.css";
+@import "./board.css";
 
 /* Reset ------------------------------------------------------------------ */
 
@@ -21,6 +22,7 @@ html {
 }
 
 body {
+  position: relative;
   background: var(--paper);
   color: var(--ink);
   font-family: var(--font-text);
@@ -225,6 +227,8 @@ a:hover {
 /* Page frame ------------------------------------------------------------- */
 
 .page {
+  position: relative;
+  z-index: 1;
   max-width: var(--page-max);
   margin-inline: auto;
   padding-inline: var(--gutter);
@@ -307,6 +311,8 @@ a:hover {
 }
 
 .site-foot {
+  position: relative;
+  z-index: 1;
   border-top: 1px solid var(--rule);
   margin-top: var(--space-8);
   padding-block: var(--space-6) var(--space-8);

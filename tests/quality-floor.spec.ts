@@ -60,17 +60,22 @@ test.describe("readable without JavaScript", () => {
     });
   }
 
-  test("the name sequence is complete with JS off", async ({ page }) => {
+  test("the solved field is finished geometry with JS off", async ({ page }) => {
     await page.goto("/");
 
-    const steps = page.locator(".name-step");
-    await expect(steps).toHaveCount(4);
+    const blocks = page.locator(".board-field-block");
+    await expect(blocks).not.toHaveCount(0);
 
-    // All four encodings present and visible — not waiting on a loader.
-    for (const value of ["박상현", "ㅂㅏㄱ", "PARK SANGHYEON", "Sean Park"]) {
-      await expect(page.locator(".name-value", { hasText: value }).first()).toBeVisible();
+    // The board's geometry is computed at build time, so every block already
+    // carries its cell coordinates. Nothing here is waiting on a script.
+    for (const prop of ["--col", "--row", "--w"]) {
+      const values = await blocks.evaluateAll(
+        (els, p) => els.map((el) => (el as HTMLElement).style.getPropertyValue(p as string)),
+        prop,
+      );
+      expect(values.every((v) => v !== "")).toBe(true);
     }
-    await expect(steps.first()).toHaveCSS("opacity", "1");
+    await expect(blocks.first()).toBeVisible();
   });
 
   test("every case study states its constraint before its title", async ({ page }) => {
@@ -99,37 +104,25 @@ test.describe("readable without JavaScript", () => {
 });
 
 test.describe("motion is declinable", () => {
-  test("reduced motion leaves the sequence in its final state", async ({ page }) => {
+  test("the lattice lift is the only motion, and it is optional", async ({ page }) => {
     await page.emulateMedia({ reducedMotion: "reduce" });
     await page.goto("/");
 
-    // The gate never arms, so nothing was ever hidden.
-    await expect(page.locator("html")).not.toHaveAttribute("data-seq", "pending");
-    await expect(page.locator(".name-step").first()).toHaveCSS("opacity", "1");
+    // Under reduced motion the pointer lift is not rendered at all, and the
+    // ambient lattice — which is the whole design — is untouched.
+    await expect(page.locator(".lattice-lift")).toBeHidden();
+    await expect(page.locator(".lattice-base")).toBeVisible();
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 
-  test("a repeat visit skips the sequence via the persisted flag", async ({ page }) => {
-    await page.goto("/");
-    // First visit plays, then records itself.
-    await expect
-      .poll(() => page.evaluate(() => localStorage.getItem("sp:name-sequence-seen")))
-      .toBe("1");
-
-    await page.reload();
-    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
-    await expect(page.locator(".name-step").first()).toHaveCSS("opacity", "1");
-  });
-
-  test("the sequence always resolves, even if the module never loads", async ({ page }) => {
+  test("the page is identical when the module never loads", async ({ page }) => {
     await page.route("**/main-*.js", (route) => route.abort());
     await page.goto("/");
 
-    // The failsafe in the head clears the gate on its own.
-    await expect(page.locator("html")).not.toHaveAttribute("data-seq", "pending", {
-      timeout: 4000,
-    });
-    await expect(page.locator(".name-step").first()).toBeVisible();
+    // Nothing about the composition depends on the script.
+    await expect(page.locator(".board-field-block").first()).toBeVisible();
+    await expect(page.locator(".lattice-base")).toBeVisible();
+    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   });
 });
 

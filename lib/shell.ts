@@ -111,32 +111,7 @@ export interface ShellOptions {
   jsonLd?: Record<string, unknown>;
   /** Optional module entry. The page must be complete without it. */
   module?: string;
-  /** Arms the name sequence. Home page only. */
-  sequence?: boolean;
 }
-
-/**
- * Decides, before the hero paints, whether the name sequence should play at
- * all — so the first frame is already right and nothing flashes.
- *
- * It plays only on a first visit with motion allowed. The failsafe matters
- * more than the animation: if the module fails to load, the timeout reveals
- * the sequence anyway. With JS off this never runs and the page is simply
- * already finished, which is the state everything else degrades to.
- */
-const SEQUENCE_GATE = `<script>
-      (function () {
-        try {
-          if (localStorage.getItem("sp:name-sequence-seen")) return;
-          if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-          var root = document.documentElement;
-          root.dataset.seq = "pending";
-          setTimeout(function () {
-            if (root.dataset.seq === "pending") delete root.dataset.seq;
-          }, 2000);
-        } catch (e) {}
-      })();
-    </script>`;
 
 export function shell({
   title,
@@ -146,7 +121,6 @@ export function shell({
   body,
   jsonLd,
   module,
-  sequence,
 }: ShellOptions) {
   const preload = PRELOADS.map(
     (url) =>
@@ -160,6 +134,13 @@ export function shell({
   const script = module
     ? `\n    <script type="module" src="${module}"></script>`
     : "";
+
+  // The board is decoration to a screen reader and structure to everyone else.
+  const board = `    <div class="board" aria-hidden="true">
+      <div class="lattice lattice-base"></div>
+      <div class="lattice lattice-lift"></div>
+      <div class="hoshi"></div>
+    </div>`;
 
   return `<!doctype html>
 <html lang="en">
@@ -179,10 +160,10 @@ export function shell({
     />
 ${preload}
     <link rel="stylesheet" href="${stylesheet}" />${structured}
-    ${sequence ? SEQUENCE_GATE : ""}
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
+${board}
 ${navigation(path)}
 ${body}
 ${footer()}${script}

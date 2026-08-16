@@ -79,11 +79,40 @@
   --page-max: 90rem;
   --measure: 34rem;
 
+  /* ---- the board -------------------------------------------------------
+     One lattice cell is a nineteenth of the measure, so the cell is square
+     and the page is a 19-wide board at every width. Positions are expressed
+     in cells, never pixels, which is what makes a build-time solve hold up
+     across viewports. */
+  --board-cols: 19;
+  --u: calc((min(100vw, var(--page-max)) - var(--gutter) * 2) / var(--board-cols));
+  --lattice-ink: #8f8e84;
+  /* Calibrated: blends to #e0e0da on paper, contrast 1.087. Present, not a
+     drawn grid. See src/board.css for the full range. */
+  --board-base: 0.1;
+  --board-lift: 0.8;
+  --board-reach: 180px;
+
   /* ---- motion: authored, with overshoot and settle --------------------- */
   --ease-resolve: cubic-bezier(0.22, 1.12, 0.28, 1);
   --ease-exit: cubic-bezier(0.62, 0.02, 0.34, 1);
   --dur-state: 120ms;
   --dur-reveal: 620ms;
+}
+
+/* The solved field needs nineteen columns; below it the lattice is texture,
+   and a nineteenth of a phone is a 19px mesh that reads as noise. Fewer, larger
+   cells keep the board the same object at every size. */
+@media (max-width: 79.999rem) {
+  :root {
+    --board-cols: 12;
+  }
+}
+
+@media (max-width: 48rem) {
+  :root {
+    --board-cols: 7;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

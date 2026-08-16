@@ -26,23 +26,27 @@ study the constraint is the `<h1>`. This is enforced by the content types in
 `constraint`, and a `Decision` cannot be written without a `cost`. A decision
 with no cost is a preference.
 
-**The name motif is the signature.** Four encodings of one name:
+**바둑 is the substrate, not the picture.** The board is never drawn. Three
+rules survive from it, in [`lib/board.ts`](lib/board.ts):
 
-```
-박상현  →  ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ  →  PARK SANGHYEON  →  Sean Park
-composed    decomposed            transliterated      resolved
-```
+- **Lattice.** Nineteen square cells across the measure. Everything places on
+  an intersection; nothing is nudged or centred by eye.
+- **Influence (세력).** A stone radiates over the space around it and a stronger
+  position reaches further. Every block declares a weight; clearance is
+  `0.3 + weight × 0.28` cells; blocks resolve in order of initiative, the
+  strongest holding its intersection while weaker ones yield down the board.
+  Negative space is *allocated by rank* rather than left over.
+- **Star points (화점).** A real board's only marks are nine reference dots, at
+  lines 4, 10 and 16. They are the sole thing that surfaces — a baduk player
+  reads them immediately, everyone else reads registration marks.
 
-Each row is set at the size that makes it occupy the same width as the others,
-so what visibly changes down the column is the encoding and not the person.
-The last step is deliberately lossy — nothing derived "Sean", it was chosen —
-and it carries the only accent in the hero. The two human states (composed,
-resolved) are large; the two mechanical ones are small.
+The solve runs at **build time** and emits cell coordinates into the HTML, so
+the composition is correct in the first paint and identical with JavaScript
+off. The whole client-side board is two pointer coordinates.
 
-Sizes are derived from measured set widths, not a modular scale, and are
-expressed in container units so the fill is exact at every viewport. If a
-string changes, re-measure — the numbers are in
-[`src/home.css`](src/home.css).
+`?board` on any URL draws the lattice and every block's claimed influence. It
+is a URL rather than a hover so it works for a keyboard, a screenshot and a
+phone.
 
 ## Layout
 
@@ -56,10 +60,12 @@ string changes, re-measure — the numbers are in
 | `plugins/site.ts`       | Writes every page to its URL path and registers MPA inputs   |
 | `src/tokens.css`        | Palette, type scale, tracking, spacing, easing               |
 | `src/base.css`          | Reset, type primitives, strips, focus, page frame            |
-| `src/home.css`          | The name sequence, thesis, position strip                    |
+| `lib/board.ts`          | The lattice, influence and the build-time solver              |
+| `src/board.css`         | The board's visible surface — lattice, hoshi, solved field    |
+| `src/board.ts`          | The only client script: two pointer coordinates               |
+| `src/home.css`          | Thesis and position strip                                     |
 | `src/case.css`          | Case studies and artifact pages — the decision spine         |
 | `src/index-rows.css`    | Constraint-first index rows                                  |
-| `src/name-sequence.ts`  | The loader, behind one interface                             |
 | `scripts/fetch-fonts.py`| Regenerates `public/fonts/` and `src/fonts.css`              |
 
 Pages are generated to their URL path at the repo root (`work/…/index.html`)
@@ -114,50 +120,42 @@ Light only, committed via `color-scheme: light`.
 
 ## Motion
 
-There is one animation: the name sequence staggers in on a first visit. That
-is all.
+There is one piece of motion on the site: a brighter copy of the lattice,
+masked to a disc that follows the pointer. It does not conjure a grid out of
+nothing — it raises the contrast of structure already on the page, which is the
+difference between this and a flashlight effect. Under
+`prefers-reduced-motion: reduce`, or on any device without a pointer, it is not
+rendered and the ambient lattice is the whole design.
 
-It is gated by an inline script in the head, so the first frame is already
-correct and nothing flashes. It never runs under `prefers-reduced-motion:
-reduce`, never runs on a repeat visit (`localStorage`), and a 2 s failsafe in
-that same script reveals the sequence if the module never loads. With JS off
-the script never runs and the page is simply already finished.
-
-The placeholder uses the Web Animations API and reads its curve from the
-`--ease-resolve` custom property, so a tween and a CSS transition cannot drift.
-Two things were removed during the build and should stay removed unless
+Three things were removed during the build and should stay removed unless
 something changes:
 
-- **GSAP** cost 70 KB to stagger four rows. The replacement is isolated behind
-  `mountNameSequence`, so the WebGL version is free to pull in whatever it
-  genuinely needs.
+- **GSAP** cost 70 KB to stagger four rows.
 - **ScrollTrigger** faded in the position strip, which left the site's
   credentials at `opacity: 0` until the reader happened to scroll past. On a
-  site with a three-minute budget, scroll now only scrolls.
+  site with a three-minute budget, scroll only scrolls.
+- **The name sequence.** 박상현 → ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ → PARK SANGHYEON → Sean
+  Park was the previous motif and is gone, along with `src/name-sequence.ts`
+  and the `mountNameSequence` interface a WebGL implementation was to drop
+  into. Nothing hosts that work now; re-adding a mount point is small if it is
+  wanted somewhere.
 
 **Lenis was never added.** There are no scroll-linked scenes to smooth and it
 degrades keyboard and screen-reader scrolling.
 
-### The loader interface
-
-A WebGL implementation of the name sequence is being built separately. It drops
-in behind one function:
-
-```ts
-mountNameSequence(root: HTMLElement): { destroy(): void }
-```
-
-The contract, enforced by `tests/quality-floor.spec.ts`:
-
-- The server already rendered the finished sequence into `root`. Mounting
-  enhances something complete; it is never what makes the name appear.
-- `destroy()` releases everything and leaves the DOM in its finished state.
-- Nothing runs under reduced motion or on a repeat visit. Both are decided
-  before mount.
-
 ## Quality floor
 
-`npm test` enforces the non-negotiables rather than leaving them as intentions:
+`npm test` enforces the non-negotiables rather than leaving them as intentions.
+
+[`tests/board.spec.ts`](tests/board.spec.ts) is what makes a build-time solver
+safe. Blocks declare their height in cells because the solver cannot measure
+text, so the tests measure it instead — **across 1280…2560px**, reporting the
+value to use when a declaration drifts. Checking a single width is not enough:
+the cell shrinks with the viewport faster than text does, and an earlier version
+of that file went green at 1440 while the lede overflowed its cells at 1100.
+That is also why the board only applies from 80rem up.
+
+The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and
 valid schema.org on every page, the constraint preceding the title, a `COST`
 field on every decision, reduced-motion and repeat-visit skips, the module-fails

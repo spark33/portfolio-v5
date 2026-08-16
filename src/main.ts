@@ -1,23 +1,17 @@
 /**
- * Home page entry.
+ * Site entry.
  *
- * Everything here is enhancement. The server rendered a finished page; this
- * file animates the name sequence on a first visit and nothing else. If it
- * never runs, the only difference is that the sequence is already in its
- * final state — which is also what a reader who has asked for reduced motion,
- * or who has been here before, gets on purpose.
+ * Everything here is enhancement. The pages are rendered complete — including
+ * the board's solved geometry, which is computed at build time in lib/board.ts
+ * and arrives as cell coordinates in the HTML. This file publishes the pointer
+ * position for the lattice lift, and nothing else.
  *
- * There was a ScrollTrigger reveal on the position strip here. It cost 43.6 KB
- * to fade in four numbers, and it left them at opacity 0 until the reader
- * happened to scroll past — hiding the credentials the page exists to deliver.
- * A site whose job is three minutes long cannot spend them waiting for prose
- * to arrive, so scroll now only scrolls.
+ * Two things were removed during the build and should stay removed unless
+ * something changes. GSAP cost 70 KB to stagger four rows. ScrollTrigger faded
+ * in the position strip, which left the site's credentials at opacity 0 until
+ * the reader happened to scroll past — on a site with a three-minute budget,
+ * scroll only scrolls.
  */
-import { mountNameSequence } from "./name-sequence.ts";
+import { mountBoard } from "./board.ts";
 
-const sequence = document.querySelector<HTMLElement>("[data-name-sequence]");
-const handle = sequence ? mountNameSequence(sequence) : undefined;
-
-if (import.meta.hot) {
-  import.meta.hot.dispose(() => handle?.destroy());
-}
+mountBoard();

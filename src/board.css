@@ -1,0 +1,204 @@
+/* The board's visible surface — which is almost nothing.
+ *
+ * Both the lattice and the star points are CSS backgrounds. Nothing here needs
+ * JavaScript, an SVG, or the page's height: the cell is a custom property, so
+ * the board resolves itself at any viewport and is correct in the first paint.
+ * The only script on the page writes two pointer coordinates.
+ *
+ * The lattice sits at --board-base, calibrated by measurement rather than eye:
+ * line #8f8e84 over paper #e9e9e3 blends to #e0e0da, contrast ratio 1.087.
+ * Below 0.08 it vanishes under compression; at 0.16 it starts reading as graph
+ * paper; 0.24 is a drawn grid. 0.10 survives a screenshot and a phone without
+ * announcing itself.
+ *
+ * A second copy, brighter, is masked to a disc under the pointer — so hovering
+ * does not conjure a grid from nothing, it raises the contrast of structure
+ * already on the page. That is the difference between this and a flashlight. */
+
+.board {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, var(--page-max));
+  padding-inline: var(--gutter);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lattice {
+  position: absolute;
+  inset: 0 var(--gutter);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--lattice-ink) 0 1px,
+      transparent 1px var(--u)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--lattice-ink) 0 1px,
+      transparent 1px var(--u)
+    );
+}
+
+.lattice-base {
+  opacity: var(--board-base);
+}
+
+.lattice-lift {
+  opacity: var(--board-lift);
+  -webkit-mask-image: radial-gradient(
+    circle var(--board-reach) at var(--mx, -999px) var(--my, -999px),
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    transparent 74%
+  );
+  mask-image: radial-gradient(
+    circle var(--board-reach) at var(--mx, -999px) var(--my, -999px),
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    transparent 74%
+  );
+}
+
+/* No pointer, or no appetite for motion: the ambient lattice is the whole
+   story, and it is identical on every device. */
+@media (prefers-reduced-motion: reduce), (hover: none) {
+  .lattice-lift {
+    display: none;
+  }
+}
+
+/* The nine hoshi, at lines 4, 10 and 16 of the board — a six-cell pitch
+   starting four cells in. Horizontally that lands three marks inside nineteen
+   cells and clips the fourth; vertically it continues down the page, which
+   reads as one board after another. */
+.hoshi {
+  position: absolute;
+  inset: 0 var(--gutter);
+  background-image: radial-gradient(
+    circle 3px at center,
+    var(--ink) 100%,
+    transparent 0
+  );
+  background-size: calc(var(--u) * 6) calc(var(--u) * 6);
+  background-position: calc(var(--u) * 4) calc(var(--u) * 4);
+  opacity: 0.36;
+}
+
+/* The solved field ------------------------------------------------------- */
+
+.board-field {
+  position: relative;
+  z-index: 1;
+}
+
+.board-field-block > .label {
+  display: block;
+  margin-bottom: var(--space-3);
+}
+
+.board-claim {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: clamp(2.4rem, 5.6vw, 5.05rem);
+  line-height: 0.95;
+  letter-spacing: -0.033em;
+}
+
+.board-body {
+  color: var(--ink-secondary);
+  line-height: 1.55;
+}
+
+.board-stat {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(1.6rem, 2.5vw, 2.125rem);
+  line-height: 1;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.board-note {
+  color: var(--ink-secondary);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  margin-top: var(--space-3);
+}
+
+/* Nineteen cells need width. Below that the blocks flow in document order and
+   keep only the lattice, which is the part that works at any size. */
+@media (min-width: 80rem) {
+  .board-field {
+    height: calc(var(--u) * var(--board-field-h));
+  }
+
+  .board-field-block {
+    position: absolute;
+    left: calc(var(--u) * var(--col));
+    top: calc(var(--u) * var(--row));
+    width: calc(var(--u) * var(--w));
+  }
+
+  .board-claim {
+    text-wrap: nowrap;
+  }
+
+  .claim-line {
+    display: block;
+  }
+}
+
+@media (max-width: 79.999rem) {
+  .board-field {
+    display: grid;
+    gap: var(--space-6);
+    padding-block: var(--space-4) var(--space-6);
+  }
+
+  /* The authored breaks are a desktop composition, not a sentence. */
+  .board-claim {
+    text-wrap: balance;
+  }
+}
+
+/* The board, on request.
+   `?board` draws the lattice the page is standing on. This is the honest
+   version of revealing it: a URL rather than a hover, so it is available to a
+   keyboard, a screenshot and a phone. */
+.show-board .lattice-base {
+  opacity: 0.5;
+}
+
+.show-board .hoshi {
+  opacity: 0.8;
+}
+
+@media (min-width: 80rem) {
+  .show-board .board-field-block {
+    outline: 1px solid color-mix(in srgb, var(--seal) 70%, transparent);
+  }
+
+  .show-board .claim-zone {
+    position: absolute;
+    z-index: 0;
+    left: calc(var(--u) * var(--cx));
+    top: calc(var(--u) * var(--cy));
+    width: calc(var(--u) * var(--cw));
+    height: calc(var(--u) * var(--ch));
+    outline: 1px dashed color-mix(in srgb, var(--seal) 45%, transparent);
+    background: color-mix(in srgb, var(--seal) 5%, transparent);
+  }
+}
+
+.claim-zone {
+  display: none;
+}
+
+.show-board .claim-zone {
+  display: block;
+}

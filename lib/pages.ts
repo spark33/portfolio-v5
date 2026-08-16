@@ -12,7 +12,7 @@ import {
   about,
   artifacts,
   caseStudies,
-  nameSequence,
+  heroBlocks,
   nav,
   person,
   position,
@@ -21,7 +21,8 @@ import {
   type CaseStudy,
   type Meta,
 } from "../content/site.ts";
-import { copy, esc, ko, personJsonLd, shell } from "./shell.ts";
+import { clearance, solve } from "./board.ts";
+import { copy, esc, personJsonLd, shell } from "./shell.ts";
 
 const SITE = `${person.nameEn} — ${person.role}, ${person.org}`;
 
@@ -48,35 +49,49 @@ ${cells}
 /* -- home ---------------------------------------------------------------- */
 
 /**
- * The signature. Four encodings of one name, each set at the size that makes
- * it occupy the same width as the others — so what changes between rows is
- * visibly the encoding and not the person. The last row is the only one
- * nothing produced, and it carries the only accent on the page.
+ * The home field, solved on the board at build time.
+ *
+ * Blocks declare a weight; the solver in lib/board.ts places the strongest on
+ * its intersection and slides the rest down the lattice until nothing sits
+ * inside anyone else's influence. What arrives in the HTML is finished
+ * geometry — cell coordinates as custom properties — so the composition is
+ * correct in the first paint and identical with JavaScript disabled.
  */
-function nameSequenceMarkup() {
-  const steps = nameSequence
-    .map((item, i) => {
-      const groups = item.groups
-        .map((group) => `<span class="name-group">${ko(esc(group))}</span>`)
-        .join("");
+function heroField() {
+  const { placed, height } = solve(heroBlocks);
 
-      return `            <li class="name-step" data-step="${i}">
-              <p class="name-meta">
-                <span class="label">${esc(item.step)}</span>
-                <span class="micro name-note">${esc(item.note)}</span>
-              </p>
-              <p class="name-value">${groups}</p>
-            </li>`;
+  const blocks = placed
+    .map((b) => {
+      const parts = [
+        b.label ? `<span class="label">${copy(b.label)}</span>` : "",
+        // Separate spans rather than <br>: on the board each is a line, and
+        // everywhere else they run together as a sentence with the whitespace
+        // between the tags collapsing to the space the sentence needs.
+        b.claim
+          ? `<h1 class="board-claim">${b.claim
+              .map((l) => `<span class="claim-line">${copy(l)}</span>`)
+              .join("\n              ")}</h1>`
+          : "",
+        b.body ? `<p class="board-body">${copy(b.body)}</p>` : "",
+        b.stat ? `<p class="board-stat">${copy(b.stat)}</p>` : "",
+        b.note ? `<p class="board-note">${copy(b.note)}</p>` : "",
+      ].filter(Boolean);
+
+      const c = clearance(b.weight);
+      const zone =
+        `<div class="claim-zone" aria-hidden="true" style="` +
+        `--cx:${b.col - c};--cy:${b.row - c};--cw:${b.w + c * 2};--ch:${b.h + c * 2}"></div>`;
+
+      return `          ${zone}
+          <div class="board-field-block" data-block="${esc(b.id)}" data-weight="${b.weight}"
+            style="--col:${b.col};--row:${b.row};--w:${b.w};--h:${b.h}">
+            ${parts.join("\n            ")}
+          </div>`;
     })
     .join("\n");
 
-  // Rendered complete. The script staggers it in on a first visit and does
-  // nothing on any other, so the page is never waiting on it.
-  return `      <section class="name page" data-name-sequence>
-        <h1 class="visually-hidden">${esc(person.nameEn)} (${esc(person.nameKo)}) — ${esc(person.role)}, ${esc(person.org)}, ${esc(person.location)}</h1>
-        <ol class="name-steps" aria-label="One name across four writing systems">
-${steps}
-        </ol>
+  return `      <section class="page board-field" style="--board-field-h:${height}">
+${blocks}
       </section>`;
 }
 
@@ -146,10 +161,9 @@ export function renderHome() {
     path: "/",
     stylesheet: "/src/home.css",
     module: "/src/main.ts",
-    sequence: true,
     jsonLd: personJsonLd(),
     body: `    <main class="main" id="main" tabindex="-1">
-${nameSequenceMarkup()}
+${heroField()}
 
       <section class="page thesis">
         <div class="thesis-role">

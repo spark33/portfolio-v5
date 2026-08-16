@@ -62,6 +62,78 @@ export const nameSequence = [
   { step: "Resolved", groups: [person.nameEn], note: "Chosen — nothing derived it" },
 ];
 
+/**
+ * The home field, as blocks on the board.
+ *
+ * `weight` is initiative: the highest holds its intersection and everything
+ * else yields around it, so the whitespace is allocated by rank. `h` is the
+ * block's height in lattice cells — declared, because the solver runs at build
+ * time and cannot measure text. `tests/board.spec.ts` checks every one of
+ * these against the real rendered height and tells you the right number when
+ * it drifts, so treat a failure there as an instruction rather than a puzzle.
+ */
+export type HeroBlock = {
+  id: string;
+  col: number;
+  row: number;
+  w: number;
+  h: number;
+  weight: number;
+  label: string;
+  /** Rendered at display size. Line breaks are deliberate. */
+  claim?: string[];
+  body?: string;
+  stat?: string;
+  note?: string;
+};
+
+export const heroBlocks: HeroBlock[] = [
+  {
+    id: "claim",
+    col: 1,
+    row: 0.5,
+    w: 11,
+    h: 2.75,
+    weight: 4,
+    label: "Position",
+    claim: ["The board was not empty", "when I sat down."],
+  },
+  {
+    id: "lede",
+    col: 1,
+    row: 0.5,
+    w: 6,
+    h: 2.25,
+    weight: 2,
+    label: "",
+    body:
+      "Head of product and delivery at Mindlogic, Seoul. Three years, one " +
+      "product — a multi-LLM assistant in 400+ Korean universities and public " +
+      "institutions. Every decision answered something already on the board.",
+  },
+  {
+    id: "position",
+    col: 13,
+    row: 0.5,
+    w: 5,
+    h: 1.5,
+    weight: 3,
+    label: "Position",
+    stat: "400+  100%  180k",
+    note: "institutions · re-contract · registered",
+  },
+  {
+    id: "also",
+    col: 13,
+    row: 0.5,
+    w: 5,
+    h: 1.25,
+    weight: 1,
+    label: "Also built",
+    note: "LogicianUI, the design system. The harness, the automation under it.",
+  },
+];
+
 export const thesis =
   "I have never designed in a vacuum. Every system I have worked in was " +
   "already there when I arrived — the scope set by a public tender before I " +
