@@ -421,16 +421,38 @@ a:hover {
   background: var(--seal);
 }
 
-/* Side by side, the wordmark and five nav items each wrapped into two lines
-   and tangled. Below this width they stack cleanly instead. */
+/* Side by side, the wordmark and the nav items each wrapped into two lines and
+   tangled. Below this width the masthead becomes two rows instead.
+
+   It was a single stacked column, which left the toggle as a grid item with
+   nothing to size it: it stretched to 162px — a capsule six times wider than
+   tall around a 14px stone — and the masthead ran to 134px, a sixth of a
+   phone screen, before any content. Placing all three explicitly puts the
+   toggle back beside the wordmark at its own size and takes a row off the
+   height. */
 @media (max-width: 34rem) {
   .site-head {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
     gap: var(--space-4);
     padding-block: var(--space-4) var(--space-5);
   }
 
+  .wordmark {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .theme-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
   .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
     gap: var(--space-3) var(--space-4);
   }
 }

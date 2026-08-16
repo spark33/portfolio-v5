@@ -154,3 +154,26 @@ heading measures 18 or more.
 Files: `lib/blog.ts`, `src/base.css`, `src/blog.css`, `src/case.css`,
 `src/home.css`, `src/prose.css`, `lib/pages.ts`, `tests/quality-floor.spec.ts`.
 Tests: 52 passed.
+
+## Pass 6 — the theme toggle was a 162px capsule on a phone
+
+**Lighthouse first** (due this pass). Mobile profile, all six routes checked:
+100 / 100 / 100 / 100 on every one. LCP 1.5s, TBT 0ms, CLS 0.002 on the home
+page and 0 everywhere else. The margin-column work in passes 2 and 5 cost
+nothing.
+
+**Gap.** Below 34rem the masthead became a single-column grid, which left the
+theme toggle as a grid item with nothing to size it. It stretched to 162px — a
+rounded capsule six times wider than tall with a 14px stone at one end — on
+every page at phone width. The three stacked rows also took the masthead to
+134px, a sixth of a 390×844 screen, before any content.
+
+**Fix.** Two rows rather than three: wordmark and toggle share row one, the nav
+spans row two. All three children are placed explicitly, so nothing is left to
+auto-placement and the toggle sizes to itself.
+
+**Test.** `the theme toggle keeps a control's proportions at every width` — at
+320/390/768/1440 it is at least 24×24 (WCAG 2.2 SC 2.5.8) and its aspect ratio
+is under 1.6. The broken state measured 6.0.
+
+Files: `src/base.css`, `tests/quality-floor.spec.ts`. Tests: 53 passed.

@@ -456,6 +456,22 @@ test.describe("regressions that keep coming back", () => {
     }
   });
 
+  test("the theme toggle keeps a control's proportions at every width", async ({ page }) => {
+    // As a lone grid item in the stacked mobile masthead it had nothing to
+    // size it and stretched to 162px — a capsule six times wider than tall
+    // around a 14px stone. It also has to clear WCAG 2.2 SC 2.5.8 at 24×24.
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+      await page.evaluate(() => document.fonts.ready);
+
+      const box = (await page.locator(".theme-toggle").boundingBox())!;
+      expect(box.width, `toggle width at ${width}px`).toBeGreaterThanOrEqual(24);
+      expect(box.height, `toggle height at ${width}px`).toBeGreaterThanOrEqual(24);
+      expect(box.width / box.height, `toggle aspect at ${width}px`).toBeLessThan(1.6);
+    }
+  });
+
   test("display headings are not broken into one-word lines", async ({ page }) => {
     // Twice now a measure written for 18px body copy has been inherited by
     // display type: `max-width: 22ch` on the work-index wrapper, and
