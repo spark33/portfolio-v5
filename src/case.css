@@ -51,31 +51,6 @@
   font-weight: 600;
 }
 
-/* The margin column ------------------------------------------------------
-   Below the header the argument needs a 42rem measure and no more, which at
-   1440 left the right third of every case page empty for six thousand pixels
-   of scroll — dead space, not negative space. The fields that used to sit in
-   a band under the title now hold that column and stay beside the argument
-   they qualify.
-
-   The split is the board's, not a guess: thirteen cells of spine, one of
-   gutter, five of margin. Thirteen cells at 1440 is 897px, which is exactly
-   the 10rem rail plus the 2rem gap plus the 42rem measure — the spine fills
-   its cells rather than floating inside them. */
-
-.case-layout {
-  display: grid;
-}
-
-.case-margin {
-  padding-block: var(--space-5);
-  border-top: 1px solid var(--rule);
-}
-
-.case-margin .strip-value {
-  font-size: var(--size-small);
-}
-
 /* One rail, one column. Everything below the header hangs off the same
    grid, so the decision number, the field labels and the outcome marker all
    sit on one vertical line down the page. */
@@ -84,35 +59,6 @@
   display: grid;
   grid-template-columns: [rail] 10rem [body] minmax(0, 42rem) [tail] 1fr;
   column-gap: var(--space-6);
-}
-
-@media (min-width: 80rem) {
-  .case-layout {
-    grid-template-columns: calc(var(--u) * 13) 1fr;
-    column-gap: var(--u);
-    align-items: start;
-  }
-
-  /* First in the DOM so the fields are still read before the lede; placed
-     second by the grid so they sit in the margin. */
-  .case-margin {
-    grid-column: 2;
-    grid-row: 1;
-    position: sticky;
-    top: calc(var(--u) * 0.5);
-    padding-top: var(--space-4);
-  }
-
-  .case-body {
-    grid-column: 1;
-    grid-row: 1;
-  }
-
-  /* Stacked in a narrow column, not spread across a band. */
-  .margin-strip {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-4);
-  }
 }
 
 /* Only the blocks that actually place children on the rail take the subgrid;

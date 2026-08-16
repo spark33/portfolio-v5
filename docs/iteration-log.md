@@ -108,3 +108,49 @@ which is the thing that actually matters without JS — a class name can be
 renamed and an empty box would have passed the old assertion.
 
 Files: `lib/pages.ts`, `src/home.css`, `tests/quality-floor.spec.ts`. Tests: 51 passed.
+
+## Pass 5 — Writing was set to a body measure at every type size
+
+**Gap.** `.prose > * { max-width: 34rem }` applied a reading measure written
+for 18px body copy to everything inside it, including a 124px `h1`. At 1440 the
+`/blog/` headline broke into six one-and-two-word lines and spent two viewports
+before the only post appeared. The post page then used 38% of the width and
+left the rest empty. It is the same mistake as pass 1, in a second place, which
+means it is a defect class rather than an instance.
+
+**Fix, in three parts.**
+
+1. A `.display-measure` primitive in `base.css`, to be set on the element that
+   carries the display class — never on its container, where `ch` and `rem`
+   resolve against the wrong font size. Applied to the work-index and blog
+   headlines. Body copy in `.prose` now takes 38rem, matching the home
+   narrative, and the masthead is exempt.
+
+2. The margin note moved out of `case.css` into `base.css` as
+   `.margin-layout` / `.margin-note`, because three page types now use it and
+   it is the site's grammar rather than a case-study detail. Blog posts adopted
+   it: the date, reading time and tags are a post's fields, so they sit where
+   every other page puts its fields.
+
+3. The blog index reuses the work index's row — the whole row is the link, the
+   title is a heading, the machine voice is on the right — instead of a
+   bespoke list that existed only here.
+
+**Two defects found while doing it, both from the brief's own list.**
+
+- The tag list was a flex row with a gap, so "placeholder" and "realtime
+  latency" rendered as one run with the separation living only in CSS. Stacked
+  one per line, where a newline carries it.
+- `.margin-layout` with no explicit template got an implicit `auto` track,
+  which sized to the widest child's min-content — a code block — and made the
+  post 469px wide inside a 350px phone. `minmax(0, 1fr)` instead. This one was
+  caught by the existing horizontal-scroll test, which is the whole point of it.
+
+**Test.** `display headings are not broken into one-word lines` — characters
+per line across every `display-*` element at 1440. The two broken states
+measured 5 and 10 characters per line; the threshold is 12 and a healthy
+heading measures 18 or more.
+
+Files: `lib/blog.ts`, `src/base.css`, `src/blog.css`, `src/case.css`,
+`src/home.css`, `src/prose.css`, `lib/pages.ts`, `tests/quality-floor.spec.ts`.
+Tests: 52 passed.

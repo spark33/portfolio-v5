@@ -60,7 +60,7 @@ ${cells}
  * is unchanged: the fields still precede the lede.
  */
 function margin(items: Meta[]) {
-  return `          <aside class="case-margin" aria-label="Project details">
+  return `          <aside class="margin-note" aria-label="Project details">
 ${strip(items, "margin-strip")}
           </aside>`;
 }
@@ -240,7 +240,7 @@ export function renderWorkIndex() {
     body: `    <main class="main page" id="main" tabindex="-1">
       <header class="work-head">
         <p class="label">Work</p>
-        <h1 class="display-l">Every project here is named by the pressure that produced it.</h1>
+        <h1 class="display-l display-measure">Every project here is named by the pressure that produced it.</h1>
       </header>
 
       <section class="section" aria-labelledby="constraints">
@@ -331,7 +331,7 @@ export function renderCaseStudy(study: CaseStudy, index: number) {
           <p class="display-m case-title">${copy(study.title)}</p>
         </header>
 
-        <div class="case-layout">
+        <div class="margin-layout">
 ${margin(study.meta)}
 
           <div class="case-body">
@@ -413,7 +413,7 @@ ${table}
           <h1 class="display-m case-constraint">${copy(item.constraint)}</h1>
           <p class="display-l case-title doc-title">${copy(item.title)}</p>
         </header>
-        <div class="case-layout">
+        <div class="margin-layout">
 ${margin(item.meta)}
 
           <div class="case-body">
@@ -448,7 +448,7 @@ export function renderAbout() {
           </p>
           <h1 class="display-l case-constraint">${copy(person.nameEn)} &mdash; <span lang="ko">${esc(person.nameKo)}</span></h1>
         </header>
-        <div class="case-layout">
+        <div class="margin-layout">
 ${margin(record)}
 
           <div class="case-body">

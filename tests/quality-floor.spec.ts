@@ -456,6 +456,35 @@ test.describe("regressions that keep coming back", () => {
     }
   });
 
+  test("display headings are not broken into one-word lines", async ({ page }) => {
+    // Twice now a measure written for 18px body copy has been inherited by
+    // display type: `max-width: 22ch` on the work-index wrapper, and
+    // `.prose > * { max-width: 34rem }` on the blog index headline. Both
+    // resolve against the wrong font size and are several times too narrow, so
+    // a 124px headline broke one word per line and spent a whole viewport
+    // saying six words. Characters per line is what that looks like as a
+    // number: the broken states measured 5 and 10, a healthy one measures 18+.
+    for (const path of ["/work/", "/blog/", "/", "/about/"]) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(path);
+      await page.evaluate(() => document.fonts.ready);
+
+      const cramped = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>("[class*='display-']")]
+          .map((el) => {
+            const style = getComputedStyle(el);
+            const lineHeight = parseFloat(style.lineHeight);
+            const lines = Math.max(1, Math.round(el.getBoundingClientRect().height / lineHeight));
+            const chars = (el.textContent ?? "").trim().length;
+            return { text: (el.textContent ?? "").trim().slice(0, 40), lines, perLine: chars / lines };
+          })
+          .filter((entry) => entry.lines > 1 && entry.perLine < 12),
+      );
+
+      expect(cramped, `${path}: display type in a body-copy measure`).toEqual([]);
+    }
+  });
+
   test("no Korean run is broken across lines", async ({ page }) => {
     // The browser's default treats every Hangul syllable as a break
     // opportunity, so 박상현 set as "박상 / 현" in the home page h1 at 1440 and

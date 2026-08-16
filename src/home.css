@@ -136,17 +136,11 @@ a.chip:hover {
   font-size: 1.21875rem;
 }
 
-/* The measure has to be set on the element that carries the display size.
+/* The measure is on the h1 itself, via `.display-measure` — see base.css.
    `max-width: 22ch` on this wrapper resolved `ch` against the inherited 18px
-   body size — about 210px — while the headline inside it was set at 124px, so
-   it broke one word per line and spent a whole 1440 viewport before any work
-   was visible. On the h1 the same unit resolves at the display size. */
+   body size, about 210px, while the headline inside it was set at 124px. */
 .work-head {
   padding-block: var(--space-6) var(--space-7);
-}
-
-.work-head > h1 {
-  max-width: 17ch;
 }
 
 .index-more {
@@ -173,8 +167,12 @@ a.chip:hover {
     align-items: start;
   }
 
-  /* Sticky so the record stays beside the argument while it is being made. */
-  .margin-note {
+  /* Sticky so the record stays beside the argument while it is being made.
+     The home spread splits 10.5 / 1.5 / 7 rather than the 13 / 1 / 5 of a
+     case page, because the narrative has no rail to fill and the record is
+     the site's evidence rather than a set of fields — so it is scoped here
+     rather than taken from the shared `.margin-layout`. */
+  .spread > .margin-note {
     position: sticky;
     top: calc(var(--u) * 0.5);
     padding-top: calc(var(--u) * 1.5);
@@ -182,7 +180,7 @@ a.chip:hover {
 }
 
 @media (max-width: 79.999rem) {
-  .margin-note {
+  .spread > .margin-note {
     margin-top: var(--space-6);
     max-width: 38rem;
   }

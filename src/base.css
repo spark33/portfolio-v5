@@ -129,6 +129,17 @@ h4 {
   text-wrap: pretty;
 }
 
+/* A measure for display type, counted at the display size.
+   `ch` and `rem` resolve against whatever font-size is in scope, so a measure
+   written for 18px body copy and inherited by a 124px headline is seven times
+   too narrow. That mistake shipped twice — 22ch on the work-index wrapper and
+   34rem on every `.prose` child — and both times the headline broke one word
+   per line. Put this on the element that carries the display class, never on
+   its container. */
+.display-measure {
+  max-width: 17ch;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -187,6 +198,69 @@ code {
 .strip-value {
   margin: 0;
   text-wrap: pretty;
+}
+
+/* The margin note ---------------------------------------------------------
+
+   A column of labelled fields sitting beside the argument they qualify. It
+   started as the record on the home page, and it is now how every page type
+   holds the right of the board: a case study's role and period, an artifact's
+   status, a post's date and tags. Without it the argument runs to a 42rem
+   measure and leaves the right third of a 1440 viewport empty for the whole
+   length of the page — dead space, not negative space.
+
+   The split is the board's, not a guess: thirteen cells of spine, one of
+   gutter, five of margin. Thirteen cells at 1440 is 897px, which is exactly
+   the 10rem rail plus the 2rem gap plus the 42rem measure a case study sets,
+   so the spine fills its cells rather than floating inside them.
+
+   Below 80rem — where the board itself stops being nineteen cells — it
+   collapses to a band above the argument. The note is first in the DOM in
+   both, so the fields are read before the lede either way and the reading
+   order never depended on the grid. */
+
+/* `minmax(0, 1fr)`, not the implicit `auto` track: an auto track sizes to the
+   widest child's min-content, and a code block inside a post made that 469px
+   inside a 350px phone. The whole page scrolled sideways. */
+.margin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.margin-layout > .margin-note {
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--rule);
+}
+
+.margin-layout .strip-value {
+  font-size: var(--size-small);
+}
+
+@media (min-width: 80rem) {
+  .margin-layout {
+    grid-template-columns: calc(var(--u) * 13) 1fr;
+    column-gap: var(--u);
+    align-items: start;
+  }
+
+  .margin-layout > .margin-note {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(var(--u) * 0.5);
+    padding-top: var(--space-4);
+  }
+
+  .margin-layout > :not(.margin-note) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Stacked in a narrow column, not spread across a band. */
+  .margin-strip {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
 }
 
 /* Links and focus -------------------------------------------------------- */
