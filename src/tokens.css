@@ -3,12 +3,12 @@
    Colour: an archival-board ground rather than the cream that a display
    serif usually sits on, and deliberately not a cool blue-grey — FactChat's
    own palette is blue-grey, and the site must not wear its employer's
-   colours. One accent, cinnabar, the colour of the paste in a Korean
-   official seal — and since the creativity pass it is an actual impression
-   rather than a swatch: see lib/seal.ts and src/seal.css. It appears in
-   three places on the whole site, at two sizes: the impression that stamps
-   each page's record, the COST field of every decision, and the current-page
-   marker, which is the impression's own broken edge at 7px. Nowhere else.
+   colours. One accent, cinnabar. It appears in three places on the whole
+   site, at two sizes: the 종성 band of the mark that signs each page's
+   record (lib/block.ts, src/block.css), the COST field of every decision,
+   and the current-page marker, which is that band's own proportion at 7px.
+   In both places it marks the part that had to fit into space something else
+   had already taken. Nowhere else.
 
    Type: Schibsted Grotesk is a metric twin of Pretendard — cap 703 vs 707,
    x-height 527 vs 530, an identical 0.750 x/cap ratio — so Korean and Latin

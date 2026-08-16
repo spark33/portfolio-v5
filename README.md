@@ -57,38 +57,61 @@ need no SVG, no script and no knowledge of page height. `?board` on any URL
 draws them, as a URL rather than a hover so it works for a keyboard, a
 screenshot and a phone.
 
-## The impression
+## The mark
 
 The site's second visual system, and the only object on it that could not be
 lifted onto somebody else's portfolio.
 
-`src/tokens.css` had said since the first commit that the accent is "인주, the
-colour of the paste in a Korean official seal", and the site rendered that
-claim as a 0.4em square. [`lib/seal.ts`](lib/seal.ts) makes it an actual
-impression: an authored, irregular edge; a displacement filter so the block
-bites unevenly into the board; a second noise field thresholded into the
-patches where the paste ran thin; and 박상현 carved out of the ink in the
-백문 form, which is the one that still reads when the whole mark is 40px wide.
+Hangul does not run its letters in a line. It gathers them into a square:
+가 holds two jamo and 뷁 holds four, and both occupy exactly the same frame. The
+frame was fixed in 1443 and is not negotiable; the entire design problem is how
+the parts are arranged to fit inside it. That is not a metaphor for this site's
+argument — it is the argument, in the writing system the author's own name is
+written in, and it is this site's own grid at a different scale: `--u` never
+changes either.
 
-The rule is one sentence: **the seal stamps the page's record.** The home page
-and the about page stamp the four figures, a case study stamps its outcome, and
-the share card stamps the claim. Artifact pages and the blog have no seal,
-because documentation is not a claim about the world and a mark that appeared
-on everything would be a logo. That is what makes it load-bearing: a record
-nobody can verify is exactly the thing a seal exists to make official, which is
-also this site's argument about its own author.
+[`lib/block.ts`](lib/block.ts) draws 박상현 as three abutting frames. Below a
+measured line, the accent fills and the letterform reverses out of it — one
+glyph, cut by the boundary its own final consonant sits under.
 
-It is the one element allowed to ignore the board — rotated 2.4°, hanging into
-the column gap the board puts between the argument and the evidence. **A stamp
-may break a layout; it may never break a sentence.** The first version was
-pulled up over the record's caption, the way a stamp on a real document is, and
-it hid the word "renewed". `the impression is decoration to the layout and a
-name to a reader` now measures the mark's box against every text rect on three
-pages at five widths.
+**The geometry is measured, not styled.** A pixel scan of Pretendard 600 says
+two things, and both are load-bearing:
 
-At type size it is the same object with the name gone: the current-page marker
-in the navigation is that broken edge as a clip path, shared with the SVG
-through one custom property rather than two drifting copies.
+- 바 occupies rows 210–487 of the scan; 박 occupies 201–465. Adding a third jamo
+  makes the block **shorter**, not taller — 초성 and 중성 compress upward to make
+  room for the 종성. The frame never grows to accommodate what you put in it.
+- There is a real gap in the ink at 60.2–64.8% of the glyph's height in both 박
+  and 상: the boundary the 종성 begins below. 62% is that measurement.
+
+The accent fills below that line because the 종성 is the one element in the
+system that is purely a fitting problem: it arrives last, into height the vowel
+has already taken.
+
+The rule is one sentence: **the mark signs the page's record.** The home page
+and the about page sign the four figures, a case study signs its outcome, and
+the share card signs the claim. Artifact pages and the blog have none, because
+documentation is not a claim about the world and a mark on every page would be a
+logo. At full width in the margin its two ends land on the same verticals as the
+rules above it, so it reads as the last row of the ledger rather than as
+something parked beside it.
+
+Nothing is rotated. It aligns to the board exactly — tilting a syllable block
+would argue against the only thing it says.
+
+At type size it is the same measurement with everything else gone: the
+current-page marker in the navigation is a bar at the 종성 band's own aspect,
+41.8%, shared with the SVG through one custom property rather than two drifting
+copies.
+
+**What it replaced, and why.** The first version of this system was a 인장
+impression — a cinnabar block with a broken edge, skipped paste and the name
+carved out. Two things were wrong with it. The object was inherited rather than
+argued: `src/tokens.css` had mentioned seal paste in a comment and the brief
+listed it as a lead, so it arrived pre-approved and was never tested against the
+person it represents. And the execution put it in the wrong register — weathered
+ink and worn stone are a heritage artefact, and the subject ships a multi-LLM
+product in Seoul in 2026. A seal says *this is old and authentic*. 모아쓰기 says
+*this is a system, and I work inside it*, which is what the site is for.
 
 ## Material
 
@@ -122,12 +145,12 @@ resolve.
 | `lib/shell.ts`          | The one HTML shell: head, nav, footer, structured data       |
 | `lib/pages.ts`          | Page renderers — home, case study, artifact, about           |
 | `lib/blog.ts`           | Markdown pipeline, rendered into the same shell              |
-| `lib/seal.ts`           | The impression — the 인장 as an SVG, edge, bite and all       |
+| `lib/block.ts`          | The mark — 박상현 as three syllable frames, measured           |
 | `plugins/site.ts`       | Writes every page to its URL path and registers MPA inputs   |
 | `src/tokens.css`        | Palette, type scale, tracking, spacing, easing               |
 | `src/base.css`          | Reset, type primitives, strips, focus, page frame            |
 | `src/board.css`         | The board's visible surface — lattice, edge, hoshi and tooth   |
-| `src/seal.css`          | Where the impression lands, and what it is allowed to break    |
+| `src/block.css`         | Where the mark lands, and what it is not allowed to cover      |
 | `src/board.ts`          | The only client script: two pointer coordinates               |
 | `src/home.css`          | Thesis and position strip                                     |
 | `src/case.css`          | Case studies and artifact pages — the decision spine         |
@@ -201,12 +224,12 @@ site must not wear its employer's colours.
 | `--ink-secondary`  | `#5c5c55` | Labels, meta                               |
 | `--seal`           | `#b4372b` | The accent — 인주, official seal cinnabar   |
 
-The accent appears in exactly three places, at two sizes: the impression that
-stamps each page's record, the `COST` field of every decision, and the
-current-page marker — which is the impression's own broken edge at 7px, so the
-largest and smallest uses are one object rather than two uses of a colour. A
-seal is a person made official to a system that was not built for them, which
-is the thesis, so it is load-bearing rather than decorative.
+The accent appears in exactly three places, at two sizes: the 종성 band of the
+mark that signs each page's record, the `COST` field of every decision, and the
+current-page marker — which is that band's own proportion at 7px, so the largest
+and smallest uses are one measurement rather than two uses of a colour. In both
+places it marks the part that had to fit into space something else had already
+taken, which is the thesis, so it is load-bearing rather than decorative.
 
 Dark is not an inversion. The ground keeps the same warm-neutral hue, dropped
 to a near-black, and the ink and accent are chosen to hit the same contrast
@@ -241,7 +264,7 @@ revealing it reflowed the masthead.
 creativity pass lifted that clause and offered a real script budget for a second
 visual system; **the budget was not spent**, and total JavaScript is still
 1.5 KB. The second system turned out to be a material and a mark, and both are
-paint — a texture belongs in a stylesheet and an impression belongs in an SVG.
+paint — a texture belongs in a stylesheet and a drawn name belongs in an SVG.
 Spending the allowance would have meant inventing a behaviour to justify it.
 
 What did change is what the tests assert. Two of them encoded the old rule as
@@ -326,11 +349,12 @@ A fourth was added by the creativity pass, and it is the first two arriving
 from a new direction — something positioned to break the layout breaking the
 copy instead:
 
-- **A mark over a word.** The impression was first placed the way a stamp lands
-  on a real document, pulled up over the record's caption, and it covered
-  "renewed". `the impression is decoration to the layout and a name to a reader`
-  measures the mark's box against every text rect on three pages at five
-  widths. The mark is rotated, so the box measured is larger than the ink.
+- **A mark over a word.** The first version of the second system was a seal,
+  placed the way a stamp lands on a real document — pulled up over the record's
+  caption, where it covered "renewed". `the mark is a name to a reader and never
+  lands on a word` measures the mark's box against every text rect on three
+  pages at five widths. The seal is gone and the guard outlived it, which is the
+  point of writing tests against properties rather than objects.
 
 The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and

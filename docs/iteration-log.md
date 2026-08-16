@@ -642,3 +642,142 @@ weakened. All four verified failing against the state they were written for.
   a paint rather than a byte, and a throttled desktop is not the same evidence.
 - **The five `{{?}}` placeholders and the placeholder blog post** are untouched,
   as instructed.
+
+---
+
+# Creativity pass B, second look — the seal was the wrong object
+
+The pass above shipped a 인장 impression as the site's second visual system.
+The review of it was one sentence: *that feels very traditional.* It was right,
+and the seal is gone.
+
+## Why it was wrong, stated properly
+
+Two faults, and the first is the one worth remembering.
+
+**The object was inherited, not argued.** `src/tokens.css` had mentioned seal
+paste in a comment since the first commit, and the brief for the pass listed the
+seal as a lead by name. So it arrived pre-approved from two directions at once
+and was never put through the test every other decision on this site has to
+pass. The pass's own write-up says it plainly without noticing: "the only one
+whose central claim the codebase had already written down and never delivered."
+That is a reason to *notice* something. It is not a reason to build it. A
+comment written by the same author two months earlier is not evidence.
+
+**The register was wrong for the subject.** A broken edge, skipped paste, worn
+stone — those are the marks of an artefact that has survived, and they say *this
+is old and authentic*. The person is running product and delivery on a multi-LLM
+assistant in Seoul in 2026. The execution was arguing for heritage on behalf of
+someone whose whole case is systems work.
+
+Everything else from the pass stands: the board's edge, the ground's tooth, the
+unspent JavaScript budget, and both rewritten tests.
+
+## What replaced it — 모아쓰기
+
+Hangul does not run its letters in a line. It gathers them into a square. 가
+holds two jamo and 뷁 holds four, and both occupy exactly the same frame — fixed
+in 1443, not negotiable, and the entire design problem is how the parts are
+arranged to fit inside it.
+
+That is not a metaphor for this site's argument. It is the argument, in the
+writing system the author's own name is written in, and it is the site's own
+grid at a different scale: `--u` never changes either, and every layout decision
+here is a composition inside a cell count somebody else set.
+
+A seal says *this is old and authentic*. 모아쓰기 says *this is a system, and I
+work inside it*.
+
+## The measurement that made it
+
+The geometry was going to be guessed. A pixel scan of Pretendard 600 — render a
+glyph to a canvas, count ink per row and per column — was meant to settle where
+the 종성 boundary sits, and it returned something better on the way:
+
+```
+바  rows 210–487     (초성 + 중성)
+박  rows 201–465     (초성 + 중성 + 종성)
+```
+
+**Adding a letter makes the block shorter.** The 초성 and 중성 compress upward
+to make room for the 종성; the frame does not grow to accommodate what you put
+in it. That is the whole thesis in two rows of a scan, and it is why the mark
+had to be measured rather than styled.
+
+The boundary itself is a real gap in the ink at **60.2–64.8%** of the glyph's
+height in both 박 and 상 — 현 has no gap, because ㅕ's lower arm reaches into the
+same band, but the structure is identical. The division is drawn at 62%.
+
+## The four treatments, and the two rounds
+
+`prototypes/p4-composition.html` guessed the geometry and tried four
+treatments; `p4b-composition.html` rebuilt them on the measurement.
+
+- **R1 — frame in ink, division in the accent.** A type specimen. Elegant, and
+  far too quiet for the problem this pass exists to solve.
+- **R2 — the composition alone, no glyph.** 초성 filled, 중성 open, 종성 in the
+  accent. The strongest *small* mark of the four by a distance, and pure
+  proportion taken from a real name. It lost because its meaning is invisible
+  without the name in it: at 34px it is three black-white-red blocks, and there
+  is nothing to tell a reader they are a name rather than a Bauhaus exercise.
+- **R3 — the 종성 as a field per syllable, glyph reversed out.** Chosen. One
+  letterform cut by the boundary its own final consonant sits under. It carries
+  R2's geometry *and* reads as a name at 34px.
+- **R4 — R3 on the board's own cell grid.** The extra subdivision fought the
+  letterforms and added nothing the frame was not already saying.
+
+## What was built
+
+`lib/block.ts` replaces `lib/seal.ts`; `src/block.css` replaces `src/seal.css`.
+
+The rule is unchanged and the verb is better: **the mark signs the page's
+record.** Home and about sign the four figures, a case study signs its outcome,
+the share card signs the claim; artifact pages and the blog have none.
+
+Two placement decisions differ from the seal's, both because the object is
+different rather than because the old ones were wrong:
+
+- **It is not rotated.** The seal sat 2.4° off axis because a stamp is pressed
+  by a hand. A syllable block is drawn to a frame, and tilting it would argue
+  against the only thing it says.
+- **It does not hang.** At full width in the margin, its two ends land on the
+  same verticals as the record's rules, so it reads as the last row of the
+  ledger — the name signing the figures — rather than as a logo parked beside
+  them.
+
+At type size the current-page marker is no longer a bitten square but a bar at
+the 종성 band's own aspect, 41.8%, shared with the SVG through one custom
+property. Largest and smallest use, one measurement.
+
+## Tests
+
+`the impression is decoration to the layout and a name to a reader` became
+**`the mark is a name to a reader and never lands on a word`** — same guard,
+new object. It was written for a defect the seal caused (pulled up over the
+caption, covering "renewed") and the seal is now gone; the test outlived it,
+which is the argument for writing tests against properties rather than objects.
+
+One added: **`the mark's smallest use is the same measurement as its largest`**
+— the navigation marker's height-to-width ratio equals `--jongseong-ratio`, so
+the two scales cannot drift into being two unrelated uses of a colour.
+
+59 passing, from 58.
+
+## Numbers
+
+Unchanged. Mobile Lighthouse 100 / 100 / 100 / 100 on `/`, `/work/`,
+`/work/inherited-mental-model/`, `/about/`, `/logician-ui/` and `/blog/`; CLS
+0.002 on the home page and 0 elsewhere; LCP 1.5 s. The mark is a smaller SVG
+than the seal was — no filters, no turbulence, no displacement.
+
+## What I did not do
+
+- **R2 is not used anywhere.** As a glyphless proportion it is the better mark
+  at very small sizes, and the site has one very small size — the navigation
+  marker, which now uses only the band. Giving the marker R2's full three-zone
+  geometry at 7px was tried in my head and not on screen; it belongs in a later
+  pass with a screenshot attached.
+- **The board and the tooth were not revisited.** The critique was about the
+  symbolism, and both of those are structure and material rather than symbol.
+- **`docs/iteration-brief.md` still lists the seal as lead #3.** It is a record
+  of what was asked, not of what was decided, so it stays as written.

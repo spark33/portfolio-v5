@@ -26,21 +26,20 @@ import {
   type DocSection,
   type Meta,
 } from "../content/site.ts";
-import { seal } from "./seal.ts";
+import { block } from "./block.ts";
 import { copy, esc, personJsonLd, shell } from "./shell.ts";
 
 const SITE = `${person.nameEn} — ${person.role}, ${person.org}`;
 
 /**
- * What the impression says to anyone who cannot see it.
+ * What the mark says to anyone who cannot see it.
  *
- * A seal is not a decorative flourish that assistive tech can skip — it is the
- * sentence "this record is mine, and I am standing behind it", which is the
- * one thing this page is for. So it is `role="img"` with a label rather than
- * `aria-hidden`, and the label says what a stamp means rather than describing
- * a red square.
+ * It is a name, drawn rather than set, so the label is the name — not a
+ * description of three red-footed squares. `role="img"` with a label rather
+ * than `aria-hidden`, because the sentence it carries is "this record is mine",
+ * which is the one thing the page is for.
  */
-const SEAL_LABEL = `Seal of ${person.nameEn}, ${person.nameKo}`;
+const MARK_LABEL = `${person.nameKo} — ${person.nameEn}`;
 
 function n(index: number) {
   return String(index + 1).padStart(2, "0");
@@ -128,7 +127,7 @@ ${paragraphs(narrative)}
         <aside class="margin-note" aria-label="The record">
 ${strip(record, "record-figures")}
           <p class="record-caption">${copy(recordCaption)}</p>
-          ${seal({ key: "record", label: SEAL_LABEL, className: "record-seal" })}
+          ${block({ key: "record", label: MARK_LABEL, className: "record-block" })}
         </aside>
       </section>`;
 }
@@ -374,7 +373,7 @@ ${decisions(study)}
               <ul class="outcome-list">
 ${outcome}
               </ul>
-              ${seal({ key: "outcome", label: SEAL_LABEL, className: "outcome-seal" })}
+              ${block({ key: "outcome", label: MARK_LABEL, className: "outcome-block" })}
             </section>
           </div>
         </div>
@@ -491,7 +490,7 @@ export function renderAbout() {
           <h1 class="display-l case-constraint">${copy(person.nameEn)} &mdash; <span lang="ko">${esc(person.nameKo)}</span></h1>
         </header>
         <div class="margin-layout">
-${margin(record, seal({ key: "record", label: SEAL_LABEL, className: "record-seal" }))}
+${margin(record, block({ key: "record", label: MARK_LABEL, className: "record-block" }))}
 
           <div class="case-body">
             <p class="lede case-lede">${copy(about.lede)}</p>

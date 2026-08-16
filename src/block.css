@@ -1,0 +1,70 @@
+/* The block.
+ *
+ * How it is drawn is in lib/block.ts, which is where the measurements live.
+ * This file only decides where it lands and how big it is.
+ *
+ * It is 3:1 — three syllable frames abutting — which is a different placement
+ * problem from the square it replaced. A square could hang into a column gap;
+ * a 3:1 bar wants a horizontal run, so it sits along the foot of the record and
+ * takes the full width of the margin rather than floating inside it.
+ *
+ * Nothing is rotated. The seal was set 2.4deg off the axis because a stamp is
+ * pressed by a hand; a syllable block is drawn to a frame, and tilting it would
+ * argue against the only thing it says. It aligns to the board exactly. */
+
+.block {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 3 / 1;
+  /* `currentColor` fills the 종성 band; the glyph and frame take their own
+     tokens, so the mark is correct in both themes without a second rule. */
+  color: var(--seal);
+  /* A picture of a name, never a control. */
+  pointer-events: none;
+}
+
+/* The record's mark — home and about.
+   After the caption, so the reading order is figures, then the sentence that
+   qualifies them, then the name that stands behind both. Last in the DOM as
+   well as last on the page. */
+.record-block {
+  margin-top: var(--space-6);
+}
+
+/* Above 80rem the record is a column in the margin and the mark takes all of
+   it, so its two ends land on the same verticals as the rules above — the mark
+   reads as the last row of the ledger rather than as a logo parked beside it.
+   Below 80rem the record is a band as wide as the page, and a 15rem cap stops
+   the name from setting larger than the four figures it signs. */
+@media (max-width: 79.999rem) {
+  .record-block {
+    margin-left: auto;
+    margin-right: 0;
+    max-width: 15rem;
+  }
+}
+
+/* A case study's mark — on the outcome, in the rail the decisions already use
+   for their field names. The outcome is what the constraint and the three costs
+   bought, so it is that page's record.
+   The rail is 10rem, and 10rem at 3:1 is 53px tall, which is the size the mark
+   was checked at. It is not allowed to outgrow the column it sits in. */
+.outcome-block {
+  margin-top: var(--space-5);
+  max-width: 10rem;
+}
+
+/* The accent at type size.
+ *
+ * The current-page marker is 7px, well below the size at which three frames and
+ * three glyphs are anything but mud. What survives is the proportion: the 종성
+ * band is the bottom 41.8% of the block, so the marker is a bar at that aspect
+ * — the mark's foot, at the one size the mark itself cannot go.
+ *
+ * Held as custom properties rather than a class so base.css and anything later
+ * share one measurement instead of two drifting copies. */
+:root {
+  --jongseong-ratio: 0.418;
+  --mark-foot-width: 0.62em;
+}

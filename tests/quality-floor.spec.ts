@@ -239,36 +239,37 @@ test.describe("motion is declinable", () => {
     await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("the impression is decoration to the layout and a name to a reader", async ({
+  test("the mark is a name to a reader and never lands on a word", async ({
     page,
   }) => {
     await page.goto("/");
 
-    // It is a picture of a name, not a control: labelled, not focusable, and
-    // it does not swallow a click meant for what is under it.
-    const seal = page.locator("svg.seal");
-    await expect(seal).toHaveCount(1);
-    await expect(seal).toHaveAttribute("role", "img");
-    expect((await seal.getAttribute("aria-label")) ?? "").toContain("박상현");
-    expect(await seal.getAttribute("focusable")).toBe("false");
+    // It is a picture of a name, not a control: labelled, not focusable, and it
+    // does not swallow a click meant for what is under it.
+    const mark = page.locator("svg.block");
+    await expect(mark).toHaveCount(1);
+    await expect(mark).toHaveAttribute("role", "img");
+    expect((await mark.getAttribute("aria-label")) ?? "").toContain("박상현");
+    expect(await mark.getAttribute("focusable")).toBe("false");
     expect(
-      await seal.evaluate((el) => getComputedStyle(el).pointerEvents),
+      await mark.evaluate((el) => getComputedStyle(el).pointerEvents),
     ).toBe("none");
 
-    // A stamp may break a layout. It may never break a sentence. The first
-    // version of .record-seal was pulled up over the record's caption and hid
-    // the word "renewed" — the same defect class as a flex gap standing in for
-    // a space, arrived at from a new direction. The seal is rotated, so the
-    // box measured here is larger than the mark, which makes this strict.
+    // The first version of this system was a seal pulled up over the record's
+    // caption, the way a stamp lands on a real document, and it hid the word
+    // "renewed" — the same defect class as a flex gap standing in for a space,
+    // arrived at from a new direction. The mark that replaced it is aligned to
+    // the board rather than tilted across it, but the guard is worth more than
+    // the object it was written for.
     for (const path of ["/", "/about/", "/work/inherited-mental-model/"]) {
       for (const width of [390, 768, 1280, 1440, 1920]) {
         await page.setViewportSize({ width, height: 900 });
         await page.goto(path);
 
         const collisions = await page.evaluate(() => {
-          const mark = document.querySelector("svg.seal");
-          if (!mark) return ["no seal"];
-          const box = mark.getBoundingClientRect();
+          const el = document.querySelector("svg.block");
+          if (!el) return ["no mark"];
+          const box = el.getBoundingClientRect();
           const hits: string[] = [];
           const walker = document.createTreeWalker(
             document.body,
@@ -276,8 +277,8 @@ test.describe("motion is declinable", () => {
           );
           for (let node = walker.nextNode(); node; node = walker.nextNode()) {
             if (!(node.textContent ?? "").trim()) continue;
-            // The carved name lives inside the block and is meant to.
-            if (mark.contains(node)) continue;
+            // The three syllables live inside the mark and are meant to.
+            if (el.contains(node)) continue;
             const range = document.createRange();
             range.selectNodeContents(node);
             for (const rect of range.getClientRects()) {
@@ -296,6 +297,39 @@ test.describe("motion is declinable", () => {
         expect(collisions, `${path} at ${width}`).toEqual([]);
       }
     }
+  });
+
+  test("the mark's smallest use is the same measurement as its largest", async ({
+    page,
+  }) => {
+    await page.goto("/work/");
+
+    // The 종성 band is the bottom 41.8% of a syllable block. At 7px the frames
+    // and the glyphs are mud, so the current-page marker keeps the proportion
+    // and drops everything else — which is only true while both read the same
+    // custom property. Two hand-kept copies of a number is how they drift.
+    const marker = await page.evaluate(() => {
+      const link = document.querySelector('.site-nav a[aria-current="page"]')!;
+      const s = getComputedStyle(link, "::before");
+      return { w: parseFloat(s.width), h: parseFloat(s.height) };
+    });
+
+    const ratio = await page.evaluate(() =>
+      parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          "--jongseong-ratio",
+        ),
+      ),
+    );
+
+    expect(ratio).toBeGreaterThan(0.3);
+    expect(ratio).toBeLessThan(0.5);
+    expect(marker.h / marker.w).toBeCloseTo(ratio, 2);
+
+    // And it is still a target a finger can find: the marker is decoration on
+    // a link whose own hit area is checked elsewhere, so this only guards the
+    // marker from collapsing to nothing.
+    expect(marker.w).toBeGreaterThan(4);
   });
 });
 

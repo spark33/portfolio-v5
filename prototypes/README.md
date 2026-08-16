@@ -64,7 +64,12 @@ makes good on in pixels: that the accent is "인주, official seal cinnabar", an
 that the ground is "archival board rather than the cream a display serif
 usually sits on".
 
-**Verdict: chosen.** See `docs/iteration-log.md`.
+**Verdict: chosen, then cut.** It shipped, and was replaced a day later — see
+P4 below and the log. The short version: the object was inherited rather than
+argued (`tokens.css` mentioned seal paste in a comment, the brief listed it as a
+lead, so it arrived pre-approved), and the execution — worn stone, skipped paste
+— put it in a heritage register that does not describe someone shipping a
+multi-LLM product in Seoul in 2026. A seal says *this is old and authentic*.
 
 ## P3 — 집, "territory"
 
@@ -87,3 +92,29 @@ deliberately equal citizens.
 
 Kept as the reason the chosen direction had to answer the thumbnail question
 rather than duck it.
+
+## P4 — 모아쓰기, "gathering writing"
+
+`p4-composition.html` and `p4b-composition.html`.
+
+**Thesis.** Hangul does not run its letters in a line, it gathers them into a
+square. 가 holds two jamo and 뷁 holds four; both occupy exactly the same frame,
+fixed in 1443 and not negotiable, and the entire design problem is how the parts
+are arranged to fit. That is not a metaphor for this site's argument — it *is*
+the argument, in the writing system the author's own name is written in, and it
+is the site's own grid at a different scale.
+
+**Argued from.** `content/site.ts`'s `person.nameKo`, and a pixel scan of the
+Pretendard the site already ships.
+
+**Verdict: chosen, and built.** It replaced P2. Where the seal was a heritage
+artefact, this is a type designer's frame: flat, hard-edged, measured, and in the
+register contemporary Korean identity work actually occupies.
+
+The two files are the two rounds. `p4` guessed the geometry and shows four
+treatments; `p4b` rebuilds three of them on measurements taken from the font
+(see the log for the probe) and is where R3 — the chosen mark — was picked over
+R1's quiet type specimen and R2's glyphless geometry. R2 is worth keeping in
+mind: as pure proportion with no glyph at all it is the strongest small mark of
+the four, and the only reason it lost is that its meaning is invisible without
+the name in it.
