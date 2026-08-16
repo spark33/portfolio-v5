@@ -1,7 +1,6 @@
 @import "./tokens.css";
 @import "./fonts.css";
 @import "./board.css";
-@import "./block.css";
 
 /* Reset ------------------------------------------------------------------ */
 
@@ -411,19 +410,19 @@ a:hover {
   color: var(--ink);
 }
 
-/* The accent's smallest appearance, and the same object as the mark on the
-   record: the 종성 band is the bottom 41.8% of a syllable block, so at 7px the
-   marker is a bar at exactly that aspect. The frames and the glyphs are gone —
-   at this size they would be mud — and the proportion is what is left, which
-   means the current-page marker and the mark are one thing at two sizes rather
-   than two unrelated uses of a colour. */
+/* The third and last use of the accent.
+   Two passes tried to make this the small end of a larger mark — a seal's
+   broken edge, then a syllable block's 종성 band. Both marks are gone and this
+   is a square again, which is what it should have stayed: at 7px in a row of
+   11px mono, the job is "you are here", and any shape carrying an argument at
+   that size is carrying it where nobody can read it. */
 .site-nav a[aria-current="page"]::before {
   content: "";
   display: inline-block;
-  width: var(--mark-foot-width);
-  height: calc(var(--mark-foot-width) * var(--jongseong-ratio));
-  margin-right: 0.5em;
-  vertical-align: 0.14em;
+  width: 0.4em;
+  height: 0.4em;
+  margin-right: 0.55em;
+  vertical-align: 0.1em;
   background: var(--seal);
 }
 

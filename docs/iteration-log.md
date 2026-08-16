@@ -781,3 +781,88 @@ than the seal was — no filters, no turbulence, no displacement.
   symbolism, and both of those are structure and material rather than symbol.
 - **`docs/iteration-brief.md` still lists the seal as lead #3.** It is a record
   of what was asked, not of what was decided, so it stays as written.
+
+---
+
+# Creativity pass B, third look — there is no mark
+
+Both marks are gone. The seal, then the syllable block that replaced it, and now
+the idea that this site wants an emblem at all.
+
+The review was two sentences: *this is a site about me and it sticks out like a
+sore thumb.* That is the correct reading, and neither of the previous two write-
+ups got near it, because both were arguing about which mark rather than whether.
+
+## Why it was wrong, and it is not the reason the seal was wrong
+
+The seal was cut for its register — heritage treatment on a contemporary
+subject. The syllable block fixed that, and the geometry was measured rather
+than styled, and it was still wrong, which means the register was never the real
+fault.
+
+**On a site about a person, an emblem of that person's name is the one element
+on the page doing no work.** Everything else here is evidence: a constraint, a
+decision, what it cost, a number somebody could check. A mark is an assertion of
+identity, and identity was never the thing in doubt — the reader knows who the
+site is about by the second line. It was answering a question nobody had asked,
+which is exactly the failure the site is arranged against.
+
+The placement made it worse rather than better. The mark took the full width of
+the margin at the foot of the record, which made it the largest object on the
+first screen — so the loudest thing on the page was the thing carrying the least,
+directly above four figures a stranger cannot verify and would very much like to.
+
+There is also a plainer version. A portfolio with a monogram is doing something
+other portfolios do. The whole case for this one is that it does not.
+
+## What that says about the two passes before it
+
+Worth writing down, because it is a pattern and not an incident.
+
+The brief for this pass asked for a second visual system and said, correctly,
+that restraint scores Usability and not Creativity. Both marks were answers to
+*that* — to the scoring rubric — rather than to the site. The seal came from a
+comment in `tokens.css`; the block came from a genuinely good argument about
+Hangul; neither came from asking what the first screen is for. The first screen
+is for making a stranger believe four numbers, and both passes spent it on a
+name.
+
+The sibling pass on `main` reached the same conclusion from the opposite
+direction and wrote it more sharply: *the site has one job and about three
+minutes to do it, and the first screen is the whole budget.* It spent that
+budget on the name resolved in four steps, looked at it, and took it back off
+the home page. Two independent passes, two different objects, the same mistake.
+
+## What survives
+
+Everything from the pass that was not the mark:
+
+- **The board's edge.** `--board-frame`, measured at 1.35 against the ground in
+  both themes. What makes nineteen cells read as a board rather than as graph
+  paper is that the field ends.
+- **The tooth.** One inlined noise tile that only ever lightens, so it cannot
+  cost contrast. Both survive because they are structure and material — they
+  make the page a surface, and they do not assert anything about a person.
+- **The unspent JavaScript budget** and **both rewritten motion tests.**
+
+The accent is back to three places and a 7px square: the `COST` field, the
+current-page marker, the share card.
+
+## Tests
+
+57, from 59. The two mark tests went with the object. `the mark is a name to a
+reader and never lands on a word` is the loss worth noting — it caught a real
+defect and was written against a property rather than an object, so it survived
+the seal being replaced. It does not survive there being nothing positioned to
+overlap anything. A note is left at its site in the spec so the next absolutely
+positioned element gets it back before shipping rather than after.
+
+## What I did not do
+
+- **The prototypes stay.** `prototypes/` still holds all five directions and the
+  verdict on each. A direction that was built, looked at and rejected is worth
+  more written down than deleted, and this pass produced three separate reasons
+  for rejecting things that are worth having on file.
+- **The tooth and the edge were not re-litigated.** The review was about the
+  mark. If the answer is that the whole pass was a mistake, that is a different
+  instruction and I would rather be told than assume it.

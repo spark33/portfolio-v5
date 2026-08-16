@@ -34,10 +34,6 @@ const LATTICE = token("lattice-ink");
 const { person, record, thesis } = await import(
   pathToFileURL(resolve("content/site.ts")).href
 );
-// The same mark the pages carry, from the same module. A card that drew its own
-// version would be a second definition free to drift, and the card is the one
-// image most readers see before any page.
-const { block } = await import(pathToFileURL(resolve("lib/block.ts")).href);
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -60,9 +56,6 @@ const html = `<!doctype html>
     <link rel="stylesheet" href="./fonts.css" />
     <style>
       * { margin: 0; box-sizing: border-box; }
-      /* lib/block.ts paints its glyph and frame from --ink and --paper, which
-         this document does not inherit from the site's stylesheet. */
-      :root { --ink: ${INK}; --paper: ${PAPER}; }
       body {
         width: ${WIDTH}px;
         height: ${HEIGHT}px;
@@ -131,17 +124,15 @@ const html = `<!doctype html>
       }
       .label { font-family: "IBM Plex Mono", monospace; font-size: 12px;
         letter-spacing: 0.14em; text-transform: uppercase; color: ${INK_2}; }
-      /* The one accent, in the one place: the mark. Larger than it is on the
-         page, because this is read at 300px in a feed and the 종성 band is the
-         only part that survives that. */
-      .block {
+      /* The one accent, in the one place, at the size it is on the site. */
+      .seal {
         position: absolute;
         right: ${CELL}px;
-        bottom: ${CELL * 1.1}px;
-        width: ${CELL * 4.2}px;
-        color: ${SEAL};
+        bottom: ${CELL * 1.2}px;
+        width: 34px;
+        height: 34px;
+        background: ${SEAL};
       }
-      .block rect[fill="none"] { stroke: ${INK}; }
     </style>
   </head>
   <body>
@@ -162,7 +153,7 @@ const html = `<!doctype html>
         </div>
       </div>
     </div>
-    ${block({ key: "card", label: `${person.nameKo} — ${person.nameEn}` })}
+    <div class="seal"></div>
   </body>
 </html>
 `;

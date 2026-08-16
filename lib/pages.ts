@@ -26,20 +26,9 @@ import {
   type DocSection,
   type Meta,
 } from "../content/site.ts";
-import { block } from "./block.ts";
 import { copy, esc, personJsonLd, shell } from "./shell.ts";
 
 const SITE = `${person.nameEn} — ${person.role}, ${person.org}`;
-
-/**
- * What the mark says to anyone who cannot see it.
- *
- * It is a name, drawn rather than set, so the label is the name — not a
- * description of three red-footed squares. `role="img"` with a label rather
- * than `aria-hidden`, because the sentence it carries is "this record is mine",
- * which is the one thing the page is for.
- */
-const MARK_LABEL = `${person.nameKo} — ${person.nameEn}`;
 
 function n(index: number) {
   return String(index + 1).padStart(2, "0");
@@ -73,10 +62,9 @@ ${cells}
  * It is first in the DOM, and placed right by the grid, so the reading order
  * is unchanged: the fields still precede the lede.
  */
-function margin(items: Meta[], after = "") {
+function margin(items: Meta[]) {
   return `          <aside class="margin-note" aria-label="Project details">
 ${strip(items, "margin-strip")}
-${after ? `            ${after}` : ""}
           </aside>`;
 }
 
@@ -127,7 +115,6 @@ ${paragraphs(narrative)}
         <aside class="margin-note" aria-label="The record">
 ${strip(record, "record-figures")}
           <p class="record-caption">${copy(recordCaption)}</p>
-          ${block({ key: "record", label: MARK_LABEL, className: "record-block" })}
         </aside>
       </section>`;
 }
@@ -373,7 +360,6 @@ ${decisions(study)}
               <ul class="outcome-list">
 ${outcome}
               </ul>
-              ${block({ key: "outcome", label: MARK_LABEL, className: "outcome-block" })}
             </section>
           </div>
         </div>
@@ -490,7 +476,7 @@ export function renderAbout() {
           <h1 class="display-l case-constraint">${copy(person.nameEn)} &mdash; <span lang="ko">${esc(person.nameKo)}</span></h1>
         </header>
         <div class="margin-layout">
-${margin(record, block({ key: "record", label: MARK_LABEL, className: "record-block" }))}
+${margin(record)}
 
           <div class="case-body">
             <p class="lede case-lede">${copy(about.lede)}</p>

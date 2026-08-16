@@ -239,98 +239,17 @@ test.describe("motion is declinable", () => {
     await expect(page.locator("h1")).toBeVisible();
   });
 
-  test("the mark is a name to a reader and never lands on a word", async ({
-    page,
-  }) => {
-    await page.goto("/");
-
-    // It is a picture of a name, not a control: labelled, not focusable, and it
-    // does not swallow a click meant for what is under it.
-    const mark = page.locator("svg.block");
-    await expect(mark).toHaveCount(1);
-    await expect(mark).toHaveAttribute("role", "img");
-    expect((await mark.getAttribute("aria-label")) ?? "").toContain("박상현");
-    expect(await mark.getAttribute("focusable")).toBe("false");
-    expect(
-      await mark.evaluate((el) => getComputedStyle(el).pointerEvents),
-    ).toBe("none");
-
-    // The first version of this system was a seal pulled up over the record's
-    // caption, the way a stamp lands on a real document, and it hid the word
-    // "renewed" — the same defect class as a flex gap standing in for a space,
-    // arrived at from a new direction. The mark that replaced it is aligned to
-    // the board rather than tilted across it, but the guard is worth more than
-    // the object it was written for.
-    for (const path of ["/", "/about/", "/work/inherited-mental-model/"]) {
-      for (const width of [390, 768, 1280, 1440, 1920]) {
-        await page.setViewportSize({ width, height: 900 });
-        await page.goto(path);
-
-        const collisions = await page.evaluate(() => {
-          const el = document.querySelector("svg.block");
-          if (!el) return ["no mark"];
-          const box = el.getBoundingClientRect();
-          const hits: string[] = [];
-          const walker = document.createTreeWalker(
-            document.body,
-            NodeFilter.SHOW_TEXT,
-          );
-          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-            if (!(node.textContent ?? "").trim()) continue;
-            // The three syllables live inside the mark and are meant to.
-            if (el.contains(node)) continue;
-            const range = document.createRange();
-            range.selectNodeContents(node);
-            for (const rect of range.getClientRects()) {
-              if (rect.width === 0 || rect.height === 0) continue;
-              const overlaps =
-                rect.left < box.right &&
-                rect.right > box.left &&
-                rect.top < box.bottom &&
-                rect.bottom > box.top;
-              if (overlaps) hits.push(node.textContent!.trim().slice(0, 40));
-            }
-          }
-          return hits;
-        });
-
-        expect(collisions, `${path} at ${width}`).toEqual([]);
-      }
-    }
-  });
-
-  test("the mark's smallest use is the same measurement as its largest", async ({
-    page,
-  }) => {
-    await page.goto("/work/");
-
-    // The 종성 band is the bottom 41.8% of a syllable block. At 7px the frames
-    // and the glyphs are mud, so the current-page marker keeps the proportion
-    // and drops everything else — which is only true while both read the same
-    // custom property. Two hand-kept copies of a number is how they drift.
-    const marker = await page.evaluate(() => {
-      const link = document.querySelector('.site-nav a[aria-current="page"]')!;
-      const s = getComputedStyle(link, "::before");
-      return { w: parseFloat(s.width), h: parseFloat(s.height) };
-    });
-
-    const ratio = await page.evaluate(() =>
-      parseFloat(
-        getComputedStyle(document.documentElement).getPropertyValue(
-          "--jongseong-ratio",
-        ),
-      ),
-    );
-
-    expect(ratio).toBeGreaterThan(0.3);
-    expect(ratio).toBeLessThan(0.5);
-    expect(marker.h / marker.w).toBeCloseTo(ratio, 2);
-
-    // And it is still a target a finger can find: the marker is decoration on
-    // a link whose own hit area is checked elsewhere, so this only guards the
-    // marker from collapsing to nothing.
-    expect(marker.w).toBeGreaterThan(4);
-  });
+  /**
+   * There used to be two more tests here, guarding a mark that no longer
+   * exists: `the mark is a name to a reader and never lands on a word` and
+   * `the mark's smallest use is the same measurement as its largest`. Both
+   * went with the object. The first was worth keeping in spirit — it caught a
+   * real defect, a mark placed over the record's caption covering the word
+   * "renewed" — and that property is still covered from the other side, by
+   * `visual separation exists as characters, not only as CSS` and by the
+   * horizontal-overflow tests. Nothing on the site is positioned to overlap
+   * anything any more, so a test for it would assert against an empty set.
+   */
 });
 
 test.describe("light and dark", () => {
