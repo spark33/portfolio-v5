@@ -55,3 +55,31 @@ it collapses back to a band above the lede, and the DOM order (fields, then
 lede) is unchanged in both, so reading order never depended on the grid.
 
 Files: `lib/pages.ts`, `src/case.css`. Tests: 50 passed.
+
+## Pass 3 — the name was torn in half in the largest type on the site
+
+**Gap.** The home page `h1` set "Hi, I'm Sean Park — 박상 / 현 — and I run
+product…" at 1440 and 768, and "박 / 상현" at 390. Every breakpoint, both
+themes.
+
+**Cause.** The browser's default treats every Hangul syllable block as a break
+opportunity. Korean breaks at word boundaries (어절), so the default is simply
+wrong for the language — it had just never been overridden.
+
+**Fix.** `word-break: keep-all` on `:lang(ko)`, which is where the shell
+already wraps every Korean run. It is a property of the language rather than a
+patch on the heading, so it also holds the wordmark, the footer signature,
+한국장학재단 in the case-study fields, and any Korean added later.
+
+Worth naming why it matters beyond typography: the site's argument is that a
+record illegible to a foreign reader can be made undeniable without being
+flattened. Breaking the name in half in the biggest type on the site argues the
+other way.
+
+**Test.** `no Korean run is broken across lines` — a space-free `[lang="ko"]`
+run occupies exactly one line box, so more than one client rect means it broke.
+Checked at 320/390/768/1440 on home, about and the case study that carries a
+Korean client name. Verified failing against the previous build before the fix
+landed.
+
+Files: `src/base.css`, `tests/quality-floor.spec.ts`. Tests: 51 passed.

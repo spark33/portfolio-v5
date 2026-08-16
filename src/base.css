@@ -54,10 +54,19 @@ h4 {
   text-wrap: balance;
 }
 
+/* Korean breaks at word boundaries (어절), not between syllable blocks.
+   The browser default is the opposite — every syllable is a break
+   opportunity — which set the h1 of the home page as "Hi, I'm Sean Park —
+   박상 / 현" at 1440 and 768 and "박 / 상현" at 390. The site's argument is
+   that a name should survive being made legible to a reader who cannot read
+   it; tearing it in half in the largest type on the site is the opposite.
+   `keep-all` is the correct default for the language, not a patch for the
+   heading. */
 :lang(ko),
 .ko {
   font-family: "Pretendard", var(--font-text);
   letter-spacing: var(--track-korean);
+  word-break: keep-all;
 }
 
 .display-xl {

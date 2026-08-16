@@ -450,6 +450,31 @@ test.describe("regressions that keep coming back", () => {
     }
   });
 
+  test("no Korean run is broken across lines", async ({ page }) => {
+    // The browser's default treats every Hangul syllable as a break
+    // opportunity, so 박상현 set as "박상 / 현" in the home page h1 at 1440 and
+    // 768 and "박 / 상현" at 390. Korean breaks at word boundaries. A run with
+    // no space in it therefore occupies exactly one line box, and the count of
+    // client rects is how you find out.
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+
+      for (const path of ["/", "/about/", "/work/no-reason-to-return/"]) {
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+
+        const split = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>('[lang="ko"]')]
+            .filter((el) => !/\s/.test(el.textContent ?? ""))
+            .filter((el) => el.getClientRects().length > 1)
+            .map((el) => el.textContent ?? ""),
+        );
+
+        expect(split, `${path} at ${width}px`).toEqual([]);
+      }
+    }
+  });
+
   test("the index argument is carried by real headings", async ({ page }) => {
     await page.goto("/work/");
 
