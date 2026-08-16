@@ -75,8 +75,14 @@ test.describe("readable without JavaScript", () => {
       expect((await chip.textContent())!.trim().length).toBeGreaterThan(4);
     }
 
-    // The margin evidence is content, not an enhancement.
-    await expect(page.locator(".evidence")).toBeVisible();
+    // The record in the margin is content, not an enhancement. Assert the
+    // figures rather than the container's class name, so renaming the box
+    // cannot break the test and an empty box cannot pass it.
+    const margin = page.locator(".margin-note");
+    await expect(margin).toBeVisible();
+    for (const figure of ["400+", "100%", "180k+", "53k"]) {
+      await expect(margin).toContainText(figure);
+    }
   });
 
   test("every case study states its constraint before its title", async ({ page }) => {
@@ -122,7 +128,7 @@ test.describe("motion is declinable", () => {
 
     // Nothing about the composition depends on the script.
     await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator(".evidence")).toBeVisible();
+    await expect(page.locator(".margin-note")).toContainText("400+");
     await expect(page.locator(".lattice-base")).toBeVisible();
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   });

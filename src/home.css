@@ -82,32 +82,45 @@ a.chip:hover {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 42%, transparent);
 }
 
-/* The record, beside the sentence that claims it. */
-.evidence {
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: var(--space-5);
-  background: color-mix(in srgb, var(--paper-recessed) 55%, transparent);
+/* The record, beside the sentence that claims it.
+
+   It was a rounded, tinted, bordered card — the only box on a site that is
+   otherwise hairlines and type, and the one element that would have looked
+   identical for any other client. A card also argues that the record is a
+   widget rather than evidence. It is now the same margin note the case pages
+   carry: a top hairline, mono labels, figures at four times the label size,
+   one row per figure. Same primitive as every other row of labelled fields on
+   the site, so it is the grammar rather than a component. */
+
+.record-figures {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule);
 }
 
-.evidence-figures {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-5) var(--space-4);
+.record-figures .strip-cell {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--rule);
 }
 
-.evidence-figures b {
-  display: block;
-  margin-top: var(--space-2);
-  font-size: 1.8rem;
+.record-figures .strip-cell > dt {
+  margin-bottom: 0;
+}
+
+.record-figures .strip-value {
+  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.024em;
+  letter-spacing: -0.028em;
   font-variant-numeric: tabular-nums;
 }
 
-.evidence-caption {
-  margin-top: var(--space-5);
+.record-caption {
+  margin-top: var(--space-4);
   font-size: var(--size-small);
   line-height: 1.5;
   color: var(--ink-secondary);

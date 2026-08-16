@@ -104,25 +104,14 @@ function paragraphs(items: typeof narrative) {
  * board's decision rather than a layout guess.
  */
 function opening() {
-  const figures = record
-    .map(
-      (f) => `            <div><span class="label">${copy(f.label)}</span>
-              <b>${copy(f.value)}</b></div>`,
-    )
-    .join("\n");
-
   return `      <section class="page spread">
         <div class="story">
           <h1 class="greeting">${chips(greeting)}</h1>
 ${paragraphs(narrative)}
         </div>
         <aside class="margin-note" aria-label="The record">
-          <div class="evidence">
-            <div class="evidence-figures">
-${figures}
-            </div>
-            <p class="evidence-caption">${copy(recordCaption)}</p>
-          </div>
+${strip(record, "record-figures")}
+          <p class="record-caption">${copy(recordCaption)}</p>
         </aside>
       </section>`;
 }

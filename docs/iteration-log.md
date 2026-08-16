@@ -83,3 +83,28 @@ Korean client name. Verified failing against the previous build before the fix
 landed.
 
 Files: `src/base.css`, `tests/quality-floor.spec.ts`. Tests: 51 passed.
+
+## Pass 4 — the record was the only box on the site
+
+**Gap.** The four numbers that carry the site's evidence sat in a rounded,
+tinted, 1px-bordered card. Everything else on the site is hairlines and type.
+Ask the brief's question — would this look the same for a different client? —
+and the card is the one element on the page that answers yes. It also argues
+the wrong thing: a card reads as a widget, and those numbers are the record.
+
+**Fix.** Dissolved it into the same margin note the case pages now carry: a top
+hairline, mono label left, figure right, a rule under each row. The figures
+went from 1.8rem to clamp(1.75rem, 2.4vw, 2.4rem) and are set tabular, so the
+column reads as a ledger rather than a widget. No border, no radius, no fill.
+
+The bespoke `evidence-figures` markup is gone with it — the record now renders
+through `strip()`, the site's one repeating layout primitive, which is what the
+README already claims it does everywhere. That is nine lines less renderer and
+one fewer thing to keep in sync.
+
+**Tests.** Two tests located this block by the class name `.evidence` and broke
+on the rename. They now assert the four figures are present in the margin,
+which is the thing that actually matters without JS — a class name can be
+renamed and an empty box would have passed the old assertion.
+
+Files: `lib/pages.ts`, `src/home.css`, `tests/quality-floor.spec.ts`. Tests: 51 passed.
