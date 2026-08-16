@@ -1,0 +1,68 @@
+/**
+ * The loading animation.
+ *
+ * No webfont: every letterform in the sequence is baked outline data, matched
+ * contour to contour at build time so one script can morph into another. The
+ * only type here is the meter, which uses the site's own mono.
+ */
+
+.loader {
+  width: 100%;
+  color: inherit;
+}
+
+/*
+ * The SVG carries its own aspect via viewBox; this just caps how big it goes.
+ *
+ * Clipped, not visible. The viewBox is a moving camera over a plane three times
+ * the frame, so anything unclipped spills across the page the moment it pushes
+ * in — and parts arriving from outside should enter the frame rather than
+ * already be sitting beyond its edge.
+ */
+.loader svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: hidden;
+}
+
+
+/**
+ * Both runs occupy the same place, so the handoff is one name replacing
+ * another rather than a layout shift.
+ */
+
+/* Three syllables set light need air, or they read as one word. */
+
+/* A heavy weight at display size sets too loose at its native sidebearings. */
+
+
+
+.loader__meter {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  margin-top: 1.4rem;
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  font-variant-numeric: tabular-nums;
+}
+
+.loader__track {
+  flex: 1;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.18;
+}
+
+.loader__fill {
+  height: 1px;
+  background: currentColor;
+}
+
+.loader__percent {
+  opacity: 0.62;
+  min-width: 3ch;
+  text-align: right;
+}

@@ -9,9 +9,20 @@
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%235b6cff'/></svg>"
     />
     <link rel="stylesheet" href="/src/style.css" />
+    <!--
+      Without script there is nothing to lift the curtain, so there is no
+      curtain. The page underneath is complete either way.
+    -->
+    <noscript><style>#gate{display:none}</style></noscript>
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>
+    <!--
+      In the markup rather than created by script, so it covers the page from
+      first paint instead of flashing the content it is meant to introduce.
+      src/loader/gate.ts fills it and takes it away again.
+    -->
+    <div id="gate" class="gate" aria-hidden="true"></div>
     <canvas id="scene" aria-hidden="true"></canvas>
     <header class="site-nav">
       <a class="wordmark" href="/">Portfolio</a>
