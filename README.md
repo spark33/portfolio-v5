@@ -26,15 +26,16 @@ study the constraint is the `<h1>`. This is enforced by the content types in
 `constraint`, and a `Decision` cannot be written without a `cost`. A decision
 with no cost is a preference.
 
-**The name is the argument at the scale of a word.** The home page opens on
-박상현 resolved in four steps — composed, decomposed into jamo, transliterated,
-resolved to "Sean Park" — each labelled with the operation that produced it,
-and the last carrying a `COST` field, because the step that finally makes the
-name legible to everyone is the step that loses it. It is the same shape as a
-case study (the pressure first, the name second, what it cost stated) applied
-to the one record on the site that is unarguably the person's own. The data is
-`nameResolution` in [`content/site.ts`](content/site.ts), derived from `person`
-so it cannot drift from the wordmark, the footer or the structured data.
+**The name is resolved where the question was asked.** `/about/` opens on the
+name in two scripts, so the page has already asked what this person is called;
+under the lede it answers, in four steps — composed, decomposed into jamo,
+transliterated, resolved to "Sean Park" — with a `COST` field on the last,
+because the step that makes the name legible to everyone is the step that loses
+it. It is a ledger on the page's own columns, not a hero. `nameResolution` in
+[`content/site.ts`](content/site.ts) is derived from `person`, so it cannot
+drift from the wordmark, the footer or the structured data. It spent one commit
+as the home page's opening at display scale; `docs/iteration-log.md` has the
+reasoning for taking it back off.
 
 **The page is a person talking.** The home page is first-person prose, and the
 links live inside the sentences rather than in an index. Each chip names an
@@ -79,7 +80,7 @@ resolve.
 | `src/board.css`         | The board's visible surface — lattice and star points         |
 | `src/board.ts`          | The only client script: two pointer coordinates               |
 | `src/home.css`          | Thesis and position strip                                     |
-| `src/case.css`          | Case studies and artifact pages — the decision spine         |
+| `src/case.css`          | Case studies, artifacts and about — the decision spine, and the name ledger |
 | `src/index-rows.css`    | Constraint-first index rows                                  |
 | `scripts/fetch-fonts.py`| Regenerates `public/fonts/` and `src/fonts.css`              |
 | `scripts/screenshots.mjs`| Every page at three widths in both themes, into `shots/`     |
@@ -133,15 +134,6 @@ the world actually uses. The three values are named in
 [`src/tokens.css`](src/tokens.css) — `--weight-source`, `--weight-carried`,
 `--weight-imposed` — so the scale is a decision with a reason rather than three
 numbers in a rule.
-
-**A size that is derived rather than chosen.** The resolution strip has no
-font-size in its scale: it is set at `100cqw / --fit`, its own measure divided
-by a constant, so the type scales with the page and no step can wrap or
-overflow at any viewport. `--fit` is 10 on a wide screen — the longest of the
-four steps runs 8.9 em, so it takes 89% of the measure — and tightens to 9.1
-below 48rem, where a phone has no slack to spend. The number is measured, by
-`proto/measure.mjs`, not guessed, and `the name fills its measure and never
-wraps` fails if the copy, the weight or the tracking moves it.
 
 Korean breaks at word boundaries (어절), not between syllable blocks, so
 `:lang(ko)` carries `word-break: keep-all`. The browser default is the
@@ -268,18 +260,14 @@ about its contents:
   that a space-free `[lang="ko"]` run occupies exactly one line box, at four
   widths across three pages.
 
-Two more arrived with the name resolution, and both exist because its type is
-sized from a measured constant that nothing else in the CSS reveals:
+One more arrived with the name resolution:
 
-- **A step that wraps or overflows.** `the name fills its measure and never
-  wraps` checks, at five widths, that every step occupies one line box and fits
-  the measure — and that the longest still uses more than 80% of it, which is
-  what fails if container units stop resolving and the fallback clamp quietly
-  takes over.
 - **Decomposition that only exists in CSS.** `the name resolves in four steps,
-  and every step is real text` reads the rendered text of all four steps,
-  including the spaces between the three jamo groups. Positioned spans or a
-  flex gap would look identical and be invisible to a screen reader.
+  and every step is real text` reads the rendered text of all four steps on
+  `/about/`, including the spaces between the three jamo groups. Positioned
+  spans or a flex gap would look identical and be invisible to a screen reader.
+  The same test asserts the strip is *not* on the home page, because where it
+  sits was itself a decision.
 
 The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and

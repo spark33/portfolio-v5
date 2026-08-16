@@ -64,10 +64,7 @@ test.describe("readable without JavaScript", () => {
     await page.goto("/");
 
     // The page is somebody talking, and the links live inside the sentences.
-    // The h1 used to open "Hi, I'm Sean Park — 박상현 —" and then bury the role
-    // at the end of it. The resolution strip above now introduces the name in
-    // four steps, so the h1 is the sentence the greeting was burying.
-    await expect(page.locator("h1")).toHaveText(/product and delivery at Mindlogic in Seoul/);
+    await expect(page.locator("h1")).toHaveText(/Hi, I'm Sean Park/);
     const chips = page.locator(".chip");
     expect(await chips.count()).toBeGreaterThanOrEqual(4);
 
@@ -91,7 +88,10 @@ test.describe("readable without JavaScript", () => {
   test("the name resolves in four steps, and every step is real text", async ({
     page,
   }) => {
-    await page.goto("/");
+    // On the about page, and deliberately not on the home page: a name at the
+    // top of the site puts identity in front of a reader who came for the work.
+    await page.goto("/about/");
+    await expect(page.locator(".resolve")).toHaveCount(1);
 
     const steps = page.locator(".resolve-step");
     await expect(steps).toHaveCount(4);
@@ -108,12 +108,15 @@ test.describe("readable without JavaScript", () => {
       "Sean Park",
     ]);
 
-    // The step that loses something says what it cost, in the same field name
-    // every decision on the site uses.
-    await expect(steps.nth(3).locator(".resolve-cost")).toHaveText("Cost");
-    for (const note of await page.locator(".resolve-text").allTextContents()) {
-      expect(note.trim().length).toBeGreaterThan(30);
-    }
+    // The last step says what it cost, in the same field name every decision
+    // on the site uses.
+    await expect(page.locator(".resolve-cost")).toHaveText("Cost");
+    expect((await page.locator(".resolve-text").textContent())!.trim().length)
+      .toBeGreaterThan(30);
+
+    // And it is nowhere near the first thing an employer meets.
+    await page.goto("/");
+    await expect(page.locator(".resolve")).toHaveCount(0);
   });
 
   test("every case study states its constraint before its title", async ({ page }) => {
@@ -599,55 +602,6 @@ test.describe("regressions that keep coming back", () => {
       );
 
       expect(cramped, `${path}: display type in a body-copy measure`).toEqual([]);
-    }
-  });
-
-  test("the name fills its measure and never wraps", async ({ page }) => {
-    // The resolution strip has no chosen font size: it is set at its own
-    // measure divided by `--fit`, so the type scales with the page and no step
-    // can overflow. That only holds while `--fit` is at least the em-width of
-    // the longest step, and the em-width moves if the copy, the weight or the
-    // tracking changes — none of which is visible in the CSS. So assert both
-    // ends of it: nothing wraps or overflows, and the longest step still uses
-    // most of the width it was given, which is what fails if the container
-    // units silently stop resolving and the fallback clamp takes over.
-    for (const width of [320, 390, 768, 1024, 1440]) {
-      await page.setViewportSize({ width, height: 900 });
-      await page.goto("/");
-      await page.evaluate(() => document.fonts.ready);
-
-      const strip = await page.evaluate(() => {
-        const container = document.querySelector<HTMLElement>(".resolve")!;
-        const style = getComputedStyle(container);
-        const measure =
-          container.clientWidth -
-          parseFloat(style.paddingLeft) -
-          parseFloat(style.paddingRight);
-
-        return {
-          measure,
-          steps: [...document.querySelectorAll<HTMLElement>(".resolve-value")].map((el) => {
-            const range = document.createRange();
-            range.selectNodeContents(el);
-            return {
-              text: el.textContent!.trim(),
-              lines: el.getClientRects().length,
-              width: range.getBoundingClientRect().width,
-            };
-          }),
-        };
-      });
-
-      for (const step of strip.steps) {
-        expect(step.lines, `"${step.text}" wrapped at ${width}px`).toBe(1);
-        expect(
-          step.width,
-          `"${step.text}" overflows its measure at ${width}px`,
-        ).toBeLessThanOrEqual(strip.measure + 1);
-      }
-
-      const widest = Math.max(...strip.steps.map((s) => s.width));
-      expect(widest / strip.measure, `longest step at ${width}px`).toBeGreaterThan(0.8);
     }
   });
 

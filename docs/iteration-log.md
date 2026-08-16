@@ -399,7 +399,13 @@ about judgement: the site's claim is that the decisions and their costs are the
 evidence, and a wall of metrics is the version of this record that a recruiter
 screen already produces.
 
-## What was built
+## What was built — and what was then taken back off
+
+> **Read the revision below before this section.** The strip described here was
+> built as the home page's opening at display scale, and that placement was
+> reverted within the day. What survives is described under "Revision". This
+> section is kept as written because the reasoning it contains is the reasoning
+> that turned out to be wrong, and deleting it would hide the mistake.
 
 **The strip.** `nameResolution` in `content/site.ts`, derived from `person` so
 the four forms cannot drift from the wordmark, the footer or the structured
@@ -461,9 +467,72 @@ body-copy measure off display type and their test counts characters per line;
 a three-character name would read as broken under it. The invariant that
 matters here is a different one and is tested directly.
 
+## Revision — the strip comes off the home page
+
+Sean's question, on seeing it: *what is the point of my name really big at the
+top, four times, from a portfolio perspective?* It is the right question and the
+answer is that there isn't one.
+
+**What was wrong with it.** The site has one job and about three minutes to do
+it: convince someone in Berlin or San Francisco that a record they cannot read
+is worth taking seriously. The first screen is the whole budget for that, and I
+spent it on identity rather than on evidence. Four large repetitions of a thing
+the reader cannot evaluate, under labels — COMPOSED, DECOMPOSED — that are
+legible to the person who designed the page and read as art-school framing to
+everyone else. It is also a full viewport before any work is visible, which is
+the defect pass 1 fixed and pass 10 warned about, reintroduced deliberately by
+someone who had just read both.
+
+There is a sharper version of the objection. Leading with the name makes *this
+person's name being difficult for you* the site's opening topic, in a market
+where the thing you want them thinking about is product judgement under
+constraint. The strip means to say "this record is legible if you look at it".
+Placed first and set at 130px, it can land as "here is my name, at length".
+
+**Why I built it anyway.** The brief asked for a moment a juror would stop on,
+and scored the site against Awwwards weightings. Those two goals — a memorable
+thumbnail, and three minutes of an employer's attention — pull in different
+directions more often than the brief admits, and when they did I picked the
+juror. The juror is a proxy. The employer is the actual goal.
+
+**What shipped instead.** The home page is byte-identical to what it was before
+the pass: `src/home.css` reverted, the greeting restored to "Hi, I'm Sean Park —
+박상현 — and I run product and delivery at Mindlogic in Seoul."
+
+The four steps now sit on `/about/`, under the lede, at a fifth of the size.
+That page's `h1` is already the name in two scripts, so the question has been
+asked and the answer is useful rather than interruptive: what to call this
+person, and what the English form costs. It is set as a ledger on the case
+page's own columns — mono step name on the rail, the form in the body column, a
+rule under each row — so it is the same shape as a decision rather than a block
+invented for one page, and the rail is not left empty for content to indent past
+(pass 8).
+
+The weight scale survives and still means something at this size:
+`--weight-source` 400 for 박상현, `--weight-carried` 700, `--weight-imposed` 860
+for "Sean Park". The container-derived sizing does not: it existed to make a
+hero fill a measure it can no longer fill, and keeping 130 lines of CSS and a
+five-viewport test for a block that now fits comfortably in a 42rem column would
+be machinery outliving its reason. `the name fills its measure and never wraps`
+went with it. `proto/measure.mjs` is kept — it is how the number was derived and
+the prototypes still use it.
+
+**What this pass is worth, honestly.** Three prototypes, none of them adopted at
+the scale they were designed for, one of them adopted small on a different page,
+plus a defect fixed and a weight scale that is now documented. The brief said a
+result of "nothing here beats the baseline, here is why" was acceptable and
+preferable to a change that makes the site worse. This is close to that result,
+arrived at one commit later than it should have been.
+
+The home page still has no moment anyone will remember, which is the gap the
+pass was called to close and did not. The honest next attempt is on the work
+rather than on the person — the three constraints are the most distinctive
+sentences on the site and they are currently set as an ordinary index — and it
+should be tested against the three-minute job first and the thumbnail second.
+
 ## Where it ended up
 
-**Lighthouse**, mobile profile, after the pass:
+**Lighthouse**, mobile profile, after the pass and its revision:
 
 | Route | Perf | A11y | Best practices | SEO | CLS |
 | ----- | ---- | ---- | -------------- | --- | --- |
@@ -476,20 +545,18 @@ matters here is a different one and is tested directly.
 | `/blog/cutting-transcript-latency/` | 100 | 100 | 100 | 100 | 0 |
 | `/404.html` | 100 | 100 | 100 | **63** | 0 |
 
-LCP 1.5 s and TBT 0 ms throughout. CLS went from 0.002 to 0 on every route,
-which is not a coincidence: the strip's height is `line-height × font-size` and
-its font-size comes from the container's width, so nothing about it moves when
-the web font swaps in. The one element that used to shift was the first line of
-the home page.
+LCP 1.5 s and TBT 0 ms throughout. The home page's CLS is 0.002 again — the
+reverted first line is the element that shifts on the font swap, exactly as it
+did before the pass. `/about/` is 0.
 
 This Lighthouse build also reports an `agentic-browsing` category, scoring 67 on
 every route including the ones untouched by this pass. It is not one of the four
 the brief names and nothing here moved it; recording it so the next pass knows
 it was already there.
 
-**Tests:** 58 passing, from 56. Two added, none weakened. One existing assertion
-was updated rather than removed — the h1 regex, because the h1's copy changed —
-and it is no weaker than it was.
+**Tests:** 57 passing, from 56. One added and kept; one added and then removed
+with the mechanism it tested. The h1 assertion was changed and then changed
+back, and is now identical to what it was before the pass.
 
 **Total JavaScript:** still 1.5 KB. Nothing in this pass runs at runtime.
 
@@ -516,17 +583,13 @@ and it is no weaker than it was.
   the mismatch in the one place on the site where the two scripts are most
   directly compared. The interest had to come from what the type is doing, not
   from what it is.
-- **The strip on any page but the home page.** It is the site's one moment and
-  repeating it on `/about/` would spend it. The about page still opens on a
-  plain "Sean Park — 박상현" h1, which now looks thin by comparison. That is the
-  most obvious candidate for the next pass.
-- **The home h1 is still smaller than the h3s below it**, and now smaller than
-  the strip above it too. Pass 10 left this open and this pass did not close it;
-  the greeting is deliberately conversational and I still did not want to shout
-  it. It is more visible now than it was.
+- **A memorable first screen.** This is the gap the pass existed to close, and
+  after the revision it is still open. See the end of "Revision" for where I
+  think the next attempt should look.
+- **The home h1 is still smaller than the h3s below it.** Pass 10 left this open
+  and this pass did not close it either.
 - **No testing on a real mid-range Android.** Still Chromium at a throttled
-  profile. The strip is the heaviest text block the site has ever rendered and
-  it is the thing I would most want to see on real hardware.
+  profile.
 
 ---
 

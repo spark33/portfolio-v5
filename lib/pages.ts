@@ -15,6 +15,7 @@ import {
   caseStudies,
   closing,
   greeting,
+  nameCost,
   nameResolution,
   narrative,
   nav,
@@ -102,41 +103,42 @@ function paragraphs(items: typeof narrative) {
 }
 
 /**
- * The name, resolved in four steps, at display scale.
+ * The name, resolved in four steps. On the about page, and nowhere else.
  *
- * An ordered list because the steps are an order: each one is produced from
- * the one above it, and the last is the only one that loses anything. The
- * mono step names and the notes are the same machine voice the rest of the
- * site labels its fields in, and the fourth note sits under a COST field
- * because that is the grammar every decision on this site is written in.
+ * An ordered list because the steps are an order: each is produced from the one
+ * above it, and the last is the only one that loses anything. It is set as a
+ * ledger — mono label left, value right, a rule under each row — which is the
+ * same row the record uses in the home margin, so this is the site's grammar
+ * rather than a component invented for one block.
  *
- * The value carries no `display-*` class. Those exist to hold a body-copy
- * measure off display type, and their test counts characters per line — a
- * three-character name would read as broken under it. The invariant that
- * matters here is different and is tested directly: every step occupies
- * exactly one line box and fits its measure at every width.
+ * It spent one commit as the home page's opening at display scale. That put a
+ * name in front of a reader who had come to find out about the work, and read
+ * as identity where the page's whole job is evidence. Here the page has already
+ * asked the question — its h1 is the name in two scripts — and the answer is
+ * useful: what to call this person, and what the English form costs.
  */
 function resolution() {
   const steps = nameResolution
     .map(
-      (step) => `          <li class="resolve-step s${copy(step.n)}">
-            <p class="label resolve-n">${copy(step.n)} &mdash; ${copy(step.step)}</p>
-            <p class="resolve-value">${copy(step.value)}</p>
-            <div class="resolve-note">
-${step.cost ? `              <p class="label resolve-cost">Cost</p>\n` : ""}              <p class="resolve-text">${copy(step.note)}</p>
-            </div>
-          </li>`,
+      (step) => `            <li class="resolve-step s${copy(step.n)}">
+              <span class="label">${copy(step.n)} &mdash; ${copy(step.step)}</span>
+              <span class="resolve-value">${copy(step.value)}</span>
+            </li>`,
     )
     .join("\n");
 
-  // Named by `aria-label`, not by a heading: a heading here would sit above
-  // the h1 and would take the first `main h2`, which the home page reserves
-  // for its claim. The margin note is named the same way.
-  return `      <section class="page resolve" aria-label="The name, in four steps">
-        <ol class="resolve-steps">
+  // Named by `aria-label` rather than by a heading: the about page's headings
+  // are its three sections, and a fourth one here would put the name back into
+  // an outline that is meant to read as an argument about the work.
+  return `          <section class="resolve" aria-label="The name, in four steps">
+            <ol class="resolve-steps">
 ${steps}
-        </ol>
-      </section>`;
+            </ol>
+            <div class="resolve-note">
+              <p class="label resolve-cost">Cost</p>
+              <p class="resolve-text">${copy(nameCost)}</p>
+            </div>
+          </section>`;
 }
 
 /**
@@ -221,8 +223,6 @@ export function renderHome() {
     module: "/src/main.ts",
     jsonLd: personJsonLd(),
     body: `    <main class="main" id="main" tabindex="-1">
-${resolution()}
-
 ${opening()}
 
       <div class="page">
@@ -522,6 +522,7 @@ ${margin(record)}
 
           <div class="case-body">
             <p class="lede case-lede">${copy(about.lede)}</p>
+${resolution()}
 ${sections}
           </div>
         </div>

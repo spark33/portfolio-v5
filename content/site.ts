@@ -51,15 +51,15 @@ export const person = {
 };
 
 /**
- * The name, resolved in four steps.
+ * The name, resolved in four steps. Rendered on the about page only.
  *
- * This is the site's whole argument at the scale of one word: a record that a
- * European or American reader cannot read is made legible without being
- * flattened, and the step that finally makes it easy is the step that loses
- * the most. Every project on the site is introduced by the constraint that
- * produced it and states what the decision cost; so is the name.
+ * It answers a question that page has actually asked — its h1 is the name in
+ * two scripts — by saying what a reader should call this person and what the
+ * English form costs. It was briefly the home page's opening at display scale,
+ * which put identity in front of an employer who was there to find out about
+ * the work; the reasoning for taking it back off is in docs/iteration-log.md.
  *
- * The four values are derived from `person` rather than retyped, so the strip
+ * The four values are derived from `person` rather than retyped, so they
  * cannot drift from the wordmark, the footer or the structured data.
  */
 export type NameStep = {
@@ -68,44 +68,21 @@ export type NameStep = {
   /** The operation that produced this form. */
   step: string;
   value: string;
-  note: string;
-  /** The one step that loses something. Rendered under a COST field. */
-  cost?: boolean;
 };
 
 export const nameResolution: NameStep[] = [
-  {
-    n: "01",
-    step: "Composed",
-    value: person.nameKo,
-    note: "Three Hangul syllable blocks. The name on every document I hold.",
-  },
-  {
-    n: "02",
-    step: "Decomposed",
-    value: person.nameJamo.join(" "),
-    note:
-      "Nine letters, in the order they are written inside the blocks. The " +
-      "structure survives; the word does not.",
-  },
-  {
-    n: "03",
-    step: "Transliterated",
-    value: person.nameRoman,
-    note:
-      "Revised Romanisation. Every system can file it, and almost nobody " +
-      "can say it.",
-  },
-  {
-    n: "04",
-    step: "Resolved",
-    value: person.nameEn,
-    cost: true,
-    note:
-      "What I answer to in English. Legible to everyone, and true to no " +
-      "document I own.",
-  },
+  { n: "01", step: "Composed", value: person.nameKo },
+  { n: "02", step: "Decomposed", value: person.nameJamo.join(" ") },
+  { n: "03", step: "Transliterated", value: person.nameRoman },
+  { n: "04", step: "Resolved", value: person.nameEn },
 ];
+
+/**
+ * What the last step cost, in the field name every decision here uses.
+ */
+export const nameCost =
+  "Sean is what I answer to in English, and it is the only one of the four " +
+  "that loses the name: legible to everyone, and true to no document I own.";
 
 /**
  * The home page, as a person talking.
@@ -120,15 +97,8 @@ export const nameResolution: NameStep[] = [
  */
 export type Narrative = { kind: "p"; text: string; lead?: boolean };
 
-/**
- * The greeting no longer introduces the name: the resolution strip above it
- * has just spent the whole first screen on that, four times over, and saying
- * "Hi, I'm Sean Park — 박상현" underneath it repeated both halves of the strip
- * in the same breath. What is left is the sentence the greeting was burying —
- * the role — which is also the one an employer is reading for.
- */
 export const greeting =
-  "I run product and delivery at Mindlogic in Seoul.";
+  "Hi, I'm Sean Park — 박상현 — and I run product and delivery at Mindlogic in Seoul.";
 
 export const narrative: Narrative[] = [
   { kind: "p", text: "You won't have heard of [Mindlogic|Seoul, 20 people], and that is most of the reason this site exists.", lead: true },

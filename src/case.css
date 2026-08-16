@@ -233,14 +233,102 @@
   background: var(--paper-recessed);
 }
 
+/* The name, in four steps ------------------------------------------------
+
+   On the about page only. Its h1 is the name in two scripts, so the page has
+   already asked what this person is called; this answers it, and states what
+   the English form costs in the same field name every decision here uses.
+
+   Set as a ledger on the page's own columns — the mono step name on the rail,
+   the form in the body column, a rule under each row — so it is the same shape
+   as a decision rather than a block invented for one page. The rail carries
+   the label, which is why nothing here indents past an empty rail (pass 8).
+
+   The weight axis does the one thing it is here to do: Schibsted Grotesk is a
+   400–900 variable file and the site had been asking it for three fixed
+   values. Weight rises as fidelity falls — 박상현 at the axis floor, "Sean
+   Park" at 860 — because the least true form is the one the world uses. Both
+   Korean steps are Pretendard, which ships here as two static weights, so they
+   take 400, which is also the weight the shell preloads. See src/tokens.css.
+
+   This was briefly the home page's opening at display scale. That put a name
+   in front of a reader who had come for the work; docs/iteration-log.md has
+   the reasoning for taking it back off. */
+
+.resolve {
+  grid-column: rail / tail;
+  max-width: 52rem;
+  margin-bottom: var(--space-6);
+  border-top: 1px solid var(--rule);
+}
+
+.resolve-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.resolve-step {
+  display: grid;
+  grid-template-columns: 10rem minmax(0, 1fr);
+  column-gap: var(--space-6);
+  align-items: baseline;
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--rule);
+}
+
+.resolve-value {
+  font-size: clamp(1.35rem, 2.6vw, 2rem);
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+  font-weight: var(--weight-source);
+}
+
+.s03 .resolve-value {
+  font-weight: var(--weight-carried);
+}
+
+.s04 .resolve-value {
+  font-weight: var(--weight-imposed);
+}
+
+.resolve-note {
+  margin-top: var(--space-4);
+  max-width: 38rem;
+}
+
+/* The first of the accent's three places on the site, and the one the palette
+   was written for: the step of the name that loses something. */
+.resolve-cost {
+  color: var(--seal);
+  margin-bottom: var(--space-1);
+}
+
+/* `.resolve-text`, not `.resolve-note p`: the COST field is also a `p` inside
+   the note, and a rule written for the container (one class and one element)
+   outweighs the bare class written for the element — so the accent above lost
+   to it and the field rendered in secondary grey. Fourth time in this
+   codebase; see pass 1, pass 5 and pass 9. */
+.resolve-text {
+  font-size: var(--size-small);
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  text-wrap: pretty;
+}
+
 @media (max-width: 64rem) {
   .case-body,
   .decision,
   .outcome,
   .doc-section,
   .decision-fields,
-  .field {
+  .field,
+  .resolve-step {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .resolve-step {
+    row-gap: var(--space-2);
   }
 
   .decision,
