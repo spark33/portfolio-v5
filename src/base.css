@@ -1,6 +1,7 @@
 @import "./tokens.css";
 @import "./fonts.css";
 @import "./board.css";
+@import "./seal.css";
 
 /* Reset ------------------------------------------------------------------ */
 
@@ -410,15 +411,21 @@ a:hover {
   color: var(--ink);
 }
 
-/* The third and last use of the accent. */
+/* The accent's smallest appearance, and the same object as the impression on
+   the record: `.seal-mark` in seal.css carries the block's broken edge as a
+   clip path. At 7px the carved name is gone and the edge is the only part of a
+   seal that survives — which is enough to read as one rather than as a bullet,
+   and means the current-page marker and the stamp are one thing at two sizes
+   instead of two unrelated uses of a colour. */
 .site-nav a[aria-current="page"]::before {
   content: "";
   display: inline-block;
-  width: 0.4em;
-  height: 0.4em;
+  width: 0.44em;
+  height: 0.44em;
   margin-right: 0.55em;
-  vertical-align: 0.1em;
+  vertical-align: 0.08em;
   background: var(--seal);
+  clip-path: var(--seal-edge);
 }
 
 /* Side by side, the wordmark and the nav items each wrapped into two lines and

@@ -34,6 +34,10 @@ const LATTICE = token("lattice-ink");
 const { person, record, thesis } = await import(
   pathToFileURL(resolve("content/site.ts")).href
 );
+// The same impression the pages carry, from the same module. A card that drew
+// its own version of the seal would be a second definition free to drift, and
+// the card is the one image most readers see before any page.
+const { seal } = await import(pathToFileURL(resolve("lib/seal.ts")).href);
 
 const WIDTH = 1200;
 const HEIGHT = 630;
@@ -124,14 +128,17 @@ const html = `<!doctype html>
       }
       .label { font-family: "IBM Plex Mono", monospace; font-size: 12px;
         letter-spacing: 0.14em; text-transform: uppercase; color: ${INK_2}; }
-      /* The one accent, in the one place: the seal. */
+      /* The one accent, in the one place: the impression. Larger than it is
+         on the page, because this is read at 300px in a feed and the block is
+         the only thing that survives that. */
       .seal {
         position: absolute;
-        right: ${CELL}px;
-        bottom: ${CELL * 1.2}px;
-        width: 34px;
-        height: 34px;
-        background: ${SEAL};
+        right: ${CELL * 0.9}px;
+        bottom: ${CELL * 1.1}px;
+        width: ${CELL * 2.1}px;
+        height: ${CELL * 2.1}px;
+        color: ${SEAL};
+        rotate: -2.4deg;
       }
     </style>
   </head>
@@ -153,7 +160,7 @@ const html = `<!doctype html>
         </div>
       </div>
     </div>
-    <div class="seal"></div>
+    ${seal({ key: "card", label: `Seal of ${person.nameEn}` })}
   </body>
 </html>
 `;

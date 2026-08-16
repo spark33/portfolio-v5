@@ -137,26 +137,165 @@ test.describe("readable without JavaScript", () => {
 });
 
 test.describe("motion is declinable", () => {
-  test("the lattice lift is the only motion, and it is optional", async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: "reduce" });
-    await page.goto("/");
+  /**
+   * These two used to be `the lattice lift is the only motion, and it is
+   * optional` and `the page is identical when the module never loads`, and
+   * both asserted `document.getAnimations().length === 0` unconditionally.
+   *
+   * That was a proxy for the right property and it had two problems. It was
+   * too strong — it banned any future motion outright, including motion that
+   * declines itself correctly — and it was too weak, because a page with no
+   * animation returns zero whether or not the preference is honoured, so the
+   * assertion passed for the wrong reason on the very case it was written for.
+   * "Identical", likewise, is not the property anyone needs: the property is
+   * that the page is *complete and usable*, which is a different and testable
+   * thing.
+   *
+   * So they are rewritten to say what actually matters. The names are the new
+   * assertions rather than the old ones.
+   */
 
-    // Under reduced motion the pointer lift is not rendered at all, and the
-    // ambient lattice — which is the whole design — is untouched.
-    await expect(page.locator(".lattice-lift")).toBeHidden();
-    await expect(page.locator(".lattice-base")).toBeVisible();
-    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  test("nothing on the page moves when the reader has declined motion", async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+
+    for (const path of ["/", "/work/inherited-mental-model/", "/about/"]) {
+      await page.goto(path);
+
+      // The pointer lift is not rendered at all, and the ambient board —
+      // which is the whole design at this point — is untouched.
+      await expect(page.locator(".lattice-lift")).toBeHidden();
+      await expect(page.locator(".lattice-base")).toBeVisible();
+      await expect(page.locator(".board-edge")).toBeVisible();
+
+      // The real property, stated directly: no element declares a running
+      // animation, and every transition on the page has collapsed to the 1ms
+      // the reduced-motion block in tokens.css sets. This permits motion to be
+      // added later and fails the moment a duration is written as a literal
+      // instead of through a --dur token.
+      const moving = await page.evaluate(() => {
+        const offenders: string[] = [];
+        for (const el of document.querySelectorAll<HTMLElement>("*")) {
+          const style = getComputedStyle(el);
+          const name = el.getAttribute("class") ?? "";
+          if (style.animationName !== "none") {
+            offenders.push(`${el.tagName}.${name} animation`);
+          }
+          for (const value of style.transitionDuration.split(",")) {
+            const ms = value.trim().endsWith("ms")
+              ? parseFloat(value)
+              : parseFloat(value) * 1000;
+            if (ms > 20) {
+              offenders.push(`${el.tagName}.${name} transition ${value}`);
+            }
+          }
+        }
+        return offenders;
+      });
+      expect(moving, path).toEqual([]);
+
+      expect(await page.evaluate(() => document.getAnimations().length), path).toBe(0);
+    }
   });
 
-  test("the page is identical when the module never loads", async ({ page }) => {
+  test("every route is complete and navigable with the module blocked", async ({
+    page,
+  }) => {
     await page.route("**/main-*.js", (route) => route.abort());
+
+    for (const path of ROUTES) {
+      await page.goto(path);
+
+      // Complete: the argument, the structure it stands on, and the mark that
+      // signs it are all in the HTML the server sent.
+      await expect(page.locator("h1"), path).toBeVisible();
+      await expect(page.locator(".lattice-base"), path).toBeVisible();
+      await expect(page.locator(".board-edge"), path).toBeVisible();
+      await expect(page.locator(".tooth"), path).toHaveCount(1);
+
+      // Nothing is left in a state only a script could resolve — no element
+      // parked at zero opacity waiting for a reveal that will never come.
+      const parked = await page.evaluate(() => {
+        const hidden: string[] = [];
+        for (const el of document.querySelectorAll<HTMLElement>("main *")) {
+          const style = getComputedStyle(el);
+          if (
+            parseFloat(style.opacity) === 0 &&
+            (el.textContent ?? "").trim().length > 0
+          ) {
+            hidden.push(el.tagName + "." + (el.getAttribute("class") ?? ""));
+          }
+        }
+        return hidden;
+      });
+      expect(parked, path).toEqual([]);
+    }
+
+    // Navigable: the site is still a site. Follow a link and arrive.
+    await page.goto("/");
+    await page.locator(".index-link").first().click();
+    await expect(page).toHaveURL(/\/work\/[a-z-]+\/$/);
+    await expect(page.locator("h1")).toBeVisible();
+  });
+
+  test("the impression is decoration to the layout and a name to a reader", async ({
+    page,
+  }) => {
     await page.goto("/");
 
-    // Nothing about the composition depends on the script.
-    await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator(".margin-note")).toContainText("400+");
-    await expect(page.locator(".lattice-base")).toBeVisible();
-    expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+    // It is a picture of a name, not a control: labelled, not focusable, and
+    // it does not swallow a click meant for what is under it.
+    const seal = page.locator("svg.seal");
+    await expect(seal).toHaveCount(1);
+    await expect(seal).toHaveAttribute("role", "img");
+    expect((await seal.getAttribute("aria-label")) ?? "").toContain("박상현");
+    expect(await seal.getAttribute("focusable")).toBe("false");
+    expect(
+      await seal.evaluate((el) => getComputedStyle(el).pointerEvents),
+    ).toBe("none");
+
+    // A stamp may break a layout. It may never break a sentence. The first
+    // version of .record-seal was pulled up over the record's caption and hid
+    // the word "renewed" — the same defect class as a flex gap standing in for
+    // a space, arrived at from a new direction. The seal is rotated, so the
+    // box measured here is larger than the mark, which makes this strict.
+    for (const path of ["/", "/about/", "/work/inherited-mental-model/"]) {
+      for (const width of [390, 768, 1280, 1440, 1920]) {
+        await page.setViewportSize({ width, height: 900 });
+        await page.goto(path);
+
+        const collisions = await page.evaluate(() => {
+          const mark = document.querySelector("svg.seal");
+          if (!mark) return ["no seal"];
+          const box = mark.getBoundingClientRect();
+          const hits: string[] = [];
+          const walker = document.createTreeWalker(
+            document.body,
+            NodeFilter.SHOW_TEXT,
+          );
+          for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+            if (!(node.textContent ?? "").trim()) continue;
+            // The carved name lives inside the block and is meant to.
+            if (mark.contains(node)) continue;
+            const range = document.createRange();
+            range.selectNodeContents(node);
+            for (const rect of range.getClientRects()) {
+              if (rect.width === 0 || rect.height === 0) continue;
+              const overlaps =
+                rect.left < box.right &&
+                rect.right > box.left &&
+                rect.top < box.bottom &&
+                rect.bottom > box.top;
+              if (overlaps) hits.push(node.textContent!.trim().slice(0, 40));
+            }
+          }
+          return hits;
+        });
+
+        expect(collisions, `${path} at ${width}`).toEqual([]);
+      }
+    }
   });
 });
 
@@ -231,6 +370,51 @@ test.describe("light and dark", () => {
       // on paper, so the two themes carry different alphas for the same 1.09.
       expect(opacity, scheme).toBeGreaterThan(0.02);
       expect(opacity, scheme).toBeLessThanOrEqual(0.12);
+    }
+  });
+
+  test("the board is bounded, and the ground's tooth can only raise contrast", async ({
+    page,
+  }) => {
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto("/");
+
+      const read = (selector: string, prop: string) =>
+        page.evaluate(
+          ([sel, name]) =>
+            getComputedStyle(document.querySelector(sel)!)[
+              name as "opacity"
+            ] as string,
+          [selector, prop] as const,
+        );
+
+      // What makes nineteen cells read as a board rather than as graph paper
+      // is that the field ends. The edge has to be clearly stronger than the
+      // field and clearly weaker than a rule the layout is using — the
+      // prototype that raised the *field* to this strength produced graph
+      // paper, which is what the note in board.css predicted.
+      const field = parseFloat(await read(".lattice-base", "opacity"));
+      const edge = parseFloat(await read(".board-edge", "opacity"));
+      expect(edge, scheme).toBeGreaterThan(field * 2);
+      expect(edge, scheme).toBeLessThanOrEqual(0.5);
+
+      // The tooth is white speckle on paper and black speckle on the
+      // near-black, so on either ground it moves the ground *away* from the
+      // ink. That one-directional rule is the whole reason a texture is safe
+      // under a 4.89 accent, and it lives in a single `invert()` — so the
+      // filter is the thing worth asserting. Every contrast test on this site
+      // reads computed colours, and a texture is not a computed colour.
+      const filter = await read(".tooth", "filter");
+      if (scheme === "dark") {
+        expect(filter).toContain("invert");
+      } else {
+        expect(filter).toBe("none");
+      }
+
+      const tooth = parseFloat(await read(".tooth", "opacity"));
+      expect(tooth, scheme).toBeGreaterThan(0);
+      expect(tooth, scheme).toBeLessThanOrEqual(0.6);
     }
   });
 });

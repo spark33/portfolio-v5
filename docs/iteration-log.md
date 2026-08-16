@@ -1,9 +1,12 @@
 # Iteration log
 
-Ten critique passes against [`docs/iteration-brief.md`](iteration-brief.md). Each
+Ten critique passes against [`docs/iteration-brief.md`](iteration-brief.md),
+then one creativity pass with a different brief and a different method. Each
+critique
 pass: build, screenshot every page at 1440 / 768 / 390 in both themes, look at
 the screenshots, name the single largest gap, fix that one gap, run the whole
-Playwright suite.
+Playwright suite. The creativity pass is written up at the end and worked the
+other way round — three prototypes first, then a choice, then a build.
 
 Baseline screenshots are in `shots-before/`, the current set in `shots/`. Both
 are gitignored — they are 66 PNGs a pass, and the log is the record.
@@ -402,3 +405,240 @@ verified failing against the build before their fix.
 - **`docs/design-inspiration.md` was left alone.** It documents MCP server
   setup, not a design direction, so it is not stale in the way the two deleted
   files were.
+
+---
+
+# Creativity pass B
+
+A different brief: the site scored well on Usability and Content, defensibly on
+Design, and badly on Creativity. Ten passes of restraint had produced something
+with no moment anyone would remember, and typography was carrying the entire
+visual load. The instruction was to give the type *less* to carry and find the
+idea somewhere else — in the site's own material, not in a trend — and the JS
+budget was lifted to pay for it.
+
+Method: three throwaway prototypes, screenshots of each at 1440, 390 and 300px
+in both themes, a written choice, then a proper build. The prototypes and the
+verdict on each are in [`prototypes/`](../prototypes/).
+
+## What the 300px frame decided
+
+`scripts/thumb.mjs` was written first, because the argument that the site is
+"defensible on Design" collapses the moment you look at what a juror actually
+sees first: a card about 300px wide, before they open anything. At 300px the
+site was a grey rectangle with grey type in it. Every direction was judged
+there as well as at 1440.
+
+## Reference check
+
+`www.awwwards.com` was reachable. Six current Sites of the Day were pulled as
+full submission screenshots from the `og:image` of `/sites/<slug>` —
+**mosbys-files**, **no-art**, **izanami**, **hearst-exhibit-2026**,
+**hiroto-sato**, **revelatio-studio** — chosen because none of them is
+type-led, which was the question.
+
+**Mosby's Files** was the useful one, and it is the closest thing to this site
+in the set: an archive, text-first, no photography. Its second system is a
+stack of coloured folder tabs that also does the navigation. Two things it
+settles. A second system is usually **an object metaphor rendered as flat
+structural shapes**, and it usually **carries navigation as well as identity**,
+which is what stops it being wallpaper. And its tabs pass the "would this look
+the same for another client" test only because a filing tab is what an archive
+*is* — the same shapes on a bakery would be decoration.
+
+**No Art** was the second useful one: monochrome, restrained, and it gets an
+enormous amount of identity out of visible grain, a page-as-a-card on a darker
+field, and corner registration marks. Almost none of it costs anything. That
+is the register this site can actually reach.
+
+The other four are photographic or 3D and suggested nothing here. Recording
+them because looking and finding nothing is a result.
+
+## The three prototypes
+
+**P1 — 착점, "the played point".** The page is standing on a board that already
+has stones on it. Argued from the lattice and the nine 화점 nobody can see.
+
+**P2 — 인, "the impression".** A record is not finished until it is stamped, and
+the seal is the moment a person becomes official to a system that was not built
+for them. Argued from two claims `src/tokens.css` already makes in writing and
+had never made good on in pixels: that the accent is 인주, and that the ground
+is archival board.
+
+**P3 — 집, "territory".** The index is not a list; three constraints had already
+divided the board, so draw the division and let the ground commit to a colour.
+Argued from the `Decision` type, which cannot be written without a cost.
+
+## The choice, and what the other two did better
+
+**P2, and it was not close on the test that matters.**
+
+The brief's own question is whether a thing would look the same for a different
+client. P3 is the strongest thumbnail of the three by a wide margin — four flat
+fields, unmissable at 300px — and it is the only one that fails that question
+outright. Stacked full-bleed colour bands would look identical for a law firm or
+a record label; the connection to 집 lives in the caption and nowhere in the
+pixels. Two smaller faults confirm it. The cinnabar band is the third constraint
+for no reason anyone could state, which breaks the rule that the accent is
+load-bearing. And committing the ground to near-black makes the light theme the
+odd one out on a site whose two themes are deliberately equal citizens.
+
+P1 did one thing better than either of the others, and it is in the build: it
+found that **what makes a lattice read as a board is the edge, not the line
+weight.** Raising the field alpha to 0.30 produced graph paper — exactly what
+the note in `src/board.css` predicts in writing, so the note was right and
+running the experiment was how to find that out. A board ends; graph paper runs
+off the sheet. P1 also lost on its own central idea: its stones sit on real
+intersections, but *which* intersections is arbitrary, and to anyone who plays
+the position is nonsense. The audience most likely to recognise the reference is
+the audience most likely to see that it is fabricated, which is the same defect
+as inventing a metric. They also landed on top of the display type at 1440.
+
+P2 wins because the impression is the only object in the three that could not be
+lifted onto somebody else's portfolio, and because it is the only one whose
+central claim the codebase had already written down and never delivered.
+
+## What was built
+
+**The impression.** [`lib/seal.ts`](../lib/seal.ts) draws a 백문방인 — an
+authored irregular edge, a displacement filter so the block bites unevenly, a
+second noise field thresholded into the patches where the paste ran thin, and
+박상현 carved out of the ink. Not seal script: his own name, set in the
+Pretendard the site already carries, so nothing here is a fabricated artefact.
+
+The rule is one sentence: **the seal stamps the page's record.** Home and about
+stamp the four figures, a case study stamps its outcome, the share card stamps
+the claim. Artifact pages and the blog have none, because documentation is not a
+claim about the world, and a mark on every page would be a logo. It is the one
+element allowed to ignore the board — rotated 2.4°, hanging 3.5rem into the
+column gap the board puts between the argument and the evidence.
+
+At type size it is the same object with the name gone: the current-page marker
+in the navigation is that broken edge as a clip path, shared through one custom
+property. Largest and smallest use, one object.
+
+The share card was regenerated to carry it, from the same module rather than a
+second drawing of the same idea — the card is the image most readers meet first
+and a copy would have been free to drift.
+
+**The edge.** P1's finding, at a measured value rather than P1's. `--board-frame`
+is 0.34 light and 0.14 dark, both measuring 1.35 against the ground, a shade
+over three times the field's 1.09. Only the two vertical sides: the board runs
+down the page for as long as the page is long, so a bottom line would be
+claiming an end that is not there.
+
+**The tooth.** One 140px tile of fractal noise, inlined, no request and no blend
+mode — deliberately, since `mix-blend-mode` on a viewport-sized layer pulls
+everything under it into a compositing group and this site is judged on a
+mid-range Android. It only ever lightens: the colour matrix discards the noise's
+colour, paints white, and derives alpha from luminance, and dark inverts the
+same tile.
+
+That direction is the whole reason it is safe, and it came out of arithmetic
+rather than taste. The first version was mid-grey speckle in both directions.
+Cinnabar text on paper is 4.89, which is 0.39 of headroom, and a dark speck
+under the `COST` label took the worst-case pixel to **4.29** — a WCAG failure
+that nothing in this suite would have caught, because every contrast test reads
+computed colours and a texture is not a computed colour. A one-directional tooth
+removes the question instead of answering it.
+
+## The JS budget was not spent
+
+The brief lifted the clause restricting JavaScript to two jobs and offered a
+real budget for the second system. Total JavaScript is still 1.5 KB.
+
+The second system turned out to be a material and a mark. Both are paint: a
+texture belongs in a stylesheet and an impression belongs in an SVG. Every
+scripted idea considered — stamping the seal on arrival, filling the board as
+the reader scrolls, revealing the lattice on interaction — was a behaviour
+invented to justify an allowance rather than something the argument needed, and
+two of them were within one step of the entrance animation the same brief bans.
+Not spending it is the answer, stated rather than left as an omission.
+
+## The two tests, rewritten
+
+Both encoded the old rule as `document.getAnimations().length === 0`
+unconditionally. That was simultaneously too strong and too weak: it banned any
+future motion outright, including motion that declines itself correctly, and it
+passes for a page with no animation whether or not the preference is honoured —
+so on the exact case it was written for, it passed for the wrong reason.
+"Identical", likewise, is not a property anyone needs; "complete and usable" is,
+and it is testable.
+
+- `the lattice lift is the only motion, and it is optional` →
+  **`nothing on the page moves when the reader has declined motion`**. Walks
+  every element on three routes under `prefers-reduced-motion: reduce` and fails
+  on any running animation, or any transition longer than 20ms — which is what a
+  duration written as a literal instead of through a `--dur` token looks like
+  once the reduced-motion block has collapsed the tokens to 1ms. Verified
+  failing by adding `transition: opacity 400ms linear` to `.seal`.
+
+- `the page is identical when the module never loads` →
+  **`every route is complete and navigable with the module blocked`**. Aborts
+  the module on all eight routes, checks the argument, the board's layers and
+  the ground are in the HTML the server sent, fails on any element parked at
+  `opacity: 0` with text in it, and then clicks an index link and asserts it
+  arrives — because a page that renders and cannot be navigated is not complete.
+
+Two were added:
+
+- **`the impression is decoration to the layout and a name to a reader`** — the
+  seal is `role="img"` with a name, not focusable, and `pointer-events: none`;
+  and its box does not intersect any text rect on three pages at five widths.
+  Verified failing against the first placement, which covered "renewed".
+- **`the board is bounded, and the ground's tooth can only raise contrast`** —
+  the edge is more than twice the field and at most 0.5, and the tooth's
+  `invert()` is present in dark and absent in light. The direction is the
+  property, so the filter is the thing asserted.
+
+## Numbers
+
+Lighthouse, mobile profile, after the build:
+
+| Route | Perf | A11y | Best practices | SEO | CLS | LCP |
+| ----- | ---- | ---- | -------------- | --- | --- | --- |
+| `/` | 100 | 100 | 100 | 100 | 0.002 | 1.5 s |
+| `/work/` | 100 | 100 | 100 | 100 | 0 | 1.5 s |
+| `/work/inherited-mental-model/` | 100 | 100 | 100 | 100 | 0 | 1.5 s |
+| `/about/` | 100 | 100 | 100 | 100 | 0 | 1.5 s |
+| `/logician-ui/` | 100 | 100 | 100 | 100 | 0 | 1.5 s |
+| `/blog/` | 100 | 100 | 100 | 100 | 0 | 1.5 s |
+| `/404.html` | 100 | 100 | 100 | **63** | 0 | 1.5 s |
+
+TBT 0ms throughout. Identical to the baseline: an SVG filter that paints once
+and a tiled data URI cost nothing measurable. The 404's SEO score is 63 because
+Lighthouse marks down any page blocked from indexing, which is the correct
+number for a 404.
+
+**Tests:** 58 passing, from 56. Two rewritten in place, two added, none
+weakened. All four verified failing against the state they were written for.
+
+## What I did not do, and why
+
+- **The thumbnail is better, not solved.** At 300px the site is now a grey
+  rectangle with a red stamp on it rather than a grey rectangle. That is a real
+  gain in recognisability and a specific one — nobody else's card has a 인장 on
+  it — but P3's four flat fields were unambiguously louder, and I traded loudness
+  for a mark that means something. If the verdict comes back that the card is
+  still too quiet, the honest next move is the ground, not more marks.
+- **The work index has no seal.** It is a list, not a record, so the rule
+  excludes it — and it is the second page a juror opens. I think the rule is
+  worth more than the coverage, but I am not certain.
+- **The `COST` field was left as cinnabar text.** The obvious third scale of the
+  impression is a bitten mark on the field the site cares most about, and the
+  cost is already the most emphasised thing in the rail. Two red things saying
+  the same thing is louder than this site's register. Deliberate, and reversible.
+- **The board's `--board-base` is untouched.** The brief asked whether it earns
+  its space. The answer this pass gives is that the *field* was never the
+  problem — the missing edge was — so the calibrated 1.087 stands. The stronger
+  claim, that the board earns its place because the seal has something to ignore,
+  is now true in a way it was not before.
+- **Type was not touched at all.** The brief asked for the type to be given less
+  to carry, and it now carries less because there is something else on the page,
+  not because anything about it changed. Reducing the display scale on top of
+  that would have been two experiments at once.
+- **Still no testing on a real mid-range Android.** Everything here is Chromium
+  at a throttled profile. The tooth is the first thing on this site whose cost is
+  a paint rather than a byte, and a throttled desktop is not the same evidence.
+- **The five `{{?}}` placeholders and the placeholder blog post** are untouched,
+  as instructed.

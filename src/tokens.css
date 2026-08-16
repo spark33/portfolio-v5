@@ -4,9 +4,11 @@
    serif usually sits on, and deliberately not a cool blue-grey — FactChat's
    own palette is blue-grey, and the site must not wear its employer's
    colours. One accent, cinnabar, the colour of the paste in a Korean
-   official seal. It appears in three places on the whole site: the lossy
-   step of the name, the COST field of every decision, and the current page
-   marker. Nowhere else.
+   official seal — and since the creativity pass it is an actual impression
+   rather than a swatch: see lib/seal.ts and src/seal.css. It appears in
+   three places on the whole site, at two sizes: the impression that stamps
+   each page's record, the COST field of every decision, and the current-page
+   marker, which is the impression's own broken edge at 7px. Nowhere else.
 
    Type: Schibsted Grotesk is a metric twin of Pretendard — cap 703 vs 707,
    x-height 527 vs 530, an identical 0.750 x/cap ratio — so Korean and Latin
@@ -105,6 +107,12 @@
      much faster than a dark line gains on paper — so the two themes carry
      different numbers rather than a shared one that suits neither. */
   --board-base: 0.095;
+  /* The board's boundary, not its field. Measured the same way: #8f8e84 at
+     0.34 over paper blends to #cacac3, contrast 1.352 — a shade over three
+     times the field's 1.087, which is what makes nineteen cells read as a
+     board rather than as graph paper, and still under the 1.5 at which a
+     hairline starts reading as a rule the layout is using. */
+  --board-frame: 0.34;
   --board-lift: 0.8;
   --board-reach: 180px;
 
@@ -134,6 +142,11 @@
     --lattice-ink: #c9c7ba;
     /* Half the light alpha, for the same 1.09 against the ground. */
     --board-base: 0.045;
+    /* Not half, this time. The lattice's 0.045 → 0.095 halving holds because
+       both ends sit on the flat part of the curve; at edge strength the dark
+       side gains much faster, and 0.20 would be 1.567 against light's 1.352.
+       0.14 is 1.348. Measured, not derived. */
+    --board-frame: 0.14;
     --board-lift: 0.5;
   }
 }
@@ -152,6 +165,11 @@
   --lattice-ink: #c9c7ba;
   /* Half the light alpha, for the same 1.09 against the ground. */
   --board-base: 0.045;
+  /* Not half, this time. The lattice's 0.045 → 0.095 halving holds because
+     both ends sit on the flat part of the curve; at edge strength the dark
+     side gains much faster, and 0.20 would be 1.567 against light's 1.352.
+     0.14 is 1.348. Measured, not derived. */
+  --board-frame: 0.14;
   --board-lift: 0.5;
 }
 

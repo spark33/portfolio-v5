@@ -1,0 +1,98 @@
+/* The impression.
+ *
+ * Everything about how a seal is *drawn* is in lib/seal.ts. This file only
+ * decides where it lands and how big it is, because the one thing a stamp must
+ * not look like is a component that was placed in a slot.
+ *
+ * It sits slightly off the axis and slightly over the rule beneath the record,
+ * which is the only element on the site allowed to ignore the board. That is
+ * the argument, not a flourish: the lattice is the position you were given and
+ * the seal is the one mark you make on it yourself. A stamp that lined up with
+ * the grid would be a logo.
+ *
+ * The rotation is 2.4deg rather than something rounder because a bounding box
+ * grows by sin(θ)·w when you rotate it, and the seal hangs left into a column
+ * gap that is 1.5 cells wide. At 1440 that gap is 104px and the seal is 202px,
+ * so the rotation adds 8px — the hang plus the growth has to stay inside the
+ * gap or the mark starts covering the narrative, which is a defect and not a
+ * design.
+ *
+ * No transition and no transform origin games: this is one static paint. */
+
+.seal {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  color: var(--seal);
+  /* The block is a picture of a name and never a control. */
+  pointer-events: none;
+}
+
+/* The record's seal — home and about.
+   Placed after the caption, so the reading order is figures, then the sentence
+   that qualifies them, then the mark that certifies both. It is last in the
+   DOM as well as last on the page. */
+.record-seal {
+  width: clamp(6rem, 14vw, 15rem);
+  margin-top: var(--space-5);
+  rotate: -2.4deg;
+}
+
+/* What it breaks, and what it must not.
+ *
+ * The first version pulled the seal up by a space-5 so it overlapped the
+ * caption, which is what a stamp on a real document does — and it covered the
+ * word "renewed". That is the defect class this repository keeps producing,
+ * arrived at from a new direction: separation, or in this case a whole word,
+ * living somewhere a reader cannot get at it. A stamp may break a *layout*; it
+ * may never break a *sentence*.
+ *
+ * So it breaks the one boundary that has nothing in it. Above 80rem the record
+ * is a column in the margin and the board puts one and a half cells of gap
+ * between the argument and the evidence — 104px at 1440. The seal hangs 3.5rem
+ * (56px) left, into that gap, plus 152·sin(2.4°) = 6px of rotation growth. 62
+ * of 104, with the narrative's own 38rem measure ending 117px before the gap
+ * even starts. It crosses a column boundary of the board and touches no glyph
+ * at any width.
+ *
+ * Below 80rem the record is a band starting at the page's own gutter, where
+ * there is nothing to hang into and hanging left would put the mark through
+ * the viewport edge. It sits to the right instead. This is the whole reason
+ * the offset is not written once at the top of the file. */
+@media (min-width: 80rem) {
+  .record-seal {
+    margin-left: -3.5rem;
+  }
+}
+
+@media (max-width: 79.999rem) {
+  .record-seal {
+    margin-left: auto;
+    margin-right: 0;
+  }
+}
+
+/* A case study's seal — on the outcome, in the rail the decisions already use
+   for their field names. The outcome is what the constraint and the three
+   costs bought, so it is that page's record. */
+.outcome-seal {
+  width: clamp(4rem, 5.5vw, 6.5rem);
+  rotate: 3.1deg;
+  margin-top: var(--space-4);
+}
+
+/* The accent at type size.
+   A twelve-point trace of the same edge lib/seal.ts authors as a path — the
+   carved name is gone at 7px, and the broken edge is the only part of a seal
+   that survives that far down. Held as a custom property rather than a class
+   so the two places that need it (the current-page marker in base.css and
+   anything later) share one shape instead of two drifting copies. */
+:root {
+  --seal-edge: polygon(
+    4% 5%, 38% 2%, 66% 6%, 97% 3%,
+    95% 34%, 98% 63%, 96% 96%,
+    62% 98%, 34% 94%, 3% 97%,
+    6% 66%, 2% 37%
+  );
+}
