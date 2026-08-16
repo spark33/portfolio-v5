@@ -244,3 +244,37 @@ its own heading rather than in the rail. Caught by measuring the rendered grid,
 not by reading the CSS — the rule looked correct in isolation.
 
 Files: `content/site.ts`, `lib/pages.ts`, `src/case.css`. Tests: 54 passed.
+
+## Pass 9 — the site's only ask was its quietest element
+
+**Gap.** The home page ends with `sanghyun.park@mindlogic.ai` set at body size,
+about 150px above the same address repeated at 18px in the footer. A site whose
+entire job is to make an employer write to this person said so twice, at the
+same weight, at the bottom, in the smallest voice on the page.
+
+**Fix.** An `EMAIL` label and the address at `clamp(1.35rem, 4vw, 3rem)` —
+after the claim, the largest thing on the page, and the last thing before the
+footer. The footer's copy now reads as the chrome it is rather than as a second
+attempt at the same sentence.
+
+The 1.35rem floor is not a round number for a reason: 26 characters of address
+at 1.75rem measures 364px inside a 350px column at 390 wide, and this codebase
+has form on silently losing the end of a string exactly that way.
+
+**A defect found while doing it, and it is the third of its kind.** The first
+version of the rule set the address at 48px in the stylesheet and 19.5px on the
+page, because `.story > p` is a class plus an element and outweighs a bare
+`.contact`. Pass 1 was a measure on a container beating the element; pass 5 was
+the same in `.prose`; this is the same shape again. Noted in the CSS at the
+site of each.
+
+**Also checked this pass, since motion is scored and none of it has been
+touched:** every `transition` on the site uses `--ease-resolve` or
+`--ease-exit`, both authored cubic-béziers. There is no `ease`, `ease-in-out`
+or `linear` anywhere in `src/`. With motion off the site is unchanged apart
+from the pointer lift, which is `display: none` under reduced motion.
+
+**Lighthouse** (due this pass). All seven routes, mobile profile: 100 / 100 /
+100 / 100. LCP 1.5s, TBT 0ms, CLS 0.002.
+
+Files: `lib/pages.ts`, `src/home.css`. Tests: 54 passed.

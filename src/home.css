@@ -131,9 +131,34 @@ a.chip:hover {
   padding-block: var(--space-7) var(--space-6);
 }
 
-.contact {
-  margin-top: var(--space-5);
-  font-size: 1.21875rem;
+/* The ask, at the size of an ask. It was set at body size directly above the
+   same address repeated in the footer. The floor is 1.35rem rather than
+   something rounder because 26 characters of address at 1.75rem measures
+   364px inside a 350px column at 390 wide, and the site has form on losing
+   the end of a string that way. */
+.story > .contact-label {
+  margin-top: var(--space-7);
+  font-size: var(--size-label);
+  line-height: var(--leading-tight);
+}
+
+/* `.story > .contact`, not `.contact`: `.story > p` is a class plus an element
+   and outweighs a bare class, so the first version of this rule set the
+   address at 48px in the stylesheet and 19.5px on the page. Third time a
+   measure or a size has been overridden by a rule written for the container
+   rather than the element — see pass 1 and pass 5. */
+.story > .contact {
+  margin-top: var(--space-3);
+  max-width: none;
+  font-size: clamp(1.35rem, 4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.contact a {
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.14em;
 }
 
 /* The measure is on the h1 itself, via `.display-measure` — see base.css.

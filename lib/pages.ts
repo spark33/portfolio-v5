@@ -118,9 +118,19 @@ ${strip(record, "record-figures")}
       </section>`;
 }
 
+/**
+ * The end of the page is the ask.
+ *
+ * The address used to be set at body size, two hundred pixels above the same
+ * address repeated in the footer — the one thing the site exists to produce
+ * was its quietest element, and it was said twice at the same weight. It is
+ * now the largest thing after the claim, and the footer's copy reads as the
+ * chrome it is rather than as a second attempt.
+ */
 function closingMarkup() {
   return `      <section class="page story story-closing">
 ${paragraphs(closing)}
+        <p class="label contact-label">Email</p>
         <p class="contact"><a href="mailto:${esc(person.email)}">${esc(person.email)}</a></p>
       </section>`;
 }
