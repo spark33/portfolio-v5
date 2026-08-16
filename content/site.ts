@@ -367,6 +367,13 @@ export const caseStudies: CaseStudy[] = [
   },
 ];
 
+/** A documented section: a heading, prose, and optionally one table. */
+export type DocSection = {
+  heading: string;
+  body: string[];
+  table?: { head: string[]; rows: string[][] };
+};
+
 export type Artifact = {
   slug: string;
   constraint: string;
@@ -374,7 +381,7 @@ export type Artifact = {
   summary: string;
   meta: Meta[];
   lede: string;
-  sections: { heading: string; body: string[]; table?: { head: string[]; rows: string[][] } }[];
+  sections: DocSection[];
 };
 
 export const artifacts: Artifact[] = [
@@ -525,6 +532,12 @@ export const artifacts: Artifact[] = [
   },
 ];
 
+/**
+ * The about page uses the same section shape as an artifact, so it renders
+ * through the same code and inherits the same rail. As three unlabelled
+ * paragraphs it had exactly one heading on the whole page — the name — and its
+ * body copy was indented past a rail that never held anything.
+ */
 export const about = {
   lede:
     "I am head of product and delivery at Mindlogic in Seoul. I own " +
@@ -532,21 +545,36 @@ export const about = {
     "across an eight-person engineering team, lead a three-person frontend " +
     "chapter directly, and sit in a product organisation of about twenty. I " +
     "still ship production code.",
-  body: [
-    "The work is one product, FactChat, over three years — a multi-LLM " +
-      "assistant deployed in more than 400 Korean universities and public " +
-      "institutions, with 180,000+ registered users and a peak of around 53,000 " +
-      "weekly actives during term.",
-    "None of it was greenfield. The scope of a public tender is set before a " +
-      "designer is involved. The accessibility standard is statutory. The " +
-      "procurement cycle decides the release calendar. The company's position " +
-      "is fast-follower, so the interface conventions were set by a competitor " +
-      "with more users than we will have. Those are the conditions, and they " +
-      "are not unusual — they are what most product work looks like once the " +
-      "company is old enough to have customers.",
-    "What I am looking for is somewhere with real constraints and the honesty " +
-      "to say so. I read and write English fluently and work daily in both " +
-      "English and Korean.",
+  sections: [
+    {
+      heading: "One product, three years",
+      body: [
+        "The work is one product, FactChat — a multi-LLM assistant deployed in " +
+          "more than 400 Korean universities and public institutions, with " +
+          "180,000+ registered users and a peak of around 53,000 weekly actives " +
+          "during term.",
+      ],
+    },
+    {
+      heading: "None of it was greenfield",
+      body: [
+        "The scope of a public tender is set before a designer is involved. The " +
+          "accessibility standard is statutory. The procurement cycle decides " +
+          "the release calendar. The company's position is fast-follower, so the " +
+          "interface conventions were set by a competitor with more users than " +
+          "we will have.",
+        "Those are the conditions, and they are not unusual — they are what most " +
+          "product work looks like once the company is old enough to have " +
+          "customers.",
+      ],
+    },
+    {
+      heading: "What I am looking for",
+      body: [
+        "Somewhere with real constraints and the honesty to say so. I read and " +
+          "write English fluently and work daily in both English and Korean.",
+      ],
+    },
   ],
 };
 

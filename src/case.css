@@ -181,12 +181,25 @@
   row-gap: var(--space-4);
 }
 
-.doc-section > h2 {
-  grid-column: rail / tail;
+/* The number earns the rail, exactly as `Decision 01` does. The heading used
+   to span `rail / tail` while its own paragraphs started 160px to the right,
+   so it hung off the left of the text it introduced and the rail carried
+   nothing at all. */
+.doc-n {
+  grid-column: rail;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.45em;
+}
+
+.doc-heading {
+  grid-column: body;
   margin-bottom: var(--space-2);
 }
 
-.doc-section > p,
+/* `:not(.doc-n)` because the rail marker is also a `p`, and this rule is
+   later and more specific — without it the number landed in the body column
+   above the heading rather than in the rail beside it. */
+.doc-section > p:not(.doc-n),
 .doc-section > .spec {
   grid-column: body;
 }
@@ -242,8 +255,9 @@
   .field > dd,
   .outcome > .label,
   .outcome-list,
-  .doc-section > h2,
-  .doc-section > p,
+  .doc-n,
+  .doc-heading,
+  .doc-section > p:not(.doc-n),
   .doc-section > .spec {
     grid-column: 1;
   }
@@ -254,6 +268,7 @@
 
   .field > dt,
   .decision-n,
+  .doc-n,
   .outcome > .label {
     padding-top: 0;
   }

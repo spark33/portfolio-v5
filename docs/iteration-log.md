@@ -214,3 +214,33 @@ hierarchy.
 
 Files: `content/site.ts`, `lib/pages.ts`, `src/home.css`,
 `tests/quality-floor.spec.ts`. Tests: 54 passed.
+
+## Pass 8 — a 160px indent past a column that never held anything
+
+**Gap.** The case-study rail earns its 10rem: it carries `DECISION 01`,
+`CONTEXT`, `REJECTED`, `COST`. On artifact and about pages it was empty for the
+whole page, and the body copy was indented past it anyway. Worse on artifacts:
+the `h2` spanned `rail / tail` while its own paragraphs started 160px to the
+right, so every section heading hung off the left of the text it was heading.
+The about page had nothing in the rail and no headings at all — one `h1`, the
+name, and then three unlabelled paragraphs indented into the middle of the
+page.
+
+**Fix.** A section number in the rail, and the heading moved into the body
+column with the paragraphs it introduces — the same shape as `Decision 01`
+above a decision title. The rail now carries something on every page that
+indents past it.
+
+The about page was restructured to the same `sections` shape as an artifact and
+now renders through the same function, so it gets the same rail. Its three
+paragraphs became three sections: "One product, three years", "None of it was
+greenfield", "What I am looking for". Reading only the headings on `/about/`
+used to give the name and nothing else.
+
+**A defect found while doing it.** The rail marker is a `<p class="label
+doc-n">`, and `.doc-section > p { grid-column: body }` sits later in the file
+and is more specific, so the number rendered in the body column stacked above
+its own heading rather than in the rail. Caught by measuring the rendered grid,
+not by reading the CSS — the rule looked correct in isolation.
+
+Files: `content/site.ts`, `lib/pages.ts`, `src/case.css`. Tests: 54 passed.

@@ -22,6 +22,7 @@ import {
   thesis,
   type Artifact,
   type CaseStudy,
+  type DocSection,
   type Meta,
 } from "../content/site.ts";
 import { copy, esc, personJsonLd, shell } from "./shell.ts";
@@ -360,38 +361,52 @@ ${nextLink(index)}
 
 /* -- artifact (documentation, not narrative) ----------------------------- */
 
-export function renderArtifact(item: Artifact) {
-  const sections = item.sections
+/**
+ * A run of documented sections, sharing the case study's rail.
+ *
+ * The number goes in the rail and the heading sits in the body column with
+ * the paragraphs it introduces. The heading used to span `rail / tail` while
+ * its own text started 160px to the right, so every section heading hung off
+ * the left of the thing it was heading and the rail carried nothing at all —
+ * a 160px indent past an empty column.
+ */
+function docSections(sections: DocSection[]) {
+  return sections
     .map((section, i) => {
       const body = section.body
-        .map((p) => `          <p>${copy(p)}</p>`)
+        .map((p) => `            <p>${copy(p)}</p>`)
         .join("\n");
 
       const table = section.table
-        ? `          <table class="spec">
-            <thead><tr>${section.table.head.map((h) => `<th class="label">${copy(h)}</th>`).join("")}</tr></thead>
-            <tbody>${section.table.rows
-              .map(
-                (row) =>
-                  `<tr>${row
-                    .map((cell, c) =>
-                      c === 0
-                        ? `<th scope="row">${copy(cell)}</th>`
-                        : `<td>${copy(cell)}</td>`,
-                    )
-                    .join("")}</tr>`,
-              )
-              .join("")}</tbody>
-          </table>`
+        ? `            <table class="spec">
+              <thead><tr>${section.table.head.map((h) => `<th class="label">${copy(h)}</th>`).join("")}</tr></thead>
+              <tbody>${section.table.rows
+                .map(
+                  (row) =>
+                    `<tr>${row
+                      .map((cell, c) =>
+                        c === 0
+                          ? `<th scope="row">${copy(cell)}</th>`
+                          : `<td>${copy(cell)}</td>`,
+                      )
+                      .join("")}</tr>`,
+                )
+                .join("")}</tbody>
+            </table>`
         : "";
 
-      return `        <section class="doc-section" aria-labelledby="s${i}">
-          <h2 class="display-s" id="s${i}">${copy(section.heading)}</h2>
+      return `          <section class="doc-section" aria-labelledby="s${i}">
+            <p class="label doc-n">${n(i)}</p>
+            <h2 class="display-s doc-heading" id="s${i}">${copy(section.heading)}</h2>
 ${body}
 ${table}
-        </section>`;
+          </section>`;
     })
     .join("\n");
+}
+
+export function renderArtifact(item: Artifact) {
+  const sections = docSections(item.sections);
 
   return shell({
     title: `${item.title} — ${person.nameEn}`,
@@ -432,9 +447,7 @@ ${sections}
 /* -- about --------------------------------------------------------------- */
 
 export function renderAbout() {
-  const body = about.body
-    .map((p) => `          <p>${copy(p)}</p>`)
-    .join("\n");
+  const sections = docSections(about.sections);
 
   return shell({
     title: `About — ${person.nameEn}`,
@@ -456,9 +469,7 @@ ${margin(record)}
 
           <div class="case-body">
             <p class="lede case-lede">${copy(about.lede)}</p>
-            <section class="doc-section">
-${body}
-            </section>
+${sections}
           </div>
         </div>
       </article>
