@@ -1153,3 +1153,44 @@ positioned element gets it back before shipping rather than after.
 - **The tooth and the edge were not re-litigated.** The review was about the
   mark. If the answer is that the whole pass was a mistake, that is a different
   instruction and I would rather be told than assume it.
+
+## And the hero was a product brief
+
+Same review, second half: *the hero talks too much about FactChat. I'm me, not
+FactChat.*
+
+The fault was grammatical before it was editorial. Reading only the subject of
+each sentence in the opening:
+
+> Mindlogic … one product … the scope … the accessibility standard … the release
+> calendar … our users
+
+Six openings, none of them him. The second paragraph spent two full clauses
+describing a product before its author appeared — "For three years I have worked
+on one product: FactChat, a multi-LLM assistant used across Korean universities
+and public bodies" — and only then reached the sentence that says what he
+actually does. A reader skimming clause openings, which is what a reader with
+three minutes does, got a product brief.
+
+Rewritten so he is the subject of every sentence:
+
+> Nothing on my CV … I own architecture, scope … I lead three frontend engineers
+> … I have never started anything here from a blank page … Every decision I can
+> show you …
+
+FactChat is named once, as the object of a sentence he is the subject of, and
+the constraints that took a paragraph of their own are now a single list inside
+a sentence that opens and closes on him — which also hands off better to the
+claim underneath it, since "I have never started anything here from a blank
+page" is the premise that heading needs.
+
+Nothing was invented and nothing was dropped: every fact in the old three
+paragraphs is in the new three. The reasoning is in `content/site.ts` above
+`narrative`, where the next person to edit it will find it.
+
+**Not changed, and worth a decision from someone else.** The record beside the
+narrative is still four FactChat numbers under a FactChat caption. They are the
+only hard evidence on the page and a product person's evidence is necessarily
+their product's, so I have left them exactly as they are rather than reframing
+someone's metrics to sound more personal — that is a judgement about his own
+record, not a design call.
