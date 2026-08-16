@@ -47,6 +47,24 @@ ${cells}
       </dl>`;
 }
 
+/**
+ * The same fields, in the margin rather than under the title.
+ *
+ * As a horizontal band under the header it read once and then left the right
+ * five cells of the board empty for the whole length of the page. In the
+ * margin it holds that column and stays beside the argument it qualifies —
+ * the same move the home page makes with the record, so it is the site's
+ * grammar rather than a fix applied here.
+ *
+ * It is first in the DOM, and placed right by the grid, so the reading order
+ * is unchanged: the fields still precede the lede.
+ */
+function margin(items: Meta[]) {
+  return `          <aside class="case-margin" aria-label="Project details">
+${strip(items, "margin-strip")}
+          </aside>`;
+}
+
 /* -- home ---------------------------------------------------------------- */
 
 /**
@@ -322,21 +340,24 @@ export function renderCaseStudy(study: CaseStudy, index: number) {
           </p>
           <h1 class="display-l case-constraint">${copy(study.constraint)}</h1>
           <p class="display-m case-title">${copy(study.title)}</p>
-${strip(study.meta, "case-meta")}
         </header>
 
-        <div class="case-body">
-          <p class="lede case-lede">${copy(study.lede)}</p>
+        <div class="case-layout">
+${margin(study.meta)}
+
+          <div class="case-body">
+            <p class="lede case-lede">${copy(study.lede)}</p>
 
 ${decisions(study)}
 
-          <section class="outcome" aria-labelledby="outcome">
-            <p class="label">Outcome</p>
-            <h2 class="visually-hidden" id="outcome">Outcome</h2>
-            <ul class="outcome-list">
+            <section class="outcome" aria-labelledby="outcome">
+              <p class="label">Outcome</p>
+              <h2 class="visually-hidden" id="outcome">Outcome</h2>
+              <ul class="outcome-list">
 ${outcome}
-            </ul>
-          </section>
+              </ul>
+            </section>
+          </div>
         </div>
       </article>
 
@@ -402,11 +423,14 @@ ${table}
           </p>
           <h1 class="display-m case-constraint">${copy(item.constraint)}</h1>
           <p class="display-l case-title doc-title">${copy(item.title)}</p>
-${strip(item.meta, "case-meta")}
         </header>
-        <div class="case-body">
-          <p class="lede case-lede">${copy(item.lede)}</p>
+        <div class="case-layout">
+${margin(item.meta)}
+
+          <div class="case-body">
+            <p class="lede case-lede">${copy(item.lede)}</p>
 ${sections}
+          </div>
         </div>
       </article>
     </main>`,
@@ -434,13 +458,16 @@ export function renderAbout() {
             <span class="case-counter micro">${esc(person.location)}</span>
           </p>
           <h1 class="display-l case-constraint">${copy(person.nameEn)} &mdash; <span lang="ko">${esc(person.nameKo)}</span></h1>
-${strip(record, "case-meta")}
         </header>
-        <div class="case-body">
-          <p class="lede case-lede">${copy(about.lede)}</p>
-          <section class="doc-section">
+        <div class="case-layout">
+${margin(record)}
+
+          <div class="case-body">
+            <p class="lede case-lede">${copy(about.lede)}</p>
+            <section class="doc-section">
 ${body}
-          </section>
+            </section>
+          </div>
         </div>
       </article>
     </main>`,

@@ -29,3 +29,29 @@ wrapper's measure was never the binding constraint — which is exactly why this
 survived: it was invisible at the two widths that get checked first.
 
 Files: `src/home.css`. Tests: 50 passed.
+
+## Pass 2 — the right five cells of every case page were empty for the whole scroll
+
+**Gap.** At 1440 a case study used about 65% of the content width. The header
+went full bleed, then the rail plus the 42rem measure left roughly 420px of
+nothing down the right-hand side for six thousand pixels of scroll. That is
+dead space, not negative space — negative space has an edge doing work on
+something.
+
+**Fix.** The meta fields — role, team, period, surface — moved out of the
+horizontal band under the title and into that column, stacked and sticky, so
+they stay beside the argument they qualify instead of reading once and
+vanishing. It is the move the home page already makes with the record, so the
+site gains a repeated grammar rather than a local patch.
+
+The split is taken off the board rather than guessed: thirteen cells of spine,
+one of gutter, five of margin. Thirteen cells at 1440 is 897px, which is
+exactly the 10rem rail plus the 2rem gap plus the 42rem measure — the spine now
+fills its cells rather than floating inside them.
+
+Applies to case studies, artifact pages and about, which share the renderer.
+Below 80rem — the same breakpoint the board and the home spread already use —
+it collapses back to a band above the lede, and the DOM order (fields, then
+lede) is unchanged in both, so reading order never depended on the grid.
+
+Files: `lib/pages.ts`, `src/case.css`. Tests: 50 passed.
