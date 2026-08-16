@@ -47,6 +47,37 @@
   opacity: var(--board-base);
 }
 
+/* The edge.
+ *
+ * The first prototype of this pass raised the line alpha to 0.30 to make the
+ * lattice read as a board and got graph paper instead — which is exactly what the
+ * note above predicts, so the note was right and the experiment was the way to
+ * find out. What separates a board from graph paper is not line weight, it is
+ * that a board *ends*: nineteen lines and then a boundary. Graph paper runs
+ * off the sheet.
+ *
+ * So the edge is drawn and the field is left alone. It is a separate layer
+ * rather than a border on .lattice-base, because the base is held at
+ * --board-base and the edge needs its own value: measured the same way, line
+ * #8f8e84 at 0.34 over paper #e9e9e3 blends to #cacac3, contrast 1.352 — a
+ * shade over three times the field's 1.087, and still under the 1.5 at which a
+ * hairline starts reading as a rule the layout is using.
+ *
+ * Dark is 0.14, not the 0.20 that halving would give. The lattice's 0.045 /
+ * 0.095 pair holds because both ends sit on the flat part of the curve; this
+ * far up it, 0.20 measures 1.567 against light's 1.352. Both numbers are in
+ * tokens.css with their working.
+ *
+ * Only the two vertical edges. The board is nineteen cells wide and continues
+ * down the page for as long as the page is long, so a horizontal edge would be
+ * claiming a bottom line that is not there. */
+.board-edge {
+  position: absolute;
+  inset: 0 var(--gutter);
+  border-inline: 1px solid var(--lattice-ink);
+  opacity: var(--board-frame);
+}
+
 .lattice-lift {
   opacity: var(--board-lift);
   -webkit-mask-image: radial-gradient(
@@ -98,5 +129,72 @@
 
 .show-board .hoshi {
   opacity: 0.8;
+}
+
+.show-board .board-edge {
+  opacity: 0.85;
+}
+
+/* Tooth.
+ *
+ * src/tokens.css has claimed since the first commit that this ground is
+ * "archival board rather than the cream a display serif usually sits on", and
+ * until now that was a sentence in a comment: the ground was a flat fill, and a
+ * flat fill has no material at all. One tile of fractal noise, 140px, inlined
+ * as a data URI — no raster asset, no request, and it tiles seamlessly because
+ * feTurbulence is asked to (`stitchTiles`).
+ *
+ * **It only ever lightens.** The colour matrix throws the noise's own RGB away,
+ * paints flat white, and moves the noise's luminance into the alpha channel —
+ * so what lands on the page is white speckle at varying transparency, and in
+ * dark a single `invert()` makes it black speckle. That is not a stylistic
+ * choice, it is the whole reason this is safe to ship:
+ *
+ *   - On paper, raising the ground can only raise contrast against ink,
+ *     ink-secondary and the seal. All three go up, never down.
+ *   - On the near-black, lowering it does the same.
+ *
+ * The first version was mid-grey noise in both directions, and the arithmetic
+ * killed it: cinnabar text on paper is 4.89, which is 0.39 of headroom, and a
+ * dark speck under the COST label took the worst-case pixel to 4.29 — a
+ * failure that no test on this site would have caught, because every contrast
+ * test reads computed colours and a texture is not a computed colour. A
+ * one-directional tooth removes the question instead of answering it.
+ *
+ * Mean lift on paper is about 2 levels of 255 and the peak is 5, so the palette
+ * in the README still describes what is on the screen.
+ *
+ * There is no blend mode anywhere, which is also deliberate: mix-blend-mode on
+ * an element covering the viewport pulls everything under it into a compositing
+ * group, and this site is judged on a mid-range Android.
+ *
+ * Fixed, so it is one layer the size of the viewport that never repaints,
+ * rather than a layer the height of a six-thousand-pixel case study. */
+.tooth {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.5;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='t' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' seed='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.34 0.34 0.34 0 -0.14'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23t)'/%3E%3C/svg%3E");
+}
+
+/* Same tile, other direction. `invert` leaves alpha alone, so this is the
+   identical speckle painted black — and on a near-black ground that is again
+   a lift in contrast rather than a cut.
+   0.30 rather than light's 0.50 because the two grounds are not symmetrical:
+   a four-level move is 1.7% of paper and 18% of the near-black, and at 0.42
+   the measured ground read #12120f against the #161613 the README documents.
+   0.30 keeps the palette honest and the tooth still measures. */
+:root[data-theme="dark"] .tooth {
+  filter: invert(1);
+  opacity: 0.3;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .tooth {
+    filter: invert(1);
+    opacity: 0.3;
+  }
 }
 

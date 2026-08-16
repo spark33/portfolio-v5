@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P4 — 모아쓰기 variants</title>
+    <link rel="stylesheet" href="/proto/proto-base.css" />
+    <style>
+      /* P4 — 모아쓰기, "gathering writing".
+       *
+       * Thesis: every Hangul syllable is composed inside a square nobody chose.
+       * 가 has two jamo and 뷁 has four; both occupy exactly the same frame, and
+       * the design is entirely in how the parts are arranged to fit. That is not
+       * a metaphor for this site's argument, it is the argument, and it happens
+       * to be the writing system the author's own name is written in.
+       *
+       * The 종성 — the final consonant — is the part that arrives last and has
+       * to fit into height the vowel has already taken. It is drawn in the
+       * accent, because it is the one element in the system that is purely a
+       * constraint problem.
+       *
+       * Register is deliberately not heritage: no ink, no wear, no seal script.
+       * This is a type designer's 원도 — the frame, the division, and the glyph
+       * obeying both. Contemporary Korean identity work (Pyeongchang 2018,
+       * Ordinary People) lives in this register; carved-stone seals do not. */
+
+      body { padding: 0 0 6rem; }
+      h2.v { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--ink-secondary); font-weight: 500;
+        padding-top: 3rem; }
+      .row { display: flex; align-items: flex-end; gap: 1.5rem; padding-top: 1rem; }
+      .row .big { width: 150px; }
+      .row .mid { width: 74px; }
+      .row .sm { width: 34px; }
+      .note { font-size: 0.9rem; color: var(--ink-secondary); max-width: 46rem; padding-top: 0.6rem; }
+      .mark { display: flex; gap: 0; }
+      .mark svg { display: block; width: 100%; height: auto; }
+      .glyph-ink { fill: var(--ink); }
+      .glyph-out { fill: var(--paper); }
+      .frame { stroke: var(--ink); fill: none; vector-effect: non-scaling-stroke; }
+      .frame-faint { stroke: var(--rule); fill: none; vector-effect: non-scaling-stroke; }
+      .frame-seal { stroke: var(--seal); fill: none; vector-effect: non-scaling-stroke; }
+      .field { fill: var(--seal); }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <p class="label" style="padding-top:3rem">P4 — 모아쓰기</p>
+      <h1 style="font-size:2rem;letter-spacing:-0.03em;max-width:30ch;padding-top:0.5rem">
+        The frame is given. The composition is not.
+      </h1>
+      <p class="note">
+        Four ways to draw the same idea. Each block is one syllable of 박상현
+        with its composition frame: the vertical rule divides 초성 from 중성, the
+        horizontal rule divides both from 종성. Rendered at 150 / 74 / 34px —
+        the last is the size on a 300px card.
+      </p>
+
+      <h2 class="v">V1 — frame in hairline, 종성 as a field, glyph reversed out of it</h2>
+      <div class="row">
+        <div class="mark big"  data-mark="v1"></div>
+        <div class="mark mid"  data-mark="v1"></div>
+        <div class="mark sm"   data-mark="v1"></div>
+      </div>
+
+      <h2 class="v">V2 — frame and division only, in the accent</h2>
+      <div class="row">
+        <div class="mark big"  data-mark="v2"></div>
+        <div class="mark mid"  data-mark="v2"></div>
+        <div class="mark sm"   data-mark="v2"></div>
+      </div>
+
+      <h2 class="v">V3 — no frame, the 종성 field alone</h2>
+      <div class="row">
+        <div class="mark big"  data-mark="v3"></div>
+        <div class="mark mid"  data-mark="v3"></div>
+        <div class="mark sm"   data-mark="v3"></div>
+      </div>
+
+      <h2 class="v">V4 — the block on the board's own lattice, 3 × 3 cells a syllable</h2>
+      <div class="row">
+        <div class="mark big"  data-mark="v4"></div>
+        <div class="mark mid"  data-mark="v4"></div>
+        <div class="mark sm"   data-mark="v4"></div>
+      </div>
+    </div>
+
+    <script type="module">
+      // 박 / 상 / 현. All three are 초성 + vertical 중성 + 종성, which is the
+      // point rather than a limitation: the frame does not change.
+      const SYLLABLES = ["박", "상", "현"];
+
+      // Measured against Pretendard 600 rather than guessed — see the console
+      // read-out below, which prints the glyph box this was fitted to.
+      const JONG = 63;   // where 종성 starts, in a 100-unit block
+      const CHO = 61;    // where 초성 ends and the vertical vowel begins
+
+      function block(kind, ch, i) {
+        const id = `${kind}-${i}`;
+        const glyph = (cls) =>
+          `<text x="50" y="52" text-anchor="middle" dominant-baseline="central"
+             font-family="Pretendard, sans-serif" font-weight="600" font-size="86"
+             class="${cls}">${ch}</text>`;
+
+        if (kind === "v1") {
+          return `<svg viewBox="0 0 100 100">
+            <defs>
+              <clipPath id="top-${id}"><rect x="0" y="0" width="100" height="${JONG}"/></clipPath>
+              <clipPath id="bot-${id}"><rect x="0" y="${JONG}" width="100" height="${100 - JONG}"/></clipPath>
+            </defs>
+            <rect x="0" y="${JONG}" width="100" height="${100 - JONG}" class="field"/>
+            <g clip-path="url(#top-${id})">${glyph("glyph-ink")}</g>
+            <g clip-path="url(#bot-${id})">${glyph("glyph-out")}</g>
+            <path d="M0 ${JONG} H100 M${CHO} 0 V${JONG}" class="frame-faint"/>
+            <rect x="0.5" y="0.5" width="99" height="99" class="frame"/>
+          </svg>`;
+        }
+        if (kind === "v2") {
+          return `<svg viewBox="0 0 100 100">
+            ${glyph("glyph-ink")}
+            <path d="M0 ${JONG} H100 M${CHO} 0 V${JONG}" class="frame-seal"/>
+            <rect x="0.5" y="0.5" width="99" height="99" class="frame-faint"/>
+          </svg>`;
+        }
+        if (kind === "v3") {
+          return `<svg viewBox="0 0 100 100">
+            <defs>
+              <clipPath id="top-${id}"><rect x="0" y="0" width="100" height="${JONG}"/></clipPath>
+              <clipPath id="bot-${id}"><rect x="0" y="${JONG}" width="100" height="${100 - JONG}"/></clipPath>
+            </defs>
+            <rect x="0" y="${JONG}" width="100" height="${100 - JONG}" class="field"/>
+            <g clip-path="url(#top-${id})">${glyph("glyph-ink")}</g>
+            <g clip-path="url(#bot-${id})">${glyph("glyph-out")}</g>
+          </svg>`;
+        }
+        // v4 — the syllable block is three board cells square, so the name is
+        // composed on the same lattice the page is.
+        return `<svg viewBox="0 0 99 99">
+          <defs>
+            <clipPath id="top-${id}"><rect x="0" y="0" width="99" height="66"/></clipPath>
+            <clipPath id="bot-${id}"><rect x="0" y="66" width="99" height="33"/></clipPath>
+          </defs>
+          <rect x="0" y="66" width="99" height="33" class="field"/>
+          <g clip-path="url(#top-${id})"><text x="49.5" y="51" text-anchor="middle"
+            dominant-baseline="central" font-family="Pretendard, sans-serif"
+            font-weight="600" font-size="86" class="glyph-ink">${ch}</text></g>
+          <g clip-path="url(#bot-${id})"><text x="49.5" y="51" text-anchor="middle"
+            dominant-baseline="central" font-family="Pretendard, sans-serif"
+            font-weight="600" font-size="86" class="glyph-out">${ch}</text></g>
+          <path d="M33 0 V99 M66 0 V99 M0 33 H99 M0 66 H99" class="frame-faint"/>
+          <rect x="0.5" y="0.5" width="98" height="98" class="frame"/>
+        </svg>`;
+      }
+
+      await document.fonts.ready;
+      for (const host of document.querySelectorAll("[data-mark]")) {
+        const kind = host.dataset.mark;
+        host.innerHTML = SYLLABLES.map((ch, i) => block(kind, ch, `${kind}-${i}-${Math.random().toString(36).slice(2, 7)}`)).join("");
+      }
+
+      // Print the real glyph box, so JONG and CHO can be fitted rather than guessed.
+      const probe = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+      probe.setAttribute("viewBox", "0 0 100 100");
+      probe.style.cssText = "position:absolute;width:100px;height:100px;opacity:0";
+      probe.innerHTML = `<text x="50" y="52" text-anchor="middle" dominant-baseline="central"
+        font-family="Pretendard, sans-serif" font-weight="600" font-size="86">박</text>`;
+      document.body.append(probe);
+      console.log("glyph box", JSON.stringify(probe.querySelector("text").getBBox()));
+    </script>
+  </body>
+</html>

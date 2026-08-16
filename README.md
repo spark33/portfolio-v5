@@ -9,6 +9,7 @@ npm run build      # typecheck + production build to dist/
 npm run preview    # serve the production build
 npm test           # Playwright (starts its own preview server)
 npm run shots      # screenshots at 1440 / 768 / 390 into shots/
+npm run thumb      # one page at 1440 / 390 / 300 — the card a juror sees
 npm run storybook  # component workbench on http://localhost:6006
 ```
 
@@ -54,10 +55,65 @@ survive from it, in [`lib/board.ts`](lib/board.ts) and
 - **Star points (화점).** A real board's only marks are nine reference dots, at
   lines 4, 10 and 16. They are the sole thing that surfaces — a baduk player
   reads them immediately, everyone else reads registration marks.
+- **The edge.** Nineteen lines and then a boundary. This is what separates a
+  board from graph paper, and it is the one thing the lattice was missing:
+  raising the *field* to board strength produces graph paper, which is what
+  `src/board.css` predicted in writing and a prototype confirmed. The edge is
+  its own token at three times the field's contrast, and only the two vertical
+  sides — the board continues down the page for as long as the page is long,
+  so a bottom line would be claiming an end that is not there.
 
-The lattice and the hoshi are CSS backgrounds, so they need no SVG, no script
-and no knowledge of page height. `?board` on any URL draws them, as a URL
-rather than a hover so it works for a keyboard, a screenshot and a phone.
+The lattice, the edge and the hoshi are CSS backgrounds and borders, so they
+need no SVG, no script and no knowledge of page height. `?board` on any URL
+draws them, as a URL rather than a hover so it works for a keyboard, a
+screenshot and a phone.
+
+## Two marks that were tried and cut
+
+The site has no logo, no monogram and no emblem, and that is now a decision
+rather than an omission. Two passes tried to give it one and both were removed.
+
+**A 인장 impression** — a cinnabar block with a broken edge, skipped paste and
+박상현 carved out of it. Two faults. The object was inherited rather than
+argued: `src/tokens.css` had mentioned seal paste in a comment and the brief
+listed it as a lead, so it arrived pre-approved and was never tested against the
+person it represents. And the register was wrong — worn stone says *this is old
+and authentic*, and the subject ships a multi-LLM product in Seoul in 2026.
+
+**A 모아쓰기 syllable block** — 박상현 as three abutting frames with the accent
+filling below a measured 62% division, the boundary a Hangul final consonant
+sits under. Better argued: Hangul gathers its letters into a fixed square, which
+is this site's thesis in the writing system the name is written in, and the
+geometry came from a pixel scan of Pretendard rather than from taste.
+
+It was cut anyway, and the reason is the one that matters: **on a site about a
+person, an emblem of that person's name is the one thing on the page doing no
+work.** Everything else here is evidence — a constraint, a decision, a cost, a
+number. A mark is an assertion of identity, and identity was never the thing in
+doubt. It also took the largest position in the evidence column, so the loudest
+element on the first screen was the element carrying the least.
+
+What is left is what was always enough: the accent in three places, the board,
+and the type. The reasoning survives in `docs/iteration-log.md` and the
+prototypes in `prototypes/`, because a direction that was built, looked at and
+rejected is worth more written down than deleted.
+
+## Material
+
+The ground is board, and until the creativity pass that was also only a
+sentence. `.tooth` in `src/board.css` is one 140px tile of fractal noise inlined
+as a data URI — no raster asset, no request, no blend mode.
+
+**It only ever lightens.** The colour matrix discards the noise's colour, paints
+flat white and derives alpha from luminance; dark inverts the same tile to
+black. So on paper the ground moves up and away from the ink, and on the
+near-black it moves down — contrast can only rise. That is not a preference. An
+earlier version was mid-grey speckle in both directions, and cinnabar text on
+paper is 4.89, which is 0.39 of headroom: a dark speck under the COST label took
+the worst-case pixel to 4.29. No test on this site would have caught it, because
+every contrast test reads computed colours and a texture is not a computed
+colour. `the board is bounded, and the ground's tooth can only raise contrast`
+asserts the `invert()` instead, because the direction is the property.
 
 The influence solver that placed the old hero's blocks has been **deleted**
 along with the CSS that styled them — eight classes appearing in zero rendered
@@ -77,14 +133,16 @@ resolve.
 | `plugins/site.ts`       | Writes every page to its URL path and registers MPA inputs   |
 | `src/tokens.css`        | Palette, type scale, tracking, spacing, easing               |
 | `src/base.css`          | Reset, type primitives, strips, focus, page frame            |
-| `src/board.css`         | The board's visible surface — lattice and star points         |
+| `src/board.css`         | The board's visible surface — lattice, edge, hoshi and tooth   |
 | `src/board.ts`          | The only client script: two pointer coordinates               |
 | `src/home.css`          | Thesis and position strip                                     |
 | `src/case.css`          | Case studies, artifacts and about — the decision spine, and the name ledger |
 | `src/index-rows.css`    | Constraint-first index rows                                  |
 | `scripts/fetch-fonts.py`| Regenerates `public/fonts/` and `src/fonts.css`              |
 | `scripts/screenshots.mjs`| Every page at three widths in both themes, into `shots/`     |
+| `scripts/thumb.mjs`     | One page at 1440, 390 and 300px — the card a juror sees first  |
 | `proto/`                | Throwaway typography prototypes, kept as the record of a pass. Not part of the build |
+| `prototypes/`           | Throwaway second-system prototypes, and the verdict on each    |
 
 Pages are generated to their URL path at the repo root (`work/…/index.html`)
 so Vite emits them at that path in `dist/`. Those directories are gitignored;
@@ -161,10 +219,11 @@ site must not wear its employer's colours.
 | `--ink-secondary`  | `#5c5c55` | Labels, meta                               |
 | `--seal`           | `#b4372b` | The accent — 인주, official seal cinnabar   |
 
-The accent appears in exactly three places: the lossy step of the name, the
-`COST` field of every decision, and the current-page marker. A seal is a person
-made official to a system that was not built for them, which is the thesis, so
-it is load-bearing rather than decorative.
+The accent appears in exactly three places: the `COST` field of every decision,
+the current-page marker, and the share card. A cost is what a decision took from
+you, which is the thesis, so the accent is load-bearing rather than decorative —
+and it is a 7px square, because two attempts at growing it into a mark both
+ended up saying less than the field it already marks.
 
 Dark is not an inversion. The ground keeps the same warm-neutral hue, dropped
 to a near-black, and the ink and accent are chosen to hit the same contrast
@@ -182,6 +241,11 @@ ground can carry. The lattice needs roughly **half** the alpha in dark
 (0.045 vs 0.095) for the same 1.09 contrast, because a light line gains on a
 dark ground far faster than a dark line gains on paper.
 
+That halving is not a law, it is a local approximation, and the board's edge is
+where it breaks: both lattice values sit on the flat part of the curve, but at
+edge strength 0.20 in dark measures 1.567 against light's 1.352. The edge
+carries 0.34 / 0.14. Both numbers are in `src/tokens.css` with their working.
+
 The system preference decides by default; an explicit choice overrides it in
 both directions and persists. It is applied by an inline script in the head
 before the first paint, so there is no flash. The toggle holds its space from
@@ -189,6 +253,29 @@ the first paint too — using the `hidden` attribute instead cost 0.047 CLS when
 revealing it reflowed the masthead.
 
 ## Motion
+
+`docs/iteration-brief.md` originally allowed JavaScript exactly two jobs. The
+creativity pass lifted that clause and offered a real script budget for a second
+visual system; **the budget was not spent**, and total JavaScript is still
+1.5 KB. The second system turned out to be a material and a mark, and both are
+paint, and a texture belongs in a stylesheet.
+Spending the allowance would have meant inventing a behaviour to justify it.
+
+What did change is what the tests assert. Two of them encoded the old rule as
+`document.getAnimations().length === 0` unconditionally, which was both too
+strong — it banned any future motion, including motion that declines itself
+correctly — and too weak, since a page with no animation returns zero whether or
+not the preference is honoured. They now assert the properties that actually
+matter, and are named after them:
+
+- `nothing on the page moves when the reader has declined motion` walks every
+  element under `prefers-reduced-motion: reduce` and fails on any running
+  animation or any transition longer than 20ms, which is what a duration
+  written as a literal instead of through a `--dur` token looks like.
+- `every route is complete and navigable with the module blocked` visits all
+  eight routes with the module aborted, checks the argument and the board are
+  in the HTML the server sent, fails on any element parked at `opacity: 0` with
+  text in it, and then follows a link to prove the site is still a site.
 
 There is one piece of motion on the site: a brighter copy of the lattice,
 masked to a disc that follows the pointer. It does not conjure a grid out of
@@ -269,6 +356,16 @@ One more arrived with the name resolution:
   The same test asserts the strip is *not* on the home page, because where it
   sits was itself a decision.
 
+And one is recorded rather than enforced, because the thing it guarded is gone:
+
+- **A mark over a word.** A seal, placed the way a stamp lands on a real
+  document — pulled up over the record's caption, where it covered "renewed".
+  The test written for it outlived the seal being replaced, and was removed with
+  the second mark, because nothing on the site is positioned to overlap anything
+  any more and the assertion would run against an empty set. Noted at its site
+  in the spec so the next absolutely positioned element gets it back before it
+  ships rather than after.
+
 The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and
 valid schema.org on every page, the constraint preceding the title, a `COST`
@@ -277,7 +374,8 @@ outranks the constraints beneath it, reduced-motion and repeat-visit skips, the
 module-fails failsafe, a visible focus ring on every tabbable element, a theme
 toggle that keeps a control's proportions, a 404 that is `noindex` and offers
 every route, a share card that is served and only advertised with an absolute
-URL, WCAG AA contrast, and CLS under 0.05.
+URL, WCAG AA contrast, CLS under 0.05, the board's edge stronger than its field
+and weaker than a rule, and the tooth one-directional in both themes.
 
 Lighthouse, mobile profile (Moto G-class, 4× CPU throttle, slow 4G):
 
@@ -324,8 +422,13 @@ the hard rules, and the two defect classes this codebase keeps producing. Paste
 it as the opening instruction of a fresh session.
 
 [`docs/iteration-log.md`](docs/iteration-log.md) is the record of the ten
-passes that produced the current composition: the gap each one named, what
-changed, and what was left undone.
+critique passes that produced the composition, and of the creativity pass that
+gave it a second visual system: the gap each one named, what changed, and what
+was left undone.
+
+[`prototypes/`](prototypes/) holds the three throwaway directions that pass
+weighed against each other, with the verdict on each. They are not wired into
+the site and are kept because the reasoning is worth more than the code.
 
 `docs/concept.md` and `docs/references.md` described an
 editorial-with-interactive-figures direction with a WebGL hero, which this site

@@ -202,9 +202,14 @@ export function shell({
     : `    <!-- No og:image: SITE_ORIGIN is unset, and a share card needs an absolute URL. -->`;
 
   // The board is decoration to a screen reader and structure to everyone else.
-  const board = `    <div class="board" aria-hidden="true">
+  // `.tooth` is the ground's material and is deliberately outside `.board`:
+  // the board is nineteen cells inside the gutter, and the surface it is drawn
+  // on runs to the edges of the window.
+  const board = `    <div class="tooth" aria-hidden="true"></div>
+    <div class="board" aria-hidden="true">
       <div class="lattice lattice-base"></div>
       <div class="lattice lattice-lift"></div>
+      <div class="board-edge"></div>
       <div class="hoshi"></div>
     </div>`;
 

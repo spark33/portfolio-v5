@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P4b — 모아쓰기 refined</title>
+    <link rel="stylesheet" href="/proto/proto-base.css" />
+    <style>
+      /* P4b — the same idea, drawn to measured geometry rather than guessed.
+       *
+       * A pixel scan of Pretendard 600 says two things worth building on.
+       *
+       * 1. 바 occupies rows 210–487; 박 occupies 201–465. Adding a third jamo
+       *    makes the block *shorter*, not taller — the 초성 and 중성 compress
+       *    upward to make room for the 종성. The frame never grows. That is the
+       *    site's argument in one measurement.
+       *
+       * 2. There is a real gap in the ink at 60.2–64.8% of the glyph's height
+       *    in both 박 and 상 — the boundary the 종성 starts below. 62% is the
+       *    measured division, not a proportion that looked right.
+       */
+
+      body { padding: 0 0 6rem; }
+      h2.v { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em;
+        text-transform: uppercase; color: var(--ink-secondary); font-weight: 500;
+        padding-top: 3.2rem; }
+      .row { display: flex; align-items: flex-end; gap: 2rem; padding-top: 1rem; }
+      .note { font-size: 0.92rem; color: var(--ink-secondary); max-width: 44rem; padding-top: 0.5rem; }
+      .mark { display: flex; }
+      .mark svg { display: block; height: auto; }
+      .b1 svg { width: 150px } .b2 svg { width: 74px } .b3 svg { width: 34px }
+      .glyph-ink { fill: var(--ink) }
+      .glyph-out { fill: var(--paper) }
+      .frame { stroke: var(--ink); fill: none; stroke-width: 1; vector-effect: non-scaling-stroke }
+      .divide { stroke: var(--seal); fill: none; stroke-width: 1.5; vector-effect: non-scaling-stroke }
+      .field { fill: var(--seal) }
+      .zone-cho { fill: var(--ink) }
+      .zone-jung { fill: none; stroke: var(--ink); stroke-width: 1; vector-effect: non-scaling-stroke }
+      .zone-jong { fill: var(--seal) }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <p class="label" style="padding-top:3rem">P4b — 모아쓰기, measured</p>
+      <h1 style="font-size:2rem;letter-spacing:-0.03em;max-width:30ch;padding-top:0.5rem">
+        Adding a letter makes the block smaller.
+      </h1>
+      <p class="note">
+        Three refinements. The frames abut rather than run as one band, so the
+        per-syllable structure reads; the division sits at the measured 62%.
+        150 / 74 / 34px — the last is the size on a 300px card.
+      </p>
+
+      <h2 class="v">R1 — frame in ink, the division in the accent</h2>
+      <div class="row"><div class="mark b1" data-mark="r1"></div><div class="mark b2" data-mark="r1"></div><div class="mark b3" data-mark="r1"></div></div>
+
+      <h2 class="v">R2 — the composition alone, no glyph: 초성 filled, 중성 open, 종성 in the accent</h2>
+      <div class="row"><div class="mark b1" data-mark="r2"></div><div class="mark b2" data-mark="r2"></div><div class="mark b3" data-mark="r2"></div></div>
+
+      <h2 class="v">R3 — the 종성 as a field per syllable, glyph reversed out of it</h2>
+      <div class="row"><div class="mark b1" data-mark="r3"></div><div class="mark b2" data-mark="r3"></div><div class="mark b3" data-mark="r3"></div></div>
+
+      <h2 class="v">R4 — R3, and the frame is the board's cell</h2>
+      <div class="row"><div class="mark b1" data-mark="r4"></div><div class="mark b2" data-mark="r4"></div><div class="mark b3" data-mark="r4"></div></div>
+    </div>
+
+    <script type="module">
+      const SYL = ["박", "상", "현"];
+
+      // Derived from the pixel scan, in em units against the alphabetic baseline:
+      // glyph top -0.7967em, bottom +0.0833em, so the block is 0.88em tall and the
+      // 종성 division at 62% of it lands 0.2511em above the baseline.
+      const FS = 78, H = 0.88 * FS;
+      const TOP = (100 - H) / 2;
+      const BASE = TOP + 0.7967 * FS;
+      const DIV = +(BASE - 0.2511 * FS).toFixed(2);
+      // 바's 초성 | 중성 gap measured at 52.6–70.8% of the width.
+      const CHO = 62;
+
+      const glyph = (ch, cls) =>
+        `<text x="50" y="${BASE}" text-anchor="middle" font-family="Pretendard, sans-serif"
+          font-weight="600" font-size="${FS}" class="${cls}">${ch}</text>`;
+
+      function svg(kind, ch, id) {
+        const clip = `<defs>
+          <clipPath id="t${id}"><rect x="0" y="0" width="100" height="${DIV}"/></clipPath>
+          <clipPath id="b${id}"><rect x="0" y="${DIV}" width="100" height="${100 - DIV}"/></clipPath>
+        </defs>`;
+        const split = (fieldClass) => `${clip}
+          <rect x="0" y="${DIV}" width="100" height="${100 - DIV}" class="${fieldClass}"/>
+          <g clip-path="url(#t${id})">${glyph(ch, "glyph-ink")}</g>
+          <g clip-path="url(#b${id})">${glyph(ch, "glyph-out")}</g>`;
+
+        if (kind === "r1")
+          return `<svg viewBox="0 0 100 100" width="100" height="100">
+            ${glyph(ch, "glyph-ink")}
+            <path d="M0 ${DIV} H100" class="divide"/>
+            <rect x="0.5" y="0.5" width="99" height="99" class="frame"/>
+          </svg>`;
+
+        if (kind === "r2")
+          return `<svg viewBox="0 0 100 100" width="100" height="100">
+            <rect x="0" y="0" width="${CHO}" height="${DIV}" class="zone-cho"/>
+            <rect x="${CHO}" y="0" width="${100 - CHO}" height="${DIV}" class="zone-jung"/>
+            <rect x="0" y="${DIV}" width="100" height="${100 - DIV}" class="zone-jong"/>
+            <rect x="0.5" y="0.5" width="99" height="99" class="frame"/>
+          </svg>`;
+
+        if (kind === "r3")
+          return `<svg viewBox="0 0 100 100" width="100" height="100">
+            ${split("field")}
+            <rect x="0.5" y="0.5" width="99" height="99" class="frame"/>
+          </svg>`;
+
+        return `<svg viewBox="0 0 100 100" width="100" height="100">
+          ${split("field")}
+          <path d="M0 ${DIV} H100" stroke="none"/>
+          <rect x="0.5" y="0.5" width="99" height="99" class="frame"/>
+          <path d="M${CHO} 0 V${DIV}" class="frame" opacity="0.35"/>
+        </svg>`;
+      }
+
+      await document.fonts.ready;
+      let n = 0;
+      for (const host of document.querySelectorAll("[data-mark]")) {
+        host.innerHTML = SYL.map((ch) => svg(host.dataset.mark, ch, n++)).join("");
+      }
+    </script>
+  </body>
+</html>

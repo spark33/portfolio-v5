@@ -124,7 +124,7 @@ const html = `<!doctype html>
       }
       .label { font-family: "IBM Plex Mono", monospace; font-size: 12px;
         letter-spacing: 0.14em; text-transform: uppercase; color: ${INK_2}; }
-      /* The one accent, in the one place: the seal. */
+      /* The one accent, in the one place, at the size it is on the site. */
       .seal {
         position: absolute;
         right: ${CELL}px;

@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P2 — Impression</title>
+    <link rel="stylesheet" href="/proto/proto-base.css" />
+    <style>
+      /* P2 — 인, "the impression".
+       *
+       * Thesis: this site is a record, and in Korea a record is not finished
+       * until it is stamped. The seal is the moment a person becomes official
+       * to a system that was not built for them — which is the site's entire
+       * argument — so stop rendering it as a 0.4em square and let it actually
+       * stamp.
+       *
+       * Material it argues from: src/tokens.css already says the accent is
+       * "인주, official seal cinnabar" and already says the ground is
+       * "archival board rather than the cream a display serif usually sits
+       * on". Neither claim is currently made good on. This makes both real:
+       * the ground gets tooth, the accent gets an impression — irregular
+       * edge, uneven ink, characters bitten out of the block — and both are
+       * printing behaviour rather than graphic decoration. */
+
+      /* Tooth. A ground that claims to be board should not be a flat fill.
+         One fractal-noise tile, no raster asset, at an opacity low enough
+         that it is a surface rather than a texture. */
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        z-index: 0;
+        opacity: 0.42;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='t'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23t)' opacity='0.35'/%3E%3C/svg%3E");
+      }
+
+      @media (prefers-color-scheme: dark) {
+        body::before { opacity: 0.3; mix-blend-mode: screen; }
+      }
+
+      /* The impression.
+         白文方印 — a solid block with the characters bitten out of it, which
+         is the form that survives being 40px wide. The edge is an authored
+         path rather than a square, and the whole thing runs through a
+         displacement so the edge breaks and the ink skips the way paste on
+         board actually behaves. */
+      .seal {
+        display: block;
+        width: clamp(6rem, 11vw, 11rem);
+        aspect-ratio: 1;
+        color: var(--seal);
+        filter: drop-shadow(0 0 0.4px currentColor);
+      }
+
+      .seal-inline {
+        display: inline-block;
+        width: 1.05em;
+        vertical-align: -0.16em;
+        margin-inline: 0.1em 0.06em;
+      }
+
+      .claim-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: var(--space-6);
+        align-items: start;
+      }
+
+      /* Printed rules, not CSS borders: a hairline with a little variation
+         along its length, so the page reads as pressed rather than drawn. */
+      .rule {
+        height: 1px;
+        border: 0;
+        background:
+          repeating-linear-gradient(
+            to right,
+            var(--rule) 0 7px,
+            color-mix(in srgb, var(--rule) 58%, transparent) 7px 11px
+          );
+      }
+
+      .rec div, .index li { border-color: transparent; }
+      .rec, .rec div, .index li {
+        border-image: repeating-linear-gradient(
+          to right,
+          var(--rule) 0 7px,
+          color-mix(in srgb, var(--rule) 58%, transparent) 7px 11px
+        ) 1;
+      }
+
+      @media (max-width: 60rem) {
+        .claim-row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- One definition, reused. The characters are 박상현, set in Pretendard
+         and masked out of the block — his own name, not invented seal script. -->
+    <svg width="0" height="0" style="position: absolute" aria-hidden="true">
+      <defs>
+        <filter id="bite" x="-12%" y="-12%" width="124%" height="124%">
+          <feTurbulence type="fractalNoise" baseFrequency="0.62" numOctaves="4" seed="11" result="n" />
+          <feDisplacementMap in="SourceGraphic" in2="n" scale="3.4" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+        <mask id="carve">
+          <path
+            d="M4.5 3.2 L95.2 4.1 L96.4 96.1 L3.6 95.0 Z"
+            fill="#fff"
+          />
+          <text
+            x="50" y="50"
+            text-anchor="middle"
+            dominant-baseline="central"
+            font-family="Pretendard, sans-serif"
+            font-weight="600"
+            font-size="26"
+            letter-spacing="-1"
+            fill="#000"
+          >박상현</text>
+        </mask>
+      </defs>
+    </svg>
+
+    <header class="page head">
+      <a class="wordmark" href="/">Sean Park <span lang="ko">박상현</span></a>
+      <nav class="nav"><a href="#">Work</a><a href="#">Writing</a><a href="#">About</a></nav>
+    </header>
+
+    <main>
+      <section class="page" style="padding-block: var(--space-6) var(--space-7); display: grid; grid-template-columns: calc(var(--u) * 10.5) 1fr; column-gap: calc(var(--u) * 1.5); align-items: start;">
+        <div class="story">
+          <h1 class="greeting">Hi, I'm Sean Park — <span lang="ko">박상현</span> — and I run product and delivery at Mindlogic in Seoul.</h1>
+          <p>You won't have heard of Mindlogic, and that is most of the reason this site exists.</p>
+          <p>For three years I have worked on one product: FactChat — a multi-LLM assistant used across Korean universities and public bodies.</p>
+          <p>None of it was greenfield. The scope was set by a public tender before I was involved. The accessibility standard is statutory.</p>
+        </div>
+        <aside>
+          <dl class="rec">
+            <div><dt class="label">Institutions</dt><dd>400+</dd></div>
+            <div><dt class="label">Re-contract</dt><dd>100%</dd></div>
+            <div><dt class="label">Registered</dt><dd>180k+</dd></div>
+            <div><dt class="label">Peak weekly</dt><dd>53k</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <div class="page">
+        <section class="section">
+          <p class="label" style="margin-bottom: var(--space-5)">Three constraints</p>
+          <div class="claim-row">
+            <h2 class="display-l" style="max-width: 17ch">Designing inside constraints you did not choose is a different skill.</h2>
+            <svg class="seal" viewBox="0 0 100 100" role="img" aria-label="Seal of Sean Park, 박상현">
+              <g filter="url(#bite)">
+                <rect width="100" height="100" fill="currentColor" mask="url(#carve)" />
+              </g>
+            </svg>
+          </div>
+          <p class="lede" style="max-width: 44rem; color: var(--ink-secondary); margin-block: var(--space-5) var(--space-8)">Three were already true before I arrived. Each produced a decision I can defend, including what it cost.</p>
+
+          <ol class="index">
+            <li>
+              <a href="#">
+                <span class="micro" style="padding-top: 0.65em">01</span>
+                <span>
+                  <h3 class="display-m">Users arrived already fluent in someone else's interface.</h3>
+                  <span class="index-title">An inherited mental model</span>
+                </span>
+                <span class="micro" style="text-align: right">2023 — 2026<br />400+ institutions</span>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <span class="micro" style="padding-top: 0.65em">02</span>
+                <span>
+                  <h3 class="display-m">Two features had become one idea in everyone's head but the IA.</h3>
+                  <span class="index-title">Two concepts, one product</span>
+                </span>
+                <span class="micro" style="text-align: right">2025<br />400+ tenants</span>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <span class="micro" style="padding-top: 0.65em">03</span>
+                <span>
+                  <h3 class="display-m">No grade, no credit, no manager. Attendance was the whole problem.</h3>
+                  <span class="index-title">Students with no reason to return</span>
+                </span>
+                <span class="micro" style="text-align: right">2025 — 2026<br />None</span>
+              </a>
+            </li>
+          </ol>
+        </section>
+
+        <section class="section">
+          <p class="label">Email</p>
+          <p class="contact"><a href="mailto:sanghyun.park@mindlogic.ai">sanghyun.park@mindlogic.ai</a></p>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>

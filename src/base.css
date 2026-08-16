@@ -410,7 +410,12 @@ a:hover {
   color: var(--ink);
 }
 
-/* The third and last use of the accent. */
+/* The third and last use of the accent.
+   Two passes tried to make this the small end of a larger mark — a seal's
+   broken edge, then a syllable block's 종성 band. Both marks are gone and this
+   is a square again, which is what it should have stayed: at 7px in a row of
+   11px mono, the job is "you are here", and any shape carrying an argument at
+   that size is carrying it where nobody can read it. */
 .site-nav a[aria-current="page"]::before {
   content: "";
   display: inline-block;

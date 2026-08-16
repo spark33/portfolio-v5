@@ -94,6 +94,21 @@ export const nameCost =
  * would otherwise do.
  *
  * Syntax: [Label|the fact] for a plain chip, [Label|the fact|/href] for a link.
+ *
+ * ## Who the subject of a sentence is
+ *
+ * This is a portfolio for a person, and the person has to be the subject of the
+ * sentences. That sounds obvious and the first version failed it throughout:
+ * the second paragraph spent two clauses describing a product before its author
+ * appeared, and the third ran "the scope was set… the standard is… the calendar
+ * belongs… our users arrived" — four sentences in a row whose subject is
+ * something other than him. A reader skimming the openings of clauses got a
+ * product brief.
+ *
+ * FactChat is the setting, not the topic. It is named once, as the object of a
+ * sentence he is the subject of. Everything a reader needs to know about it is
+ * in the three case studies, where it belongs, and in the record beside this
+ * narrative, where it is evidence rather than description.
  */
 export type Narrative = { kind: "p"; text: string; lead?: boolean };
 
@@ -101,23 +116,30 @@ export const greeting =
   "Hi, I'm Sean Park — 박상현 — and I run product and delivery at Mindlogic in Seoul.";
 
 export const narrative: Narrative[] = [
-  { kind: "p", text: "You won't have heard of [Mindlogic|Seoul, 20 people], and that is most of the reason this site exists.", lead: true },
   {
     kind: "p",
     text:
-      "For three years I have worked on one product: [FactChat|400+ institutions] — " +
-      "a multi-LLM assistant used across Korean universities and public bodies. I own " +
-      "architecture, scope, release timelines and the design decisions across an " +
-      "eight-person engineering team, I lead three frontend engineers directly, and I " +
-      "still ship production code.",
+      "Nothing on my CV is a name you will recognise — not the company, not the " +
+      "product, not the institutions that run it. That is most of the reason this " +
+      "site exists.",
+    lead: true,
   },
   {
     kind: "p",
     text:
-      "None of it was greenfield. The scope was set by a public tender before I was " +
-      "involved. The accessibility standard is statutory. The release calendar belongs " +
-      "to the procurement cycle. And our users arrived already fluent in a competitor's " +
-      "product, so the interface conventions were decided somewhere else too.",
+      "I own architecture, scope, release timelines and the design decisions across " +
+      "an eight-person engineering team at [Mindlogic|Seoul, 20 people]. I lead three " +
+      "frontend engineers directly, and I still ship production code. For three years " +
+      "all of that has gone into one product, [FactChat|400+ institutions].",
+  },
+  {
+    kind: "p",
+    text:
+      "I have never started anything here from a blank page. The scope was set by a " +
+      "public tender before I arrived, the accessibility standard is statutory, the " +
+      "release calendar belongs to the procurement cycle, and the people who use it " +
+      "turned up already fluent in a competitor's product. Every decision I can show " +
+      "you was made inside one of those.",
   },
 ];
 
