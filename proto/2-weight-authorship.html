@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prototype 2 — weight is who decided</title>
+    <link rel="stylesheet" href="/proto/proto.css" />
+    <style>
+      /* Thesis: Schibsted Grotesk carries a continuous 400–900 weight axis and
+         the site asks it for three values. Put the axis to work as meaning
+         rather than emphasis — what was imposed on the work is set light, what
+         was chosen is set heavy — so the colour of a page is a map of the
+         site's argument before a word of it is read. */
+
+      .key {
+        display: flex;
+        gap: 1.5rem;
+        padding-block: 0.75rem;
+        border-top: 1px solid var(--rule);
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .key b { font-weight: 900; color: var(--ink); }
+      .key i { font-weight: 400; font-style: normal; color: var(--ink); }
+
+      .claim {
+        margin-top: 3rem;
+        font-size: clamp(2.5rem, 8.6vw, 9rem);
+        line-height: 0.94;
+        letter-spacing: -0.028em;
+        max-width: 17ch;
+      }
+
+      .given { font-weight: 400; }
+      .chosen { font-weight: 880; }
+
+      .support {
+        margin-top: 1.75rem;
+        max-width: 44rem;
+        font-size: clamp(1.15rem, 1.5vw, 1.5rem);
+        line-height: 1.35;
+        color: var(--ink-secondary);
+      }
+
+      .index {
+        list-style: none;
+        padding: 0;
+        margin-top: 3.5rem;
+        border-top: 1px solid var(--rule);
+      }
+
+      .row {
+        padding-block: 1.4rem;
+        border-bottom: 1px solid var(--rule);
+        display: grid;
+        gap: 0.35rem;
+      }
+
+      .row .constraint {
+        font-size: clamp(1.9rem, 4.5vw, 4rem);
+        line-height: 1.02;
+        letter-spacing: -0.018em;
+        font-weight: 400;
+      }
+
+      .row .title {
+        font-weight: 880;
+        letter-spacing: -0.01em;
+      }
+
+      .fields {
+        margin-top: 3.5rem;
+        display: grid;
+        gap: 1.5rem;
+        max-width: 42rem;
+      }
+
+      .field dt { margin-bottom: 0.4rem; }
+      .field dd { margin: 0; }
+      .field.context dd { font-weight: 400; }
+      .field.rejected dd { font-weight: 500; }
+      .field.cost dd { font-weight: 800; }
+      .field.cost dt { color: var(--seal); }
+
+      @media (min-width: 80rem) {
+        .row {
+          grid-template-columns: calc(var(--u) * 13) 1fr;
+          column-gap: var(--u);
+          align-items: baseline;
+        }
+        .row .title { text-align: right; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page head">
+      <span>Sean Park <span lang="ko">박상현</span></span>
+      <nav><span>Work</span><span>Writing</span><span>About</span></nav>
+    </header>
+
+    <main class="page">
+      <p class="key label"><span>Weight <i>400</i> — given to me</span><span>Weight <b>880</b> — decided by me</span></p>
+
+      <h1 class="claim">
+        <span class="given">Designing inside constraints you did not choose</span>
+        <span class="chosen">is a different skill.</span>
+      </h1>
+
+      <p class="support">Three were already true before I arrived. Each produced a decision I can defend, including what it cost.</p>
+
+      <ol class="index">
+        <li class="row">
+          <span class="constraint">Users arrived already fluent in someone else's interface.</span>
+          <span class="title">An inherited mental model</span>
+        </li>
+        <li class="row">
+          <span class="constraint">Two features had become one idea in everyone's head but the IA.</span>
+          <span class="title">Two concepts, one product</span>
+        </li>
+        <li class="row">
+          <span class="constraint">No grade, no credit, no manager. Attendance was the whole problem.</span>
+          <span class="title">Students with no reason to return</span>
+        </li>
+      </ol>
+
+      <dl class="fields">
+        <div class="field context">
+          <dt class="label">Context</dt>
+          <dd>Prior fluency is an asset until you contradict it. Students landed expecting a thread list, streaming tokens, and a message they could edit and resend.</dd>
+        </div>
+        <div class="field rejected">
+          <dt class="label">Rejected</dt>
+          <dd>A distinct interaction paradigm — a document canvas with the model as a margin collaborator. It demoed well.</dd>
+        </div>
+        <div class="field cost">
+          <dt class="label">Cost</dt>
+          <dd>The product is derivative in a screenshot, which is the format procurement sees it in first.</dd>
+        </div>
+      </dl>
+    </main>
+  </body>
+</html>

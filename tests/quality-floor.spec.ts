@@ -85,6 +85,40 @@ test.describe("readable without JavaScript", () => {
     }
   });
 
+  test("the name resolves in four steps, and every step is real text", async ({
+    page,
+  }) => {
+    // On the about page, and deliberately not on the home page: a name at the
+    // top of the site puts identity in front of a reader who came for the work.
+    await page.goto("/about/");
+    await expect(page.locator(".resolve")).toHaveCount(1);
+
+    const steps = page.locator(".resolve-step");
+    await expect(steps).toHaveCount(4);
+
+    // The jamo are separated by spaces, not by a flex gap or three positioned
+    // spans: decomposition that only exists in CSS is decomposition a screen
+    // reader, reader mode and a text extractor never see. Read the rendered
+    // text, not the markup.
+    const values = await page.locator(".resolve-value").allInnerTexts();
+    expect(values).toEqual([
+      "박상현",
+      "ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ",
+      "PARK SANGHYEON",
+      "Sean Park",
+    ]);
+
+    // The last step says what it cost, in the same field name every decision
+    // on the site uses.
+    await expect(page.locator(".resolve-cost")).toHaveText("Cost");
+    expect((await page.locator(".resolve-text").textContent())!.trim().length)
+      .toBeGreaterThan(30);
+
+    // And it is nowhere near the first thing an employer meets.
+    await page.goto("/");
+    await expect(page.locator(".resolve")).toHaveCount(0);
+  });
+
   test("every case study states its constraint before its title", async ({ page }) => {
     await page.goto("/work/inherited-mental-model/");
 

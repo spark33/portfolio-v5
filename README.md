@@ -26,6 +26,17 @@ study the constraint is the `<h1>`. This is enforced by the content types in
 `constraint`, and a `Decision` cannot be written without a `cost`. A decision
 with no cost is a preference.
 
+**The name is resolved where the question was asked.** `/about/` opens on the
+name in two scripts, so the page has already asked what this person is called;
+under the lede it answers, in four steps — composed, decomposed into jamo,
+transliterated, resolved to "Sean Park" — with a `COST` field on the last,
+because the step that makes the name legible to everyone is the step that loses
+it. It is a ledger on the page's own columns, not a hero. `nameResolution` in
+[`content/site.ts`](content/site.ts) is derived from `person`, so it cannot
+drift from the wordmark, the footer or the structured data. It spent one commit
+as the home page's opening at display scale; `docs/iteration-log.md` has the
+reasoning for taking it back off.
+
 **The page is a person talking.** The home page is first-person prose, and the
 links live inside the sentences rather than in an index. Each chip names an
 entity and the fact that makes it mean something — `FactChat · 400+
@@ -69,10 +80,11 @@ resolve.
 | `src/board.css`         | The board's visible surface — lattice and star points         |
 | `src/board.ts`          | The only client script: two pointer coordinates               |
 | `src/home.css`          | Thesis and position strip                                     |
-| `src/case.css`          | Case studies and artifact pages — the decision spine         |
+| `src/case.css`          | Case studies, artifacts and about — the decision spine, and the name ledger |
 | `src/index-rows.css`    | Constraint-first index rows                                  |
 | `scripts/fetch-fonts.py`| Regenerates `public/fonts/` and `src/fonts.css`              |
 | `scripts/screenshots.mjs`| Every page at three widths in both themes, into `shots/`     |
+| `proto/`                | Throwaway typography prototypes, kept as the record of a pass. Not part of the build |
 
 Pages are generated to their URL path at the repo root (`work/…/index.html`)
 so Vite emits them at that path in `dist/`. Those directories are gitignored;
@@ -112,6 +124,16 @@ stroke within 7% — so Korean and Latin share a baseline with no optical
 fudging. Nothing else tested matched on all four axes. Its provenance suits
 the register too: it was commissioned for Scandinavia's largest news
 publisher, which is institutional rather than startup.
+
+**The weight axis is a scale, not three presets.** Schibsted Grotesk is one
+variable file with a 400–900 axis, and for ten passes the site asked it for
+500, 600 and 700. The name resolution uses it as a continuous scale whose
+direction is the argument: weight *rises* as fidelity *falls*. 박상현 is set at
+the axis floor and "Sean Park" at 860, because the least true form is the one
+the world actually uses. The three values are named in
+[`src/tokens.css`](src/tokens.css) — `--weight-source`, `--weight-carried`,
+`--weight-imposed` — so the scale is a decision with a reason rather than three
+numbers in a rule.
 
 Korean breaks at word boundaries (어절), not between syllable blocks, so
 `:lang(ko)` carries `word-break: keep-all`. The browser default is the
@@ -182,11 +204,19 @@ something changes:
 - **ScrollTrigger** faded in the position strip, which left the site's
   credentials at `opacity: 0` until the reader happened to scroll past. On a
   site with a three-minute budget, scroll only scrolls.
-- **The name sequence.** 박상현 → ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ → PARK SANGHYEON → Sean
-  Park was the previous motif and is gone, along with `src/name-sequence.ts`
-  and the `mountNameSequence` interface a WebGL implementation was to drop
-  into. Nothing hosts that work now; re-adding a mount point is small if it is
-  wanted somewhere.
+- **The name *sequence*.** 박상현 → ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ → PARK SANGHYEON → Sean
+  Park was the previous motif as an *animation*, and that is gone for good,
+  along with `src/name-sequence.ts` and the `mountNameSequence` interface a
+  WebGL implementation was to drop into.
+
+  The four steps themselves came back in creativity pass A, as the strip that
+  opens the home page. That is not a reversal of this decision: what was
+  removed was a scripted transition that revealed content over time, which
+  fails with JS off, fails under reduced motion, and spends a reader's
+  attention on a transition rather than on what is being transformed. The strip
+  is four rows of static HTML, complete before any script runs, identical under
+  reduced motion, and readable by anything that can read text. Nothing about it
+  moves.
 
 **Lenis was never added.** There are no scroll-linked scenes to smooth and it
 degrades keyboard and screen-reader scrolling.
@@ -229,6 +259,15 @@ about its contents:
 - **Korean broken mid-name.** `no Korean run is broken across lines` asserts
   that a space-free `[lang="ko"]` run occupies exactly one line box, at four
   widths across three pages.
+
+One more arrived with the name resolution:
+
+- **Decomposition that only exists in CSS.** `the name resolves in four steps,
+  and every step is real text` reads the rendered text of all four steps on
+  `/about/`, including the spaces between the three jamo groups. Positioned
+  spans or a flex gap would look identical and be invisible to a screen reader.
+  The same test asserts the strip is *not* on the home page, because where it
+  sits was itself a decision.
 
 The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and
