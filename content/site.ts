@@ -85,14 +85,25 @@ export const narrative: Narrative[] = [
       "to the procurement cycle. And our users arrived already fluent in a competitor's " +
       "product, so the interface conventions were decided somewhere else too.",
   },
-  {
-    kind: "p",
-    text:
-      "That is the part I actually want to talk about. Three things were already true " +
-      "when I arrived, and each one produced a decision I can defend — including what " +
-      "it cost.",
-  },
 ];
+
+/**
+ * The claim the site exists to make, as a heading rather than as prose.
+ *
+ * It used to be the fourth narrative paragraph — "That is the part I actually
+ * want to talk about…" — which meant that reading only the headings gave you a
+ * greeting, the words "Three constraints" at 11px, and three constraints, with
+ * nothing anywhere saying why a constraint is the thing being shown. The
+ * argument was in the copy and not in the structure, which is the failure mode
+ * this whole site is arranged against.
+ */
+export const thesis = {
+  label: "Three constraints",
+  claim: "Designing inside constraints you did not choose is a different skill.",
+  support:
+    "Three were already true before I arrived. Each produced a decision I can " +
+    "defend, including what it cost.",
+};
 
 export const closing: Narrative[] = [
   {
@@ -356,6 +367,13 @@ export const caseStudies: CaseStudy[] = [
   },
 ];
 
+/** A documented section: a heading, prose, and optionally one table. */
+export type DocSection = {
+  heading: string;
+  body: string[];
+  table?: { head: string[]; rows: string[][] };
+};
+
 export type Artifact = {
   slug: string;
   constraint: string;
@@ -363,7 +381,7 @@ export type Artifact = {
   summary: string;
   meta: Meta[];
   lede: string;
-  sections: { heading: string; body: string[]; table?: { head: string[]; rows: string[][] } }[];
+  sections: DocSection[];
 };
 
 export const artifacts: Artifact[] = [
@@ -514,6 +532,12 @@ export const artifacts: Artifact[] = [
   },
 ];
 
+/**
+ * The about page uses the same section shape as an artifact, so it renders
+ * through the same code and inherits the same rail. As three unlabelled
+ * paragraphs it had exactly one heading on the whole page — the name — and its
+ * body copy was indented past a rail that never held anything.
+ */
 export const about = {
   lede:
     "I am head of product and delivery at Mindlogic in Seoul. I own " +
@@ -521,22 +545,53 @@ export const about = {
     "across an eight-person engineering team, lead a three-person frontend " +
     "chapter directly, and sit in a product organisation of about twenty. I " +
     "still ship production code.",
-  body: [
-    "The work is one product, FactChat, over three years — a multi-LLM " +
-      "assistant deployed in more than 400 Korean universities and public " +
-      "institutions, with 180,000+ registered users and a peak of around 53,000 " +
-      "weekly actives during term.",
-    "None of it was greenfield. The scope of a public tender is set before a " +
-      "designer is involved. The accessibility standard is statutory. The " +
-      "procurement cycle decides the release calendar. The company's position " +
-      "is fast-follower, so the interface conventions were set by a competitor " +
-      "with more users than we will have. Those are the conditions, and they " +
-      "are not unusual — they are what most product work looks like once the " +
-      "company is old enough to have customers.",
-    "What I am looking for is somewhere with real constraints and the honesty " +
-      "to say so. I read and write English fluently and work daily in both " +
-      "English and Korean.",
+  sections: [
+    {
+      heading: "One product, three years",
+      body: [
+        "The work is one product, FactChat — a multi-LLM assistant deployed in " +
+          "more than 400 Korean universities and public institutions, with " +
+          "180,000+ registered users and a peak of around 53,000 weekly actives " +
+          "during term.",
+      ],
+    },
+    {
+      heading: "None of it was greenfield",
+      body: [
+        "The scope of a public tender is set before a designer is involved. The " +
+          "accessibility standard is statutory. The procurement cycle decides " +
+          "the release calendar. The company's position is fast-follower, so the " +
+          "interface conventions were set by a competitor with more users than " +
+          "we will have.",
+        "Those are the conditions, and they are not unusual — they are what most " +
+          "product work looks like once the company is old enough to have " +
+          "customers.",
+      ],
+    },
+    {
+      heading: "What I am looking for",
+      body: [
+        "Somewhere with real constraints and the honesty to say so. I read and " +
+          "write English fluently and work daily in both English and Korean.",
+      ],
+    },
   ],
+};
+
+/**
+ * The page a reader reaches by mistake.
+ *
+ * Written in the same grammar as everything else: the condition first, the
+ * name of it second. A 404 is the one page whose whole job is to be useful
+ * about a dead end, so it carries the work index rather than an apology.
+ */
+export const notFound = {
+  code: "404",
+  constraint: "Nothing is published at this address.",
+  title: "Not found",
+  lede:
+    "The address may have changed, or it may never have existed. Everything " +
+    "the site holds is on this page.",
 };
 
 /**

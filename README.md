@@ -58,6 +58,7 @@ resolve.
 | Path                    | Purpose                                                     |
 | ----------------------- | ----------------------------------------------------------- |
 | `content/site.ts`       | Every word the site sets, as typed data. The only place to write copy |
+| `scripts/og.mjs`        | Regenerates the committed share card at `public/og.png`       |
 | `content/posts/`        | Blog posts — markdown with frontmatter                       |
 | `lib/shell.ts`          | The one HTML shell: head, nav, footer, structured data       |
 | `lib/pages.ts`          | Page renderers — home, case study, artifact, about           |
@@ -71,10 +72,29 @@ resolve.
 | `src/case.css`          | Case studies and artifact pages — the decision spine         |
 | `src/index-rows.css`    | Constraint-first index rows                                  |
 | `scripts/fetch-fonts.py`| Regenerates `public/fonts/` and `src/fonts.css`              |
+| `scripts/screenshots.mjs`| Every page at three widths in both themes, into `shots/`     |
 
 Pages are generated to their URL path at the repo root (`work/…/index.html`)
 so Vite emits them at that path in `dist/`. Those directories are gitignored;
-`content/` is the source of truth.
+`content/` is the source of truth. `404.html` is generated alongside them and
+is deliberately absent from `routes`, so it never reaches the sitemap.
+
+**The margin note** is the site's one composition primitive above 80rem: a
+column of labelled fields beside the argument they qualify, on a board split of
+thirteen cells of spine, one of gutter, five of margin. The home page's record,
+a case study's role and period, an artifact's status and a post's date all use
+it. Thirteen cells at 1440 is 897px, which is exactly the 10rem rail plus the
+2rem gap plus the 42rem measure a case study sets. Below 80rem it collapses to
+a band above the argument; the note is first in the DOM either way, so reading
+order never depended on the grid.
+
+**A measure belongs on the element that carries the type size.** `ch` and
+`rem` resolve against whatever font-size is in scope, so a measure written for
+18px body copy and inherited by a 124px headline is seven times too narrow.
+That shipped three times — `22ch` on the work-index wrapper, `34rem` on every
+`.prose` child, and `.story > p` outweighing `.contact` — and each time the
+result was display type broken into one-word lines. `.display-measure` in
+`src/base.css` exists to be put on the heading itself.
 
 ## Type
 
@@ -92,6 +112,10 @@ stroke within 7% — so Korean and Latin share a baseline with no optical
 fudging. Nothing else tested matched on all four axes. Its provenance suits
 the register too: it was commissioned for Scandinavia's largest news
 publisher, which is institutional rather than startup.
+
+Korean breaks at word boundaries (어절), not between syllable blocks, so
+`:lang(ko)` carries `word-break: keep-all`. The browser default is the
+opposite and set the home page's `h1` as "박상 / 현".
 
 Pretendard is subset to the Korean the site actually sets, which takes it from
 1.5 MB to 2.1 KB. Adding Korean copy without adding it to `KOREAN` in
@@ -194,12 +218,27 @@ both are now tested as classes rather than patched as instances:
   extraction and screen readers. A test now walks the rendered text of every
   page and fails on welded words.
 
+A third class was added during the critique passes, and it is the same shape
+as the first two — a rule written for a container silently deciding something
+about its contents:
+
+- **Display type in a body-copy measure.** `display headings are not broken
+  into one-word lines` counts characters per line across every `display-*`
+  element at 1440. The two states it was written against measured 5 and 10; a
+  healthy heading measures 18 or more.
+- **Korean broken mid-name.** `no Korean run is broken across lines` asserts
+  that a space-free `[lang="ko"]` run occupies exactly one line box, at four
+  widths across three pages.
+
 The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and
 valid schema.org on every page, the constraint preceding the title, a `COST`
-field on every decision, reduced-motion and repeat-visit skips, the module-fails
-failsafe, a visible focus ring on every tabbable element, WCAG AA contrast, and
-CLS under 0.05.
+field on every decision, the home page's claim carried by a heading that
+outranks the constraints beneath it, reduced-motion and repeat-visit skips, the
+module-fails failsafe, a visible focus ring on every tabbable element, a theme
+toggle that keeps a control's proportions, a 404 that is `noindex` and offers
+every route, a share card that is served and only advertised with an absolute
+URL, WCAG AA contrast, and CLS under 0.05.
 
 Lighthouse, mobile profile (Moto G-class, 4× CPU throttle, slow 4G):
 
@@ -217,10 +256,18 @@ Vercel builds this with no configuration; the generated pages are written at
 build time, and the committed fonts mean the build needs neither Python nor
 network.
 
-Set **`SITE_ORIGIN`** (e.g. `https://seanpark.dev`) to emit `sitemap.xml` and
-have `robots.txt` reference it. Without it — and without Vercel's
-`VERCEL_PROJECT_PRODUCTION_URL` — no sitemap is written at all, because a
-sitemap full of placeholder URLs is worse than none.
+Set **`SITE_ORIGIN`** (e.g. `https://seanpark.dev`) to emit `sitemap.xml`, have
+`robots.txt` reference it, and advertise the share card. Without it — and
+without Vercel's `VERCEL_PROJECT_PRODUCTION_URL` — no sitemap is written and no
+`og:image` is declared. A sitemap full of placeholder URLs is worse than none,
+and a scraper fetching `og:image` has no page to resolve a relative path
+against, so the same rule covers both.
+
+`404.html` is served for unmatched paths with no configuration. `public/og.png`
+is committed and regenerated by `node scripts/og.mjs`, which reads the palette
+from `src/tokens.css` and the copy from `content/site.ts` — the same
+arrangement as the fonts, so the build needs neither a browser nor the
+network. Run it again when the claim, the record or the palette changes.
 
 ## Unknown metrics
 
@@ -237,9 +284,11 @@ for a critique-and-refine session: what the target actually rewards, the method,
 the hard rules, and the two defect classes this codebase keeps producing. Paste
 it as the opening instruction of a fresh session.
 
-## Research
+[`docs/iteration-log.md`](docs/iteration-log.md) is the record of the ten
+passes that produced the current composition: the gap each one named, what
+changed, and what was left undone.
 
-[`docs/references.md`](docs/references.md) and
-[`docs/concept.md`](docs/concept.md) predate this direction and describe an
-earlier editorial/interactive-figure concept. They are kept for the reasoning,
-not as a spec.
+`docs/concept.md` and `docs/references.md` described an
+editorial-with-interactive-figures direction with a WebGL hero, which this site
+abandoned. They are deleted rather than kept — two documents describing a
+different site mislead a reader, and their reasoning is in git history.

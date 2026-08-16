@@ -16,11 +16,14 @@ import {
   greeting,
   narrative,
   nav,
+  notFound,
   person,
   record,
   recordCaption,
+  thesis,
   type Artifact,
   type CaseStudy,
+  type DocSection,
   type Meta,
 } from "../content/site.ts";
 import { copy, esc, personJsonLd, shell } from "./shell.ts";
@@ -45,6 +48,24 @@ function strip(items: Meta[], className = "") {
   return `      <dl class="strip ${className}">
 ${cells}
       </dl>`;
+}
+
+/**
+ * The same fields, in the margin rather than under the title.
+ *
+ * As a horizontal band under the header it read once and then left the right
+ * five cells of the board empty for the whole length of the page. In the
+ * margin it holds that column and stays beside the argument it qualifies —
+ * the same move the home page makes with the record, so it is the site's
+ * grammar rather than a fix applied here.
+ *
+ * It is first in the DOM, and placed right by the grid, so the reading order
+ * is unchanged: the fields still precede the lede.
+ */
+function margin(items: Meta[]) {
+  return `          <aside class="margin-note" aria-label="Project details">
+${strip(items, "margin-strip")}
+          </aside>`;
 }
 
 /* -- home ---------------------------------------------------------------- */
@@ -86,32 +107,31 @@ function paragraphs(items: typeof narrative) {
  * board's decision rather than a layout guess.
  */
 function opening() {
-  const figures = record
-    .map(
-      (f) => `            <div><span class="label">${copy(f.label)}</span>
-              <b>${copy(f.value)}</b></div>`,
-    )
-    .join("\n");
-
   return `      <section class="page spread">
         <div class="story">
           <h1 class="greeting">${chips(greeting)}</h1>
 ${paragraphs(narrative)}
         </div>
         <aside class="margin-note" aria-label="The record">
-          <div class="evidence">
-            <div class="evidence-figures">
-${figures}
-            </div>
-            <p class="evidence-caption">${copy(recordCaption)}</p>
-          </div>
+${strip(record, "record-figures")}
+          <p class="record-caption">${copy(recordCaption)}</p>
         </aside>
       </section>`;
 }
 
+/**
+ * The end of the page is the ask.
+ *
+ * The address used to be set at body size, two hundred pixels above the same
+ * address repeated in the footer — the one thing the site exists to produce
+ * was its quietest element, and it was said twice at the same weight. It is
+ * now the largest thing after the claim, and the footer's copy reads as the
+ * chrome it is rather than as a second attempt.
+ */
 function closingMarkup() {
   return `      <section class="page story story-closing">
 ${paragraphs(closing)}
+        <p class="label contact-label">Email</p>
         <p class="contact"><a href="mailto:${esc(person.email)}">${esc(person.email)}</a></p>
       </section>`;
 }
@@ -139,7 +159,9 @@ function workIndex() {
     .join("\n");
 
   return `      <section class="section" id="work" aria-labelledby="work-heading">
-        <h2 class="label section-label" id="work-heading">Three constraints</h2>
+        <p class="label section-label">${copy(thesis.label)}</p>
+        <h2 class="display-l display-measure thesis" id="work-heading">${copy(thesis.claim)}</h2>
+        <p class="lede thesis-support">${copy(thesis.support)}</p>
         <ol class="index">
 ${rows}
         </ol>
@@ -233,7 +255,7 @@ export function renderWorkIndex() {
     body: `    <main class="main page" id="main" tabindex="-1">
       <header class="work-head">
         <p class="label">Work</p>
-        <h1 class="display-l">Every project here is named by the pressure that produced it.</h1>
+        <h1 class="display-l display-measure">Every project here is named by the pressure that produced it.</h1>
       </header>
 
       <section class="section" aria-labelledby="constraints">
@@ -322,21 +344,24 @@ export function renderCaseStudy(study: CaseStudy, index: number) {
           </p>
           <h1 class="display-l case-constraint">${copy(study.constraint)}</h1>
           <p class="display-m case-title">${copy(study.title)}</p>
-${strip(study.meta, "case-meta")}
         </header>
 
-        <div class="case-body">
-          <p class="lede case-lede">${copy(study.lede)}</p>
+        <div class="margin-layout">
+${margin(study.meta)}
+
+          <div class="case-body">
+            <p class="lede case-lede">${copy(study.lede)}</p>
 
 ${decisions(study)}
 
-          <section class="outcome" aria-labelledby="outcome">
-            <p class="label">Outcome</p>
-            <h2 class="visually-hidden" id="outcome">Outcome</h2>
-            <ul class="outcome-list">
+            <section class="outcome" aria-labelledby="outcome">
+              <p class="label">Outcome</p>
+              <h2 class="visually-hidden" id="outcome">Outcome</h2>
+              <ul class="outcome-list">
 ${outcome}
-            </ul>
-          </section>
+              </ul>
+            </section>
+          </div>
         </div>
       </article>
 
@@ -347,38 +372,52 @@ ${nextLink(index)}
 
 /* -- artifact (documentation, not narrative) ----------------------------- */
 
-export function renderArtifact(item: Artifact) {
-  const sections = item.sections
+/**
+ * A run of documented sections, sharing the case study's rail.
+ *
+ * The number goes in the rail and the heading sits in the body column with
+ * the paragraphs it introduces. The heading used to span `rail / tail` while
+ * its own text started 160px to the right, so every section heading hung off
+ * the left of the thing it was heading and the rail carried nothing at all —
+ * a 160px indent past an empty column.
+ */
+function docSections(sections: DocSection[]) {
+  return sections
     .map((section, i) => {
       const body = section.body
-        .map((p) => `          <p>${copy(p)}</p>`)
+        .map((p) => `            <p>${copy(p)}</p>`)
         .join("\n");
 
       const table = section.table
-        ? `          <table class="spec">
-            <thead><tr>${section.table.head.map((h) => `<th class="label">${copy(h)}</th>`).join("")}</tr></thead>
-            <tbody>${section.table.rows
-              .map(
-                (row) =>
-                  `<tr>${row
-                    .map((cell, c) =>
-                      c === 0
-                        ? `<th scope="row">${copy(cell)}</th>`
-                        : `<td>${copy(cell)}</td>`,
-                    )
-                    .join("")}</tr>`,
-              )
-              .join("")}</tbody>
-          </table>`
+        ? `            <table class="spec">
+              <thead><tr>${section.table.head.map((h) => `<th class="label">${copy(h)}</th>`).join("")}</tr></thead>
+              <tbody>${section.table.rows
+                .map(
+                  (row) =>
+                    `<tr>${row
+                      .map((cell, c) =>
+                        c === 0
+                          ? `<th scope="row">${copy(cell)}</th>`
+                          : `<td>${copy(cell)}</td>`,
+                      )
+                      .join("")}</tr>`,
+                )
+                .join("")}</tbody>
+            </table>`
         : "";
 
-      return `        <section class="doc-section" aria-labelledby="s${i}">
-          <h2 class="display-s" id="s${i}">${copy(section.heading)}</h2>
+      return `          <section class="doc-section" aria-labelledby="s${i}">
+            <p class="label doc-n">${n(i)}</p>
+            <h2 class="display-s doc-heading" id="s${i}">${copy(section.heading)}</h2>
 ${body}
 ${table}
-        </section>`;
+          </section>`;
     })
     .join("\n");
+}
+
+export function renderArtifact(item: Artifact) {
+  const sections = docSections(item.sections);
 
   return shell({
     title: `${item.title} — ${person.nameEn}`,
@@ -402,11 +441,14 @@ ${table}
           </p>
           <h1 class="display-m case-constraint">${copy(item.constraint)}</h1>
           <p class="display-l case-title doc-title">${copy(item.title)}</p>
-${strip(item.meta, "case-meta")}
         </header>
-        <div class="case-body">
-          <p class="lede case-lede">${copy(item.lede)}</p>
+        <div class="margin-layout">
+${margin(item.meta)}
+
+          <div class="case-body">
+            <p class="lede case-lede">${copy(item.lede)}</p>
 ${sections}
+          </div>
         </div>
       </article>
     </main>`,
@@ -416,9 +458,7 @@ ${sections}
 /* -- about --------------------------------------------------------------- */
 
 export function renderAbout() {
-  const body = about.body
-    .map((p) => `          <p>${copy(p)}</p>`)
-    .join("\n");
+  const sections = docSections(about.sections);
 
   return shell({
     title: `About — ${person.nameEn}`,
@@ -434,15 +474,76 @@ export function renderAbout() {
             <span class="case-counter micro">${esc(person.location)}</span>
           </p>
           <h1 class="display-l case-constraint">${copy(person.nameEn)} &mdash; <span lang="ko">${esc(person.nameKo)}</span></h1>
-${strip(record, "case-meta")}
         </header>
-        <div class="case-body">
-          <p class="lede case-lede">${copy(about.lede)}</p>
-          <section class="doc-section">
-${body}
-          </section>
+        <div class="margin-layout">
+${margin(record)}
+
+          <div class="case-body">
+            <p class="lede case-lede">${copy(about.lede)}</p>
+${sections}
+          </div>
         </div>
       </article>
+    </main>`,
+  });
+}
+
+/* -- not found ----------------------------------------------------------- */
+
+/**
+ * The one page whose job is to be useful about a dead end.
+ *
+ * Same grammar as everything else — the condition is the `h1` and the name of
+ * it is subordinate — and it carries the work index rather than an apology,
+ * because the reader is here by accident and the site is small enough to show
+ * all of itself.
+ *
+ * Not in `routes`: it must not appear in the sitemap, and it is served by the
+ * host for unmatched paths rather than linked to.
+ */
+export function renderNotFound() {
+  const studies = caseStudies
+    .map((study, i) =>
+      indexRow(
+        `/work/${study.slug}/`,
+        n(i),
+        study.constraint,
+        study.title,
+        study.meta.slice(2).map((m) => m.value),
+      ),
+    )
+    .join("\n");
+
+  const built = artifacts
+    .map((item) => indexRow(`/${item.slug}/`, "—", item.constraint, item.title, []))
+    .join("\n");
+
+  return shell({
+    title: `${notFound.title} — ${person.nameEn}`,
+    description: notFound.lede,
+    path: "/404",
+    stylesheet: "/src/home.css",
+    noindex: true,
+    body: `    <main class="main page" id="main" tabindex="-1">
+      <header class="work-head">
+        <p class="label section-label">${esc(notFound.code)} &mdash; ${copy(notFound.title)}</p>
+        <h1 class="display-l display-measure">${copy(notFound.constraint)}</h1>
+        <p class="lede work-lede">${copy(notFound.lede)}</p>
+      </header>
+
+      <section class="section" aria-labelledby="nf-constraints">
+        <h2 class="label section-label" id="nf-constraints">Three constraints</h2>
+        <ol class="index">
+${studies}
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="nf-built">
+        <h2 class="label section-label" id="nf-built">Also built</h2>
+        <ol class="index">
+${built}
+        </ol>
+      </section>
     </main>`,
   });
 }
@@ -454,6 +555,9 @@ export function sitePages(): { file: string; name: string; html: string }[] {
     { file: "index.html", name: "main", html: renderHome() },
     { file: "about/index.html", name: "about", html: renderAbout() },
     { file: "work/index.html", name: "work", html: renderWorkIndex() },
+    // Vercel serves this for any unmatched path. It is deliberately absent
+    // from `routes`, so it never reaches the sitemap.
+    { file: "404.html", name: "not-found", html: renderNotFound() },
   ];
 
   caseStudies.forEach((study, i) => {

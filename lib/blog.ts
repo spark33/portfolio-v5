@@ -140,7 +140,7 @@ function postMeta(post: Post) {
 
 export function renderPost(post: Post) {
   const tags = post.tags.length
-    ? `\n          <ul class="tags">${post.tags
+    ? `\n            <ul class="tags">${post.tags
         .map((tag) => `<li class="meta">${escapeHtml(tag)}</li>`)
         .join("")}</ul>`
     : "";
@@ -156,32 +156,51 @@ export function renderPost(post: Post) {
       datePublished: post.date.iso,
       author: personJsonLd(),
     },
+    // The date, the reading time and the tags are the post's fields, so they
+    // go where every other page on the site puts its fields: the margin note.
+    // In the masthead they pushed the title down the page and left the right
+    // five cells of the board empty for the whole post.
     body: `    <main class="main page" id="main" tabindex="-1">
-      <article class="prose">
-        <header class="masthead">
-          ${postMeta(post)}
-          <h1 class="display-m">${escapeHtml(post.title)}</h1>
-          ${post.summary ? `<p class="lede">${escapeHtml(post.summary)}</p>` : ""}${tags}
-        </header>
+      <div class="margin-layout">
+        <aside class="margin-note" aria-label="Post details">
+          ${postMeta(post)}${tags}
+        </aside>
+
+        <article class="prose">
+          <header class="masthead">
+            <h1 class="display-m display-measure">${escapeHtml(post.title)}</h1>
+            ${post.summary ? `<p class="lede">${escapeHtml(post.summary)}</p>` : ""}
+          </header>
 ${post.html}
-      </article>
+        </article>
+      </div>
       <p class="back"><a href="/blog/">← All writing</a></p>
     </main>`,
   });
 }
 
 export function renderIndex(posts: Post[]) {
+  // The same row the work index uses: the whole row is the link, the title is
+  // a heading, and the machine voice sits on the right.
   const items = posts.length
     ? posts
         .map(
-          (post) => `        <li class="post-item">
-          <a href="/blog/${post.slug}/">${escapeHtml(post.title)}</a>
-          ${postMeta(post)}
-          ${post.summary ? `<p class="summary">${escapeHtml(post.summary)}</p>` : ""}
+          (post) => `        <li class="index-row">
+          <a class="index-link post-link" href="/blog/${post.slug}/">
+            <span class="index-body">
+              <h2 class="post-title display-s">${escapeHtml(post.title)}</h2>
+              ${post.summary ? `<span class="summary">${escapeHtml(post.summary)}</span>` : ""}
+            </span>
+            <span class="index-meta">
+              <span class="micro"><time datetime="${post.date.iso}">${post.date.label}</time></span>
+              <span class="micro">${post.readingMinutes} min read</span>
+              <span class="index-arrow" aria-hidden="true">&rarr;</span>
+            </span>
+          </a>
         </li>`,
         )
         .join("\n")
-    : `        <li class="post-item"><p class="summary">No posts yet. Add a markdown file to <code>content/posts/</code>.</p></li>`;
+    : `        <li class="index-row"><p class="summary">No posts yet. Add a markdown file to <code>content/posts/</code>.</p></li>`;
 
   return layout({
     title: `Writing — ${person.nameEn}`,
@@ -200,13 +219,13 @@ export function renderIndex(posts: Post[]) {
       })),
     },
     body: `    <main class="main page" id="main" tabindex="-1">
-      <header class="prose">
+      <header class="blog-head">
         <p class="label">Writing</p>
-        <h1 class="display-l">Notes on delivery, design systems, and working inside constraints.</h1>
+        <h1 class="display-l display-measure">Notes on delivery, design systems, and working inside constraints.</h1>
       </header>
-      <ul class="post-list">
+      <ol class="index post-list">
 ${items}
-      </ul>
+      </ol>
     </main>`,
   });
 }

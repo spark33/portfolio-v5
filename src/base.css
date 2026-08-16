@@ -54,10 +54,19 @@ h4 {
   text-wrap: balance;
 }
 
+/* Korean breaks at word boundaries (어절), not between syllable blocks.
+   The browser default is the opposite — every syllable is a break
+   opportunity — which set the h1 of the home page as "Hi, I'm Sean Park —
+   박상 / 현" at 1440 and 768 and "박 / 상현" at 390. The site's argument is
+   that a name should survive being made legible to a reader who cannot read
+   it; tearing it in half in the largest type on the site is the opposite.
+   `keep-all` is the correct default for the language, not a patch for the
+   heading. */
 :lang(ko),
 .ko {
   font-family: "Pretendard", var(--font-text);
   letter-spacing: var(--track-korean);
+  word-break: keep-all;
 }
 
 .display-xl {
@@ -120,6 +129,17 @@ h4 {
   text-wrap: pretty;
 }
 
+/* A measure for display type, counted at the display size.
+   `ch` and `rem` resolve against whatever font-size is in scope, so a measure
+   written for 18px body copy and inherited by a 124px headline is seven times
+   too narrow. That mistake shipped twice — 22ch on the work-index wrapper and
+   34rem on every `.prose` child — and both times the headline broke one word
+   per line. Put this on the element that carries the display class, never on
+   its container. */
+.display-measure {
+  max-width: 17ch;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;
@@ -178,6 +198,69 @@ code {
 .strip-value {
   margin: 0;
   text-wrap: pretty;
+}
+
+/* The margin note ---------------------------------------------------------
+
+   A column of labelled fields sitting beside the argument they qualify. It
+   started as the record on the home page, and it is now how every page type
+   holds the right of the board: a case study's role and period, an artifact's
+   status, a post's date and tags. Without it the argument runs to a 42rem
+   measure and leaves the right third of a 1440 viewport empty for the whole
+   length of the page — dead space, not negative space.
+
+   The split is the board's, not a guess: thirteen cells of spine, one of
+   gutter, five of margin. Thirteen cells at 1440 is 897px, which is exactly
+   the 10rem rail plus the 2rem gap plus the 42rem measure a case study sets,
+   so the spine fills its cells rather than floating inside them.
+
+   Below 80rem — where the board itself stops being nineteen cells — it
+   collapses to a band above the argument. The note is first in the DOM in
+   both, so the fields are read before the lede either way and the reading
+   order never depended on the grid. */
+
+/* `minmax(0, 1fr)`, not the implicit `auto` track: an auto track sizes to the
+   widest child's min-content, and a code block inside a post made that 469px
+   inside a 350px phone. The whole page scrolled sideways. */
+.margin-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.margin-layout > .margin-note {
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--rule);
+}
+
+.margin-layout .strip-value {
+  font-size: var(--size-small);
+}
+
+@media (min-width: 80rem) {
+  .margin-layout {
+    grid-template-columns: calc(var(--u) * 13) 1fr;
+    column-gap: var(--u);
+    align-items: start;
+  }
+
+  .margin-layout > .margin-note {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(var(--u) * 0.5);
+    padding-top: var(--space-4);
+  }
+
+  .margin-layout > :not(.margin-note) {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Stacked in a narrow column, not spread across a band. */
+  .margin-strip {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
 }
 
 /* Links and focus -------------------------------------------------------- */
@@ -338,16 +421,38 @@ a:hover {
   background: var(--seal);
 }
 
-/* Side by side, the wordmark and five nav items each wrapped into two lines
-   and tangled. Below this width they stack cleanly instead. */
+/* Side by side, the wordmark and the nav items each wrapped into two lines and
+   tangled. Below this width the masthead becomes two rows instead.
+
+   It was a single stacked column, which left the toggle as a grid item with
+   nothing to size it: it stretched to 162px — a capsule six times wider than
+   tall around a 14px stone — and the masthead ran to 134px, a sixth of a
+   phone screen, before any content. Placing all three explicitly puts the
+   toggle back beside the wordmark at its own size and takes a row off the
+   height. */
 @media (max-width: 34rem) {
   .site-head {
     display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
     gap: var(--space-4);
     padding-block: var(--space-4) var(--space-5);
   }
 
+  .wordmark {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .theme-toggle {
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
+  }
+
   .site-nav {
+    grid-column: 1 / -1;
+    grid-row: 2;
     gap: var(--space-3) var(--space-4);
   }
 }

@@ -5,8 +5,16 @@
   max-width: 52rem;
 }
 
+/* A reading measure for body copy. Headings carry their own — a measure
+   written in rem for 18px type is seven times too narrow once it is inherited
+   by a 64px h1, which is how the index headline came to break one word per
+   line. See `.display-measure` in base.css. */
 .prose > * {
-  max-width: var(--measure);
+  max-width: 38rem;
+}
+
+.prose > .masthead {
+  max-width: none;
 }
 
 .prose > p + p,

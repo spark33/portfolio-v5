@@ -75,8 +75,14 @@ test.describe("readable without JavaScript", () => {
       expect((await chip.textContent())!.trim().length).toBeGreaterThan(4);
     }
 
-    // The margin evidence is content, not an enhancement.
-    await expect(page.locator(".evidence")).toBeVisible();
+    // The record in the margin is content, not an enhancement. Assert the
+    // figures rather than the container's class name, so renaming the box
+    // cannot break the test and an empty box cannot pass it.
+    const margin = page.locator(".margin-note");
+    await expect(margin).toBeVisible();
+    for (const figure of ["400+", "100%", "180k+", "53k"]) {
+      await expect(margin).toContainText(figure);
+    }
   });
 
   test("every case study states its constraint before its title", async ({ page }) => {
@@ -102,6 +108,32 @@ test.describe("readable without JavaScript", () => {
     // Each one is a pressure, not a project name.
     for (const heading of headings) expect(heading.trim().length).toBeGreaterThan(20);
   });
+
+  test("the home page states its claim in a heading, above the constraints", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await page.evaluate(() => document.fonts.ready);
+
+    // The claim used to be the fourth narrative paragraph, so reading only the
+    // headings gave a greeting, "Three constraints" at 11px, and three
+    // constraints — nothing saying why a constraint is what is being shown.
+    const claim = page.locator("main h2").first();
+    await expect(claim).toContainText("constraints you did not choose");
+
+    // And it has to outrank what it introduces: the h3 constraints were the
+    // largest type on the page while the section heading was 11px mono.
+    const sizes = await page.evaluate(() => {
+      const size = (sel: string) =>
+        [...document.querySelectorAll<HTMLElement>(sel)].map((el) =>
+          parseFloat(getComputedStyle(el).fontSize),
+        );
+      return { h2: size("main h2"), h3: size("main h3") };
+    });
+
+    expect(Math.max(...sizes.h2)).toBeGreaterThan(Math.max(...sizes.h3));
+  });
 });
 
 test.describe("motion is declinable", () => {
@@ -122,7 +154,7 @@ test.describe("motion is declinable", () => {
 
     // Nothing about the composition depends on the script.
     await expect(page.locator("h1")).toBeVisible();
-    await expect(page.locator(".evidence")).toBeVisible();
+    await expect(page.locator(".margin-note")).toContainText("400+");
     await expect(page.locator(".lattice-base")).toBeVisible();
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
   });
@@ -447,6 +479,120 @@ test.describe("regressions that keep coming back", () => {
       );
 
       expect([...new Set(welded)], `${path}: words welded together`).toEqual([]);
+    }
+  });
+
+  test("the 404 is a real page, is not indexable, and offers the work", async ({ page }) => {
+    // The host serves this for any unmatched path; `vite preview` falls back
+    // to index.html instead, so the file itself is what gets requested here.
+    await page.goto("/404.html");
+
+    await expect(page.locator("h1")).toHaveText(/Nothing is published/);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex",
+    );
+
+    // A dead end that offers nothing is an apology. Every case study and every
+    // artifact is reachable from here.
+    const hrefs = await page.locator("main .index-link").evaluateAll((links) =>
+      links.map((a) => a.getAttribute("href")),
+    );
+    expect(hrefs).toContain("/work/inherited-mental-model/");
+    expect(hrefs).toContain("/logician-ui/");
+    expect(hrefs.length).toBeGreaterThanOrEqual(5);
+  });
+
+  test("the share card is advertised only when the origin is known", async ({ page }) => {
+    // A scraper fetches og:image with no page to resolve a relative path
+    // against, so a relative one is worse than none — the same rule the
+    // sitemap already follows. These builds run without SITE_ORIGIN.
+    await page.goto("/");
+
+    const image = page.locator('meta[property="og:image"]');
+    const declared = await image.count();
+
+    if (declared) {
+      await expect(image).toHaveAttribute("content", /^https?:\/\/.+\/og\.png$/);
+      await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+        "content",
+        "summary_large_image",
+      );
+    }
+
+    // Either way the file itself has to be there, at the size it claims.
+    const response = await page.request.get("/og.png");
+    expect(response.status()).toBe(200);
+    expect(Number(response.headers()["content-length"] ?? 1)).toBeGreaterThan(1000);
+  });
+
+  test("the theme toggle keeps a control's proportions at every width", async ({ page }) => {
+    // As a lone grid item in the stacked mobile masthead it had nothing to
+    // size it and stretched to 162px — a capsule six times wider than tall
+    // around a 14px stone. It also has to clear WCAG 2.2 SC 2.5.8 at 24×24.
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto("/");
+      await page.evaluate(() => document.fonts.ready);
+
+      const box = (await page.locator(".theme-toggle").boundingBox())!;
+      expect(box.width, `toggle width at ${width}px`).toBeGreaterThanOrEqual(24);
+      expect(box.height, `toggle height at ${width}px`).toBeGreaterThanOrEqual(24);
+      expect(box.width / box.height, `toggle aspect at ${width}px`).toBeLessThan(1.6);
+    }
+  });
+
+  test("display headings are not broken into one-word lines", async ({ page }) => {
+    // Twice now a measure written for 18px body copy has been inherited by
+    // display type: `max-width: 22ch` on the work-index wrapper, and
+    // `.prose > * { max-width: 34rem }` on the blog index headline. Both
+    // resolve against the wrong font size and are several times too narrow, so
+    // a 124px headline broke one word per line and spent a whole viewport
+    // saying six words. Characters per line is what that looks like as a
+    // number: the broken states measured 5 and 10, a healthy one measures 18+.
+    for (const path of ["/work/", "/blog/", "/", "/about/"]) {
+      await page.setViewportSize({ width: 1440, height: 900 });
+      await page.goto(path);
+      await page.evaluate(() => document.fonts.ready);
+
+      const cramped = await page.evaluate(() =>
+        [...document.querySelectorAll<HTMLElement>("[class*='display-']")]
+          .map((el) => {
+            const style = getComputedStyle(el);
+            const lineHeight = parseFloat(style.lineHeight);
+            const lines = Math.max(1, Math.round(el.getBoundingClientRect().height / lineHeight));
+            const chars = (el.textContent ?? "").trim().length;
+            return { text: (el.textContent ?? "").trim().slice(0, 40), lines, perLine: chars / lines };
+          })
+          .filter((entry) => entry.lines > 1 && entry.perLine < 12),
+      );
+
+      expect(cramped, `${path}: display type in a body-copy measure`).toEqual([]);
+    }
+  });
+
+  test("no Korean run is broken across lines", async ({ page }) => {
+    // The browser's default treats every Hangul syllable as a break
+    // opportunity, so 박상현 set as "박상 / 현" in the home page h1 at 1440 and
+    // 768 and "박 / 상현" at 390. Korean breaks at word boundaries. A run with
+    // no space in it therefore occupies exactly one line box, and the count of
+    // client rects is how you find out.
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+
+      for (const path of ["/", "/about/", "/work/no-reason-to-return/"]) {
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+
+        const split = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>('[lang="ko"]')]
+            .filter((el) => !/\s/.test(el.textContent ?? ""))
+            .filter((el) => el.getClientRects().length > 1)
+            .map((el) => el.textContent ?? ""),
+        );
+
+        expect(split, `${path} at ${width}px`).toEqual([]);
+      }
     }
   });
 

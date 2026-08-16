@@ -82,32 +82,45 @@ a.chip:hover {
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 42%, transparent);
 }
 
-/* The record, beside the sentence that claims it. */
-.evidence {
-  border: 1px solid var(--rule);
-  border-radius: 6px;
-  padding: var(--space-5);
-  background: color-mix(in srgb, var(--paper-recessed) 55%, transparent);
+/* The record, beside the sentence that claims it.
+
+   It was a rounded, tinted, bordered card — the only box on a site that is
+   otherwise hairlines and type, and the one element that would have looked
+   identical for any other client. A card also argues that the record is a
+   widget rather than evidence. It is now the same margin note the case pages
+   carry: a top hairline, mono labels, figures at four times the label size,
+   one row per figure. Same primitive as every other row of labelled fields on
+   the site, so it is the grammar rather than a component. */
+
+.record-figures {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0;
+  border-top: 1px solid var(--rule);
 }
 
-.evidence-figures {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-5) var(--space-4);
+.record-figures .strip-cell {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--rule);
 }
 
-.evidence-figures b {
-  display: block;
-  margin-top: var(--space-2);
-  font-size: 1.8rem;
+.record-figures .strip-cell > dt {
+  margin-bottom: 0;
+}
+
+.record-figures .strip-value {
+  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
   font-weight: 600;
   line-height: 1;
-  letter-spacing: -0.024em;
+  letter-spacing: -0.028em;
   font-variant-numeric: tabular-nums;
 }
 
-.evidence-caption {
-  margin-top: var(--space-5);
+.record-caption {
+  margin-top: var(--space-4);
   font-size: var(--size-small);
   line-height: 1.5;
   color: var(--ink-secondary);
@@ -118,14 +131,47 @@ a.chip:hover {
   padding-block: var(--space-7) var(--space-6);
 }
 
-.contact {
-  margin-top: var(--space-5);
-  font-size: 1.21875rem;
+/* The ask, at the size of an ask. It was set at body size directly above the
+   same address repeated in the footer. The floor is 1.35rem rather than
+   something rounder because 26 characters of address at 1.75rem measures
+   364px inside a 350px column at 390 wide, and the site has form on losing
+   the end of a string that way. */
+.story > .contact-label {
+  margin-top: var(--space-7);
+  font-size: var(--size-label);
+  line-height: var(--leading-tight);
 }
 
+/* `.story > .contact`, not `.contact`: `.story > p` is a class plus an element
+   and outweighs a bare class, so the first version of this rule set the
+   address at 48px in the stylesheet and 19.5px on the page. Third time a
+   measure or a size has been overridden by a rule written for the container
+   rather than the element — see pass 1 and pass 5. */
+.story > .contact {
+  margin-top: var(--space-3);
+  max-width: none;
+  font-size: clamp(1.35rem, 4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+
+.contact a {
+  text-decoration-thickness: 1.5px;
+  text-underline-offset: 0.14em;
+}
+
+/* The measure is on the h1 itself, via `.display-measure` — see base.css.
+   `max-width: 22ch` on this wrapper resolved `ch` against the inherited 18px
+   body size, about 210px, while the headline inside it was set at 124px. */
 .work-head {
   padding-block: var(--space-6) var(--space-7);
-  max-width: 22ch;
+}
+
+.work-lede {
+  max-width: 44rem;
+  margin-top: var(--space-5);
+  color: var(--ink-secondary);
 }
 
 .index-more {
@@ -144,6 +190,22 @@ a.chip:hover {
   margin-bottom: var(--space-5);
 }
 
+/* The claim, as the largest thing on the page.
+   Reading only the headings used to give a greeting, the words "Three
+   constraints" set at 11px, and three constraints — and nothing at any size
+   saying why a constraint is the thing being shown. It was the fourth
+   narrative paragraph, which is exactly the failure this site is arranged
+   against: the argument in the copy rather than in the structure. */
+.thesis {
+  margin-bottom: var(--space-5);
+}
+
+.thesis-support {
+  max-width: 44rem;
+  color: var(--ink-secondary);
+  margin-bottom: var(--space-8);
+}
+
 @media (min-width: 80rem) {
   .spread {
     display: grid;
@@ -152,8 +214,12 @@ a.chip:hover {
     align-items: start;
   }
 
-  /* Sticky so the record stays beside the argument while it is being made. */
-  .margin-note {
+  /* Sticky so the record stays beside the argument while it is being made.
+     The home spread splits 10.5 / 1.5 / 7 rather than the 13 / 1 / 5 of a
+     case page, because the narrative has no rail to fill and the record is
+     the site's evidence rather than a set of fields — so it is scoped here
+     rather than taken from the shared `.margin-layout`. */
+  .spread > .margin-note {
     position: sticky;
     top: calc(var(--u) * 0.5);
     padding-top: calc(var(--u) * 1.5);
@@ -161,7 +227,7 @@ a.chip:hover {
 }
 
 @media (max-width: 79.999rem) {
-  .margin-note {
+  .spread > .margin-note {
     margin-top: var(--space-6);
     max-width: 38rem;
   }
