@@ -1,0 +1,253 @@
+/* Shared scaffold for the three creativity-pass-B prototypes.
+ *
+ * These are throwaways. They exist to be looked at side by side at 1440, 390
+ * and 300px in both themes, not to be wired into the site — so this file
+ * duplicates the tokens rather than importing them, and each prototype is free
+ * to overwrite anything in it.
+ *
+ * Everything below the token block is only enough page to judge an idea
+ * against: a masthead, the greeting, the record, the claim, three index rows
+ * and the ask. Copy is lifted verbatim from content/site.ts.
+ */
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/-F63fjptAgt5VM-kVkqdyU8n1i8q131nj-o.woff2) format("woff2");
+}
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/-F6qfjptAgt5VM-kVkqdyU8n3twJwlBFgsAXHNk.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Schibsted Grotesk";
+  font-weight: 400 900;
+  font-display: swap;
+  src: url(/fonts/Jqz55SSPQuCQF3t8uOwiUL-taUTtap9GayojdSFO.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/pretendard-400-subset.woff2) format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 600;
+  font-display: swap;
+  src: url(/fonts/pretendard-600-subset.woff2) format("woff2");
+}
+
+:root {
+  color-scheme: light;
+
+  --paper: #e9e9e3;
+  --paper-recessed: #deded7;
+  --rule: #c4c4ba;
+  --ink: #1a1a16;
+  --ink-secondary: #5c5c55;
+  --seal: #b4372b;
+
+  --font-display: "Schibsted Grotesk", "Pretendard", system-ui, sans-serif;
+  --font-text: "Schibsted Grotesk", "Pretendard", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, monospace;
+
+  --size-display-l: clamp(2.5rem, 8.6vw, 9rem);
+  --size-display-m: clamp(1.9rem, 4.5vw, 4rem);
+  --size-lede: clamp(1.15rem, 1.5vw, 1.5rem);
+  --size-body: 1.125rem;
+  --size-label: 0.6875rem;
+  --size-micro: 0.625rem;
+
+  --track-label: 0.14em;
+  --track-korean: -0.01em;
+
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --space-8: 4.5rem;
+
+  --gutter: clamp(1.25rem, 4vw, 4rem);
+  --page-max: 90rem;
+
+  --board-cols: 19;
+  --u: calc((min(100vw, var(--page-max)) - var(--gutter) * 2) / var(--board-cols));
+  --lattice-ink: #8f8e84;
+  --board-base: 0.095;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --paper: #161613;
+    --paper-recessed: #1e1e1a;
+    --rule: #35342e;
+    --ink: #e9e8e0;
+    --ink-secondary: #9c9a90;
+    --seal: #e2705a;
+    --lattice-ink: #c9c7ba;
+    --board-base: 0.045;
+  }
+}
+
+@media (max-width: 79.999rem) {
+  :root { --board-cols: 12; }
+}
+@media (max-width: 48rem) {
+  :root { --board-cols: 7; }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+* { margin: 0; }
+
+body {
+  position: relative;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-text);
+  font-size: var(--size-body);
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+:lang(ko) {
+  font-family: "Pretendard", var(--font-text);
+  letter-spacing: var(--track-korean);
+  word-break: keep-all;
+}
+
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; text-wrap: balance; }
+
+.page {
+  position: relative;
+  z-index: 1;
+  max-width: var(--page-max);
+  margin-inline: auto;
+  padding-inline: var(--gutter);
+}
+
+.label {
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  line-height: 1.2;
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+.micro {
+  font-family: var(--font-mono);
+  font-size: var(--size-micro);
+  line-height: 1.2;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-secondary);
+}
+
+.display-l {
+  font-size: var(--size-display-l);
+  line-height: 0.94;
+  letter-spacing: -0.028em;
+}
+.display-m {
+  font-size: var(--size-display-m);
+  line-height: 1.02;
+  letter-spacing: -0.018em;
+}
+.lede { font-size: var(--size-lede); line-height: 1.35; text-wrap: pretty; }
+
+.head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
+  padding-block: var(--space-5);
+}
+
+.wordmark, .nav a {
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  text-decoration: none;
+  font-weight: 500;
+}
+.wordmark { color: var(--ink); }
+.nav { display: flex; gap: var(--space-5); }
+.nav a { color: var(--ink-secondary); }
+
+.greeting {
+  font-size: clamp(2.1rem, 4.2vw, 3.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  text-wrap: pretty;
+  margin-bottom: var(--space-6);
+  max-width: 20ch;
+}
+
+.story p { max-width: 38rem; font-size: 1.21875rem; line-height: 1.62; text-wrap: pretty; }
+.story p + p { margin-top: var(--space-5); }
+
+.rec { border-top: 1px solid var(--rule); }
+.rec div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding-block: var(--space-3);
+  border-bottom: 1px solid var(--rule);
+}
+.rec dd {
+  margin: 0;
+  font-size: clamp(1.75rem, 2.4vw, 2.4rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.028em;
+  font-variant-numeric: tabular-nums;
+}
+
+.index { list-style: none; padding: 0; }
+.index li { border-top: 1px solid var(--rule); }
+.index a {
+  display: grid;
+  grid-template-columns: 3.5rem minmax(0, 1fr) auto;
+  column-gap: var(--space-5);
+  row-gap: var(--space-3);
+  align-items: start;
+  padding-block: var(--space-6);
+  text-decoration: none;
+  color: inherit;
+}
+.index-title {
+  display: block;
+  margin-top: var(--space-4);
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+.index-title::before { content: "\2192 "; color: var(--ink-secondary); }
+
+.contact {
+  margin-top: var(--space-3);
+  font-size: clamp(1.35rem, 4vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+.contact a { color: inherit; }
+
+.section { padding-block: var(--space-6) var(--space-7); }
+
+@media (max-width: 48rem) {
+  .index a { grid-template-columns: minmax(0, 1fr); }
+}

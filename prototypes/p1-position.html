@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>P1 — Position</title>
+    <link rel="stylesheet" href="/proto/proto-base.css" />
+    <style>
+      /* P1 — 착점, "the played point".
+       *
+       * Thesis: the page is not standing on a grid, it is standing on a board
+       * that already has stones on it. You did not choose the opening; every
+       * heading on this site is a move made inside somebody else's position.
+       *
+       * Material it argues from: the 19-cell lattice and the nine 화점 that
+       * src/board.css already draws and that nobody can see. This makes them
+       * real — an edge, a legible line weight, and stones on the points — and
+       * gives the site's structure somewhere to land. The stones are not
+       * decoration placed by eye: one per section, on the intersection the
+       * section starts at, so the board fills as the argument is made. */
+
+      body { --board-line: 0.30; --board-edge: 0.55; }
+      @media (prefers-color-scheme: dark) { body { --board-line: 0.16; --board-edge: 0.34; } }
+
+      /* The board, bounded. Graph paper has no edge; a board does, and the
+         edge is most of what makes it read as an object rather than a
+         texture. */
+      .board {
+        position: absolute;
+        inset: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(100%, var(--page-max));
+        padding-inline: var(--gutter);
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .field {
+        position: absolute;
+        inset: 0 var(--gutter);
+        border: 1px solid color-mix(in srgb, var(--lattice-ink) calc(var(--board-edge) * 100%), transparent);
+        border-block: none;
+        background-image:
+          repeating-linear-gradient(
+            to right,
+            color-mix(in srgb, var(--lattice-ink) calc(var(--board-line) * 100%), transparent) 0 1px,
+            transparent 1px var(--u)
+          ),
+          repeating-linear-gradient(
+            to bottom,
+            color-mix(in srgb, var(--lattice-ink) calc(var(--board-line) * 100%), transparent) 0 1px,
+            transparent 1px var(--u)
+          );
+      }
+
+      .hoshi {
+        position: absolute;
+        inset: 0 var(--gutter);
+        background-image: radial-gradient(circle 3px at center, var(--ink) 100%, transparent 0);
+        background-size: calc(var(--u) * 6) calc(var(--u) * 6);
+        background-position: calc(var(--u) * 4) calc(var(--u) * 4);
+        opacity: 0.5;
+      }
+
+      /* A stone. Slate is domed and takes a specular highlight up and left;
+         shell is warmer and flatter. Both sit *on* the intersection, so the
+         line runs under them, and both cast the short contact shadow of an
+         object resting on a surface rather than floating over one. */
+      .stone {
+        position: absolute;
+        width: calc(var(--u) * 0.88);
+        height: calc(var(--u) * 0.88);
+        border-radius: 50%;
+        translate: -50% -50%;
+      }
+
+      .stone-slate {
+        background:
+          radial-gradient(circle at 33% 28%, #7d7c73 0%, #3b3a34 34%, #16150f 100%);
+        box-shadow:
+          0 1px 3px rgba(20, 20, 16, 0.34),
+          inset 0 -1px 2px rgba(255, 255, 255, 0.06);
+      }
+
+      .stone-shell {
+        background:
+          radial-gradient(circle at 33% 28%, #ffffff 0%, #f2f0e6 42%, #cfccbc 100%);
+        box-shadow:
+          0 1px 3px rgba(20, 20, 16, 0.3),
+          inset 0 -1px 2px rgba(20, 20, 16, 0.08);
+      }
+
+      /* The one stone that is not a stone: what the decision cost, marked in
+         cinnabar the way a result is marked on a 기보. */
+      .stone-cost {
+        background: var(--seal);
+        box-shadow: 0 1px 3px rgba(20, 20, 16, 0.3);
+      }
+
+      main { position: relative; }
+
+      /* Section markers: a stone in the rail, on the line the section starts
+         at, instead of a number set in 11px mono. */
+      .mark {
+        display: inline-block;
+        width: 0.9rem;
+        height: 0.9rem;
+        border-radius: 50%;
+        vertical-align: -0.08em;
+        margin-right: 0.6rem;
+      }
+      .mark-slate { background: radial-gradient(circle at 33% 28%, #7d7c73 0%, #3b3a34 34%, #16150f 100%); }
+      .mark-shell { background: radial-gradient(circle at 33% 28%, #fff 0%, #f2f0e6 42%, #cfccbc 100%); box-shadow: inset 0 0 0 1px rgba(20,20,16,.18); }
+
+      .index a { grid-template-columns: 3.5rem minmax(0, 1fr) auto; }
+      .index-n { padding-top: 0.5em; }
+    </style>
+  </head>
+  <body>
+    <div class="board" aria-hidden="true">
+      <div class="field"></div>
+      <div class="hoshi"></div>
+      <!-- The opening: five stones already on the board before the page
+           starts. Placed on real intersections, in cell coordinates. -->
+      <div class="stone stone-slate" style="left: calc(var(--u) * 16); top: calc(var(--u) * 4)"></div>
+      <div class="stone stone-slate" style="left: calc(var(--u) * 16); top: calc(var(--u) * 10)"></div>
+      <div class="stone stone-shell" style="left: calc(var(--u) * 15); top: calc(var(--u) * 7)"></div>
+      <div class="stone stone-slate" style="left: calc(var(--u) * 4);  top: calc(var(--u) * 16)"></div>
+      <div class="stone stone-cost"  style="left: calc(var(--u) * 10); top: calc(var(--u) * 16)"></div>
+      <div class="stone stone-shell" style="left: calc(var(--u) * 10); top: calc(var(--u) * 22)"></div>
+      <div class="stone stone-slate" style="left: calc(var(--u) * 4);  top: calc(var(--u) * 28)"></div>
+    </div>
+
+    <header class="page head">
+      <a class="wordmark" href="/">Sean Park <span lang="ko">박상현</span></a>
+      <nav class="nav"><a href="#">Work</a><a href="#">Writing</a><a href="#">About</a></nav>
+    </header>
+
+    <main>
+      <section class="page" style="padding-block: var(--space-6) var(--space-7); display: grid; grid-template-columns: calc(var(--u) * 10.5) 1fr; column-gap: calc(var(--u) * 1.5); align-items: start;">
+        <div class="story">
+          <h1 class="greeting">Hi, I'm Sean Park — <span lang="ko">박상현</span> — and I run product and delivery at Mindlogic in Seoul.</h1>
+          <p>You won't have heard of Mindlogic, and that is most of the reason this site exists.</p>
+          <p>For three years I have worked on one product: FactChat — a multi-LLM assistant used across Korean universities and public bodies.</p>
+          <p>None of it was greenfield. The scope was set by a public tender before I was involved. The accessibility standard is statutory.</p>
+        </div>
+        <aside>
+          <dl class="rec">
+            <div><dt class="label">Institutions</dt><dd>400+</dd></div>
+            <div><dt class="label">Re-contract</dt><dd>100%</dd></div>
+            <div><dt class="label">Registered</dt><dd>180k+</dd></div>
+            <div><dt class="label">Peak weekly</dt><dd>53k</dd></div>
+          </dl>
+        </aside>
+      </section>
+
+      <div class="page">
+        <section class="section">
+          <p class="label" style="margin-bottom: var(--space-5)">Three constraints</p>
+          <h2 class="display-l" style="max-width: 17ch; margin-bottom: var(--space-5)">Designing inside constraints you did not choose is a different skill.</h2>
+          <p class="lede" style="max-width: 44rem; color: var(--ink-secondary); margin-bottom: var(--space-8)">Three were already true before I arrived. Each produced a decision I can defend, including what it cost.</p>
+
+          <ol class="index">
+            <li>
+              <a href="#">
+                <span class="index-n micro"><span class="mark mark-slate"></span>01</span>
+                <span>
+                  <h3 class="display-m">Users arrived already fluent in someone else's interface.</h3>
+                  <span class="index-title">An inherited mental model</span>
+                </span>
+                <span class="micro" style="text-align: right">2023 — 2026<br />400+ institutions</span>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <span class="index-n micro"><span class="mark mark-slate"></span>02</span>
+                <span>
+                  <h3 class="display-m">Two features had become one idea in everyone's head but the IA.</h3>
+                  <span class="index-title">Two concepts, one product</span>
+                </span>
+                <span class="micro" style="text-align: right">2025<br />400+ tenants</span>
+              </a>
+            </li>
+            <li>
+              <a href="#">
+                <span class="index-n micro"><span class="mark mark-slate"></span>03</span>
+                <span>
+                  <h3 class="display-m">No grade, no credit, no manager. Attendance was the whole problem.</h3>
+                  <span class="index-title">Students with no reason to return</span>
+                </span>
+                <span class="micro" style="text-align: right">2025 — 2026<br />None</span>
+              </a>
+            </li>
+          </ol>
+        </section>
+
+        <section class="section">
+          <p class="label">Email</p>
+          <p class="contact"><a href="mailto:sanghyun.park@mindlogic.ai">sanghyun.park@mindlogic.ai</a></p>
+        </section>
+      </div>
+    </main>
+  </body>
+</html>
