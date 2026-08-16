@@ -1,6 +1,5 @@
 import { expect, test } from "@playwright/test";
 import { COLS, clearance, solve, type Block } from "../lib/board.ts";
-import { heroBlocks } from "../content/site.ts";
 
 /**
  * The board, verified.
@@ -10,111 +9,6 @@ import { heroBlocks } from "../content/site.ts";
  * declarations against reality — which is what the first test here does, and
  * it reports the number to use rather than just failing.
  */
-
-const DESKTOP = { width: 1440, height: 1000 };
-
-/**
- * The board applies from 80rem up, so a declaration is only honest if it holds
- * across that whole range. An earlier version of this file checked 1440 alone
- * and went green while the lede overflowed its cells at 1100 — the cell shrinks
- * with the viewport faster than text does, so the narrow end is the worst case.
- */
-const BOARD_WIDTHS = [1280, 1360, 1440, 1600, 1920, 2560];
-
-test.describe("declared heights match reality", () => {
-  for (const width of BOARD_WIDTHS) {
-  test(`no block overflows the cells it claimed — ${width}px`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 1000 });
-    await page.goto("/");
-    await page.evaluate(() => document.fonts.ready);
-
-    const measured = await page.evaluate(() => {
-      // --u is authored as a calc(), and getComputedStyle hands back the
-      // unresolved expression for a custom property. Derive the cell from the
-      // lattice's real width instead, which is what the board is drawn on.
-      const u = document.querySelector(".lattice")!.getBoundingClientRect().width / 19;
-      return [...document.querySelectorAll<HTMLElement>(".board-field-block")].map((el) => ({
-        id: el.dataset.block!,
-        declared: parseFloat(el.style.getPropertyValue("--h")),
-        // Round up to the quarter cell the solver works in.
-        actual: Math.ceil(el.getBoundingClientRect().height / u / 0.25) * 0.25,
-      }));
-    });
-
-    expect(measured.length).toBe(heroBlocks.length);
-
-    for (const block of measured) {
-      expect(
-        block.actual,
-        `board block "${block.id}" declares h:${block.declared} cells but renders ` +
-          `${block.actual} at ${width}px. Set h to ${block.actual} in content/site.ts.`,
-      ).toBeLessThanOrEqual(block.declared);
-
-      // Over-declaring is not an overflow, but it opens dead space under the
-      // block that nobody chose — which is exactly what the influence rule is
-      // supposed to be deciding.
-      expect(
-        block.declared - block.actual,
-        `board block "${block.id}" declares h:${block.declared} but only needs ` +
-          `${block.actual} at ${width}px, leaving ${block.declared - block.actual} ` +
-          `cells of dead air.`,
-      ).toBeLessThanOrEqual(1);
-    }
-  });
-  }
-
-  test("blocks land exactly where the solver put them", async ({ page }) => {
-    await page.setViewportSize(DESKTOP);
-    await page.goto("/");
-    await page.evaluate(() => document.fonts.ready);
-
-    const solved = solve(heroBlocks);
-    const dom = await page.evaluate(() =>
-      Object.fromEntries(
-        [...document.querySelectorAll<HTMLElement>(".board-field-block")].map((el) => [
-          el.dataset.block,
-          {
-            row: parseFloat(el.style.getPropertyValue("--row")),
-            col: parseFloat(el.style.getPropertyValue("--col")),
-          },
-        ]),
-      ),
-    );
-
-    for (const block of solved.placed) {
-      expect(dom[block.id], `block ${block.id}`).toEqual({
-        row: block.row,
-        col: block.col,
-      });
-    }
-  });
-
-  test("nothing sits inside anything else's influence", async ({ page }) => {
-    await page.setViewportSize(DESKTOP);
-    await page.goto("/");
-    await page.evaluate(() => document.fonts.ready);
-
-    const boxes = await page.evaluate(() =>
-      [...document.querySelectorAll<HTMLElement>(".board-field-block")].map((el) => ({
-        id: el.dataset.block!,
-        box: el.getBoundingClientRect(),
-      })),
-    );
-
-    // The rendered boxes must not overlap at all — the claims that produced
-    // them are larger still, so this is the weaker of the two guarantees and
-    // the one a reader would actually notice being broken.
-    for (let i = 0; i < boxes.length; i += 1) {
-      for (let j = i + 1; j < boxes.length; j += 1) {
-        const a = boxes[i].box;
-        const b = boxes[j].box;
-        const hit =
-          a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-        expect(hit, `${boxes[i].id} overlaps ${boxes[j].id}`).toBe(false);
-      }
-    }
-  });
-});
 
 test.describe("the solver itself", () => {
   const block = (over: Partial<Block>): Block => ({
@@ -158,8 +52,13 @@ test.describe("the solver itself", () => {
   });
 
   test("the solve is deterministic", () => {
-    const a = solve(heroBlocks);
-    const b = solve([...heroBlocks].reverse());
+    const field = [
+      block({ id: "a", col: 0, w: 11, h: 3, weight: 4 }),
+      block({ id: "b", col: 0, w: 6, h: 2, weight: 2 }),
+      block({ id: "c", col: 13, w: 5, h: 2, weight: 3 }),
+    ];
+    const a = solve(field);
+    const b = solve([...field].reverse());
     expect(a.placed.map((p) => [p.id, p.row]).sort()).toEqual(
       b.placed.map((p) => [p.id, p.row]).sort(),
     );

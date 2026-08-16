@@ -19,7 +19,19 @@
 :root {
   color-scheme: light;
 
-  /* ---- colour ---------------------------------------------------------- */
+  /* ---- colour ----------------------------------------------------------
+     Two themes. Dark is not an inversion of light: the ground keeps the same
+     warm-neutral hue as archival board, dropped to a near-black, and the ink
+     and accent are then chosen to hit the same contrast relationships light
+     already passes. Measured, both directions:
+
+       ink / paper        14.32 light   14.75 dark
+       ink-secondary      5.53          6.42
+       seal               4.89          5.78
+
+     The accent has to lift in dark — #b4372b on a near-black is 2.4, which
+     fails everything. #e2705a is the same cinnabar at a luminance the ground
+     can carry. */
   --paper: #e9e9e3;
   --paper-recessed: #deded7;
   --rule: #c4c4ba;
@@ -87,9 +99,12 @@
   --board-cols: 19;
   --u: calc((min(100vw, var(--page-max)) - var(--gutter) * 2) / var(--board-cols));
   --lattice-ink: #8f8e84;
-  /* Calibrated: blends to #e0e0da on paper, contrast 1.087. Present, not a
-     drawn grid. See src/board.css for the full range. */
-  --board-base: 0.1;
+  /* Calibrated: blends to #e0e0da on paper, contrast 1.09. Present, not a
+     drawn grid. See src/board.css for the full range. Dark needs roughly half
+     this alpha for the same contrast — a light line gains on a dark ground
+     much faster than a dark line gains on paper — so the two themes carry
+     different numbers rather than a shared one that suits neither. */
+  --board-base: 0.095;
   --board-lift: 0.8;
   --board-reach: 180px;
 
@@ -98,6 +113,46 @@
   --ease-exit: cubic-bezier(0.62, 0.02, 0.34, 1);
   --dur-state: 120ms;
   --dur-reveal: 620ms;
+}
+
+
+/* Dark ------------------------------------------------------------------- */
+
+
+/* System preference, unless the reader has explicitly asked for light. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+  
+    --paper: #161613;
+    --paper-recessed: #1e1e1a;
+    --rule: #35342e;
+    --ink: #e9e8e0;
+    --ink-secondary: #9c9a90;
+    --seal: #e2705a;
+  
+    --lattice-ink: #c9c7ba;
+    /* Half the light alpha, for the same 1.09 against the ground. */
+    --board-base: 0.045;
+    --board-lift: 0.5;
+  }
+}
+
+/* An explicit choice wins over the system in both directions. */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --paper: #161613;
+  --paper-recessed: #1e1e1a;
+  --rule: #35342e;
+  --ink: #e9e8e0;
+  --ink-secondary: #9c9a90;
+  --seal: #e2705a;
+
+  --lattice-ink: #c9c7ba;
+  /* Half the light alpha, for the same 1.09 against the ground. */
+  --board-base: 0.045;
+  --board-lift: 0.5;
 }
 
 /* The solved field needs nineteen columns; below it the lattice is texture,

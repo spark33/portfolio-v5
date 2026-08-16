@@ -12,16 +12,17 @@ import {
   about,
   artifacts,
   caseStudies,
-  heroBlocks,
+  closing,
+  evidence,
+  greeting,
+  narrative,
   nav,
-  person,
   position,
-  thesis,
+  person,
   type Artifact,
   type CaseStudy,
   type Meta,
 } from "../content/site.ts";
-import { clearance, solve } from "./board.ts";
 import { copy, esc, personJsonLd, shell } from "./shell.ts";
 
 const SITE = `${person.nameEn} — ${person.role}, ${person.org}`;
@@ -49,49 +50,66 @@ ${cells}
 /* -- home ---------------------------------------------------------------- */
 
 /**
- * The home field, solved on the board at build time.
+ * `[Label|fact]` and `[Label|fact|/href]` become chips.
  *
- * Blocks declare a weight; the solver in lib/board.ts places the strongest on
- * its intersection and slides the rest down the lattice until nothing sits
- * inside anyone else's influence. What arrives in the HTML is finished
- * geometry — cell coordinates as custom properties — so the composition is
- * correct in the first paint and identical with JavaScript disabled.
+ * The chip is the site's one inline device: a noun nobody recognises, plus the
+ * fact that makes it mean something. The reference this borrows from uses
+ * favicons, which work because Microsoft and Behance credential themselves —
+ * Mindlogic and LogicianUI do not, so the payload is the fact instead.
  */
-function heroField() {
-  const { placed, height } = solve(heroBlocks);
+function chips(text: string) {
+  return copy(text).replace(
+    /\[([^\]|]+)\|([^\]|]+)(?:\|([^\]]+))?\]/g,
+    (_match, label: string, fact: string, href?: string) => {
+      const inner = `${label}<span class="chip-fact">${fact}</span>`;
+      return href
+        ? `<a class="chip" href="${href}">${inner}</a>`
+        : `<span class="chip">${inner}</span>`;
+    },
+  );
+}
 
-  const blocks = placed
-    .map((b) => {
-      const parts = [
-        b.label ? `<span class="label">${copy(b.label)}</span>` : "",
-        // Separate spans rather than <br>: on the board each is a line, and
-        // everywhere else they run together as a sentence with the whitespace
-        // between the tags collapsing to the space the sentence needs.
-        b.claim
-          ? `<h1 class="board-claim">${b.claim
-              .map((l) => `<span class="claim-line">${copy(l)}</span>`)
-              .join("\n              ")}</h1>`
-          : "",
-        b.body ? `<p class="board-body">${copy(b.body)}</p>` : "",
-        b.stat ? `<p class="board-stat">${copy(b.stat)}</p>` : "",
-        b.note ? `<p class="board-note">${copy(b.note)}</p>` : "",
-      ].filter(Boolean);
+function paragraphs(items: typeof narrative) {
+  return items
+    .map((item) => `        <p${item.lead ? ' class="lead"' : ""}>${chips(item.text)}</p>`)
+    .join("\n");
+}
 
-      const c = clearance(b.weight);
-      const zone =
-        `<div class="claim-zone" aria-hidden="true" style="` +
-        `--cx:${b.col - c};--cy:${b.row - c};--cw:${b.w + c * 2};--ch:${b.h + c * 2}"></div>`;
-
-      return `          ${zone}
-          <div class="board-field-block" data-block="${esc(b.id)}" data-weight="${b.weight}"
-            style="--col:${b.col};--row:${b.row};--w:${b.w};--h:${b.h}">
-            ${parts.join("\n            ")}
-          </div>`;
-    })
+/**
+ * The opening: a person talking, with the record beside them.
+ *
+ * The narrative runs in the board's first ten and a half cells and the
+ * evidence sits in the margin from cell twelve, so the two columns are the
+ * board's decision rather than a layout guess.
+ */
+function opening() {
+  const figures = evidence.figures
+    .map(
+      (f) => `            <div><span class="label">${copy(f.label)}</span>
+              <b>${copy(f.value)}</b></div>`,
+    )
     .join("\n");
 
-  return `      <section class="page board-field" style="--board-field-h:${height}">
-${blocks}
+  return `      <section class="page spread">
+        <div class="story">
+          <h1 class="greeting">${chips(greeting)}</h1>
+${paragraphs(narrative)}
+        </div>
+        <aside class="margin-note" aria-label="The record">
+          <div class="evidence">
+            <div class="evidence-figures">
+${figures}
+            </div>
+            <p class="evidence-caption">${copy(evidence.caption)}</p>
+          </div>
+        </aside>
+      </section>`;
+}
+
+function closingMarkup() {
+  return `      <section class="page story story-closing">
+${paragraphs(closing)}
+        <p class="contact"><a href="mailto:${esc(person.email)}">${esc(person.email)}</a></p>
       </section>`;
 }
 
@@ -125,32 +143,6 @@ ${rows}
       </section>`;
 }
 
-function artifactIndex() {
-  const rows = artifacts
-    .map(
-      (item) => `          <li class="index-row">
-            <a class="index-link" href="/${item.slug}/">
-              <span class="index-n index-n-blank micro" aria-hidden="true">&mdash;</span>
-              <span class="index-body">
-                <span class="index-constraint display-s">${copy(item.constraint)}</span>
-                <span class="index-title">${copy(item.title)}</span>
-              </span>
-              <span class="index-meta" aria-hidden="true">
-                <span class="index-arrow" aria-hidden="true">&rarr;</span>
-              </span>
-            </a>
-          </li>`,
-    )
-    .join("\n");
-
-  return `      <section class="section" aria-labelledby="built-heading">
-        <h2 class="label section-label" id="built-heading">Also built</h2>
-        <ol class="index">
-${rows}
-        </ol>
-      </section>`;
-}
-
 export function renderHome() {
   return shell({
     title: SITE,
@@ -163,25 +155,13 @@ export function renderHome() {
     module: "/src/main.ts",
     jsonLd: personJsonLd(),
     body: `    <main class="main" id="main" tabindex="-1">
-${heroField()}
-
-      <section class="page thesis">
-        <div class="thesis-role">
-          <p class="label">Role</p>
-          <p class="display-s">${copy(person.role)}</p>
-          <p>${copy(person.org)} <span class="ko" lang="ko">${esc(person.orgKo)}</span> &middot; ${copy(person.location)}</p>
-        </div>
-        <p class="lede thesis-body">${copy(thesis)}</p>
-      </section>
-
-      <div class="page">
-${strip(position, "position")}
-      </div>
+${opening()}
 
       <div class="page">
 ${workIndex()}
-${artifactIndex()}
       </div>
+
+${closingMarkup()}
     </main>`,
   });
 }

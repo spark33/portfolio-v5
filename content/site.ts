@@ -63,76 +63,77 @@ export const nameSequence = [
 ];
 
 /**
- * The home field, as blocks on the board.
+ * The home page, as a person talking.
  *
- * `weight` is initiative: the highest holds its intersection and everything
- * else yields around it, so the whitespace is allocated by rank. `h` is the
- * block's height in lattice cells — declared, because the solver runs at build
- * time and cannot measure text. `tests/board.spec.ts` checks every one of
- * these against the real rendered height and tells you the right number when
- * it drifts, so treat a failure there as an instruction rather than a puzzle.
+ * Links live inside sentences rather than in an index. Each `[chip]` names an
+ * entity and the fact that makes it mean something to a stranger — the
+ * reference this borrows from can lean on logos everyone knows, and every
+ * noun here is one nobody has heard of, so the fact does the work a mark
+ * would otherwise do.
+ *
+ * Syntax: [Label|the fact] for a plain chip, [Label|the fact|/href] for a link.
  */
-export type HeroBlock = {
-  id: string;
-  col: number;
-  row: number;
-  w: number;
-  h: number;
-  weight: number;
-  label: string;
-  /** Rendered at display size. Line breaks are deliberate. */
-  claim?: string[];
-  body?: string;
-  stat?: string;
-  note?: string;
-};
+export type Narrative = { kind: "p"; text: string; lead?: boolean };
 
-export const heroBlocks: HeroBlock[] = [
+export const greeting =
+  "Hi, I'm Sean Park — 박상현 — and I run product and delivery at Mindlogic in Seoul.";
+
+export const narrative: Narrative[] = [
+  { kind: "p", text: "You won't have heard of [Mindlogic|Seoul, 20 people], and that is most of the reason this site exists.", lead: true },
   {
-    id: "claim",
-    col: 1,
-    row: 0.5,
-    w: 11,
-    h: 2.75,
-    weight: 4,
-    label: "Position",
-    claim: ["The board was not empty", "when I sat down."],
+    kind: "p",
+    text:
+      "For three years I have worked on one product: [FactChat|400+ institutions] — " +
+      "a multi-LLM assistant used across Korean universities and public bodies. I own " +
+      "architecture, scope, release timelines and the design decisions across an " +
+      "eight-person engineering team, I lead three frontend engineers directly, and I " +
+      "still ship production code.",
   },
   {
-    id: "lede",
-    col: 1,
-    row: 0.5,
-    w: 6,
-    h: 2.25,
-    weight: 2,
-    label: "",
-    body:
-      "Head of product and delivery at Mindlogic, Seoul. Three years, one " +
-      "product — a multi-LLM assistant in 400+ Korean universities and public " +
-      "institutions. Every decision answered something already on the board.",
+    kind: "p",
+    text:
+      "None of it was greenfield. The scope was set by a public tender before I was " +
+      "involved. The accessibility standard is statutory. The release calendar belongs " +
+      "to the procurement cycle. And our users arrived already fluent in a competitor's " +
+      "product, so the interface conventions were decided somewhere else too.",
   },
   {
-    id: "position",
-    col: 13,
-    row: 0.5,
-    w: 5,
-    h: 1.5,
-    weight: 3,
-    label: "Position",
-    stat: "400+  100%  180k",
-    note: "institutions · re-contract · registered",
-  },
-  {
-    id: "also",
-    col: 13,
-    row: 0.5,
-    w: 5,
-    h: 1.25,
-    weight: 1,
-    label: "Also built",
-    note: "LogicianUI, the design system. The harness, the automation under it.",
+    kind: "p",
+    text:
+      "That is the part I actually want to talk about. Three things were already true " +
+      "when I arrived, and each one produced a decision I can defend — including what " +
+      "it cost.",
   },
 ];
+
+export const closing: Narrative[] = [
+  {
+    kind: "p",
+    text:
+      "Alongside the product I wrote [LogicianUI|our design system|/logician-ui/], and " +
+      "[the harness|agents, autofixes, auto-merge|/harness/] — the automation that lets " +
+      "three frontend engineers hold a surface this wide. I [write about both|notes|/blog/].",
+  },
+  {
+    kind: "p",
+    text:
+      "I read and write English fluently and work daily in English and Korean. I am " +
+      "looking for somewhere with real constraints and the honesty to say so.",
+  },
+];
+
+/** The evidence card that sits in the margin beside the opening. */
+export const evidence = {
+  figures: [
+    { label: "Institutions", value: "400+" },
+    { label: "Re-contract", value: "100%" },
+    { label: "Registered", value: "180k+" },
+    { label: "Peak weekly", value: "53k" },
+  ],
+  caption:
+    "Every institution that has reached the end of a contract has renewed. " +
+    "Term-time peaks around 900,000 messages a week.",
+};
 
 export const thesis =
   "I have never designed in a vacuum. Every system I have worked in was " +

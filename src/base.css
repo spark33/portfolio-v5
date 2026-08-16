@@ -242,6 +242,52 @@ a:hover {
   padding-block: var(--space-5);
 }
 
+/* Light and dark. The control is invisible until the script wires it, because
+   a toggle that does nothing is worse than no toggle — but it holds its space
+   from the first paint. Using the `hidden` attribute instead cost 0.047 CLS,
+   since revealing it reflowed the whole masthead.
+
+   `visibility: hidden` also keeps it out of the tab order and the
+   accessibility tree while it is inert, which `opacity: 0` would not.
+
+   None of this affects the colours: the theme is applied before first paint by
+   the inline script in the head. */
+.theme-toggle {
+  visibility: hidden;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: none;
+  cursor: pointer;
+  padding: 0.35rem 0.4rem;
+  line-height: 0;
+  align-self: center;
+  transition:
+    border-color var(--dur-state) var(--ease-exit),
+    background-color var(--dur-state) var(--ease-exit);
+}
+
+.theme-toggle[data-ready] {
+  visibility: visible;
+}
+
+.theme-toggle:hover {
+  border-color: var(--ink-secondary);
+}
+
+.theme-toggle > span {
+  display: block;
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  /* A stone: filled in dark, outlined in light. */
+  border: 1.5px solid var(--ink);
+  background: linear-gradient(to right, var(--ink) 50%, transparent 50%);
+}
+
+:root[data-theme="dark"] .theme-toggle > span {
+  background: var(--ink);
+}
+
 .wordmark {
   font-family: var(--font-mono);
   font-size: var(--size-label);

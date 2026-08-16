@@ -69,6 +69,20 @@ function fontPreloads(): string[] {
 
 const PRELOADS = fontPreloads();
 
+/**
+ * Applied before the first paint, so a reader who chose dark never sees a
+ * flash of light. Nothing else in the head depends on it, and with JS off it
+ * simply never runs and the system preference decides.
+ */
+const THEME_GATE = `<script>
+      (function () {
+        try {
+          var t = localStorage.getItem("sp:theme");
+          if (t === "light" || t === "dark") document.documentElement.dataset.theme = t;
+        } catch (e) {}
+      })();
+    </script>`;
+
 function navigation(path: string) {
   const items = nav
     .map(({ href, label }) => {
@@ -82,6 +96,10 @@ function navigation(path: string) {
       <nav class="site-nav" aria-label="Primary">
           ${items}
       </nav>
+      <button class="theme-toggle" type="button" data-theme-toggle
+        aria-pressed="false" aria-label="Switch to dark theme">
+        <span aria-hidden="true"></span>
+      </button>
     </header>`;
 }
 
@@ -153,13 +171,15 @@ export function shell({
     <meta property="og:title" content="${esc(title)}" />
     <meta property="og:description" content="${esc(description)}" />
     <meta property="og:type" content="website" />
-    <meta name="theme-color" content="#e9e9e3" />
+    <meta name="theme-color" content="#e9e9e3" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#161613" media="(prefers-color-scheme: dark)" />
     <link
       rel="icon"
       href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><rect width='16' height='16' fill='%23e9e9e3'/><rect x='3' y='3' width='10' height='10' fill='%23b4372b'/></svg>"
     />
 ${preload}
     <link rel="stylesheet" href="${stylesheet}" />${structured}
+    ${THEME_GATE}
   </head>
   <body>
     <a class="skip" href="#main">Skip to content</a>

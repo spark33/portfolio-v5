@@ -1,63 +1,150 @@
 @import "./base.css";
 @import "./index-rows.css";
 
-/* Thesis ------------------------------------------------------------------ */
+/* The home page is a person talking.
+ *
+ * Links live inside the sentences rather than in an index, and the record sits
+ * in the margin beside the paragraph that earns it. The board sets both
+ * columns: the story runs in the first ten and a half cells, the margin note
+ * starts at cell twelve. */
 
-/* The role sat in a 9.5rem rail and broke "Head of product and delivery"
-   across four lines, which was the worst-set type on the page. It gets a
-   column wide enough to hold it in two. */
-.thesis {
-  display: grid;
-  grid-template-columns: minmax(14rem, 20rem) minmax(0, 1fr);
-  column-gap: clamp(var(--space-5), 5vw, var(--space-8));
-  row-gap: var(--space-6);
-  align-items: start;
-  padding-block: var(--space-7) var(--space-8);
-  border-top: 1px solid var(--rule);
+.spread {
+  padding-block: var(--space-6) var(--space-7);
 }
 
-.thesis-role > .display-s {
-  margin-block: var(--space-3) var(--space-2);
-  text-wrap: balance;
+.story > p {
+  font-size: 1.21875rem;
+  line-height: 1.62;
+  text-wrap: pretty;
+  max-width: 38rem;
 }
 
-.thesis-role > p:last-child {
+.story > p + p {
+  margin-top: var(--space-5);
+}
+
+.story > p.lead {
   color: var(--ink-secondary);
-  font-size: var(--size-small);
 }
 
-.thesis-body {
-  max-width: 44rem;
-  font-size: clamp(1.2rem, 1.75vw, 1.7rem);
+.greeting {
+  font-size: clamp(2.1rem, 4.2vw, 3.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  text-wrap: pretty;
+  margin-bottom: var(--space-6);
+  max-width: 20ch;
 }
 
-.position {
-  padding-block: var(--space-6) var(--space-8);
-  border-top: 1px solid var(--rule);
-}
-
-.position .strip-value {
-  font-family: var(--font-display);
-  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+/* A noun nobody recognises, plus the fact that makes it mean something.
+   The reference this borrows from uses favicons, which work because its nouns
+   are Microsoft and Behance. Mindlogic and LogicianUI have no such currency,
+   so the chip carries the number instead of a mark. */
+.chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  white-space: nowrap;
+  background: var(--paper-recessed);
+  border-radius: 5px;
+  padding: 0.1em 0.45em 0.16em;
   font-weight: 600;
-  letter-spacing: -0.025em;
+  letter-spacing: -0.008em;
+  text-decoration: none;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  transition: box-shadow var(--dur-state) var(--ease-exit);
+}
+
+.chip-fact {
+  font-family: var(--font-mono);
+  font-size: 0.66em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+a.chip::after {
+  content: "↗";
+  font-family: var(--font-mono);
+  font-size: 0.6em;
+  color: var(--ink-secondary);
+}
+
+a.chip:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 42%, transparent);
+}
+
+/* The record, beside the sentence that claims it. */
+.evidence {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: var(--space-5);
+  background: color-mix(in srgb, var(--paper-recessed) 55%, transparent);
+}
+
+.evidence-figures {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5) var(--space-4);
+}
+
+.evidence-figures b {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 1.8rem;
+  font-weight: 600;
   line-height: 1;
-  /* Four figures read as one record, so here the digits do align. */
+  letter-spacing: -0.024em;
   font-variant-numeric: tabular-nums;
 }
 
-/* Sections ---------------------------------------------------------------- */
+.evidence-caption {
+  margin-top: var(--space-5);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  text-wrap: pretty;
+}
+
+.story-closing {
+  padding-block: var(--space-7) var(--space-6);
+}
+
+.contact {
+  margin-top: var(--space-5);
+  font-size: 1.21875rem;
+}
 
 .section {
-  padding-block: var(--space-7) var(--space-8);
+  padding-block: var(--space-6) var(--space-7);
 }
 
 .section-label {
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-5);
 }
 
-@media (max-width: 48rem) {
-  .thesis {
-    grid-template-columns: minmax(0, 1fr);
+@media (min-width: 80rem) {
+  .spread {
+    display: grid;
+    grid-template-columns: calc(var(--u) * 10.5) 1fr;
+    column-gap: calc(var(--u) * 1.5);
+    align-items: start;
+  }
+
+  /* Sticky so the record stays beside the argument while it is being made. */
+  .margin-note {
+    position: sticky;
+    top: calc(var(--u) * 0.5);
+    padding-top: calc(var(--u) * 1.5);
+  }
+}
+
+@media (max-width: 79.999rem) {
+  .margin-note {
+    margin-top: var(--space-6);
+    max-width: 38rem;
   }
 }

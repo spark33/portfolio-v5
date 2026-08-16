@@ -26,27 +26,33 @@ study the constraint is the `<h1>`. This is enforced by the content types in
 `constraint`, and a `Decision` cannot be written without a `cost`. A decision
 with no cost is a preference.
 
-**바둑 is the substrate, not the picture.** The board is never drawn. Three
-rules survive from it, in [`lib/board.ts`](lib/board.ts):
+**The page is a person talking.** The home page is first-person prose, and the
+links live inside the sentences rather than in an index. Each chip names an
+entity and the fact that makes it mean something — `FactChat · 400+
+INSTITUTIONS`. The reference this borrows from uses favicons, which work
+because its nouns are Microsoft and Behance; every noun here is one no reader
+recognises, so the fact carries what a mark otherwise would.
 
-- **Lattice.** Nineteen square cells across the measure. Everything places on
-  an intersection; nothing is nudged or centred by eye.
-- **Influence (세력).** A stone radiates over the space around it and a stronger
-  position reaches further. Every block declares a weight; clearance is
-  `0.3 + weight × 0.28` cells; blocks resolve in order of initiative, the
-  strongest holding its intersection while weaker ones yield down the board.
-  Negative space is *allocated by rank* rather than left over.
+**바둑 is the substrate, not the picture.** The board is never drawn. Two rules
+survive from it, in [`lib/board.ts`](lib/board.ts) and
+[`src/board.css`](src/board.css):
+
+- **Lattice.** Nineteen square cells across the measure, stepping to 12 and 7
+  as the viewport narrows. Both columns of the home page are cut from it: the
+  narrative runs in the first 10.5 cells, the margin note starts at cell 12.
 - **Star points (화점).** A real board's only marks are nine reference dots, at
   lines 4, 10 and 16. They are the sole thing that surfaces — a baduk player
   reads them immediately, everyone else reads registration marks.
 
-The solve runs at **build time** and emits cell coordinates into the HTML, so
-the composition is correct in the first paint and identical with JavaScript
-off. The whole client-side board is two pointer coordinates.
+The lattice and the hoshi are CSS backgrounds, so they need no SVG, no script
+and no knowledge of page height. `?board` on any URL draws them, as a URL
+rather than a hover so it works for a keyboard, a screenshot and a phone.
 
-`?board` on any URL draws the lattice and every block's claimed influence. It
-is a URL rather than a hover so it works for a keyboard, a screenshot and a
-phone.
+**The influence solver in `lib/board.ts` currently has no caller.** It placed
+the blocks of the previous hero; a narrative column has nothing for it to
+resolve. It is pure, tested and small, and it should either find a job on the
+case-study templates or be deleted — leaving it as it is, is the one thing not
+to do.
 
 ## Layout
 
@@ -116,7 +122,27 @@ The accent appears in exactly three places: the lossy step of the name, the
 made official to a system that was not built for them, which is the thesis, so
 it is load-bearing rather than decorative.
 
-Light only, committed via `color-scheme: light`.
+Dark is not an inversion. The ground keeps the same warm-neutral hue, dropped
+to a near-black, and the ink and accent are chosen to hit the same contrast
+relationships light already passes:
+
+| | light | dark |
+| --- | --- | --- |
+| ink / paper | 14.32 | 14.75 |
+| ink-secondary | 5.53 | 6.42 |
+| seal | 4.89 | 5.78 |
+
+The accent has to lift: `#b4372b` on a near-black is 2.4, which fails
+everything, so dark uses `#e2705a` — the same cinnabar at a luminance the
+ground can carry. The lattice needs roughly **half** the alpha in dark
+(0.045 vs 0.095) for the same 1.09 contrast, because a light line gains on a
+dark ground far faster than a dark line gains on paper.
+
+The system preference decides by default; an explicit choice overrides it in
+both directions and persists. It is applied by an inline script in the head
+before the first paint, so there is no flash. The toggle holds its space from
+the first paint too — using the `hidden` attribute instead cost 0.047 CLS when
+revealing it reflowed the masthead.
 
 ## Motion
 

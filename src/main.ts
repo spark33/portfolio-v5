@@ -13,5 +13,7 @@
  * scroll only scrolls.
  */
 import { mountBoard } from "./board.ts";
+import { mountTheme } from "./theme.ts";
 
+mountTheme();
 mountBoard();

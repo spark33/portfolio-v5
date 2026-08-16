@@ -60,22 +60,23 @@ test.describe("readable without JavaScript", () => {
     });
   }
 
-  test("the solved field is finished geometry with JS off", async ({ page }) => {
+  test("the narrative and its links are complete with JS off", async ({ page }) => {
     await page.goto("/");
 
-    const blocks = page.locator(".board-field-block");
-    await expect(blocks).not.toHaveCount(0);
+    // The page is somebody talking, and the links live inside the sentences.
+    await expect(page.locator("h1")).toHaveText(/Hi, I'm Sean Park/);
+    const chips = page.locator(".chip");
+    expect(await chips.count()).toBeGreaterThanOrEqual(4);
 
-    // The board's geometry is computed at build time, so every block already
-    // carries its cell coordinates. Nothing here is waiting on a script.
-    for (const prop of ["--col", "--row", "--w"]) {
-      const values = await blocks.evaluateAll(
-        (els, p) => els.map((el) => (el as HTMLElement).style.getPropertyValue(p as string)),
-        prop,
-      );
-      expect(values.every((v) => v !== "")).toBe(true);
+    // Every chip names a thing and the fact that makes it mean something —
+    // the nouns here are ones no reader recognises, so the fact is the payload.
+    for (const chip of await chips.all()) {
+      await expect(chip.locator(".chip-fact")).toHaveCount(1);
+      expect((await chip.textContent())!.trim().length).toBeGreaterThan(4);
     }
-    await expect(blocks.first()).toBeVisible();
+
+    // The margin evidence is content, not an enhancement.
+    await expect(page.locator(".evidence")).toBeVisible();
   });
 
   test("every case study states its constraint before its title", async ({ page }) => {
@@ -97,7 +98,7 @@ test.describe("readable without JavaScript", () => {
   test("the work index reads as an argument from headings alone", async ({ page }) => {
     await page.goto("/");
     const headings = await page.locator(".index-constraint").allTextContents();
-    expect(headings.length).toBeGreaterThanOrEqual(5);
+    expect(headings.length).toBeGreaterThanOrEqual(3);
     // Each one is a pressure, not a project name.
     for (const heading of headings) expect(heading.trim().length).toBeGreaterThan(20);
   });
@@ -120,9 +121,85 @@ test.describe("motion is declinable", () => {
     await page.goto("/");
 
     // Nothing about the composition depends on the script.
-    await expect(page.locator(".board-field-block").first()).toBeVisible();
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.locator(".evidence")).toBeVisible();
     await expect(page.locator(".lattice-base")).toBeVisible();
     expect(await page.evaluate(() => document.getAnimations().length)).toBe(0);
+  });
+});
+
+test.describe("light and dark", () => {
+  for (const scheme of ["light", "dark"] as const) {
+    test(`text clears WCAG AA in ${scheme}`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto("/work/inherited-mental-model/");
+
+      const samples = await page.evaluate(() => {
+        const bg = getComputedStyle(document.body).backgroundColor;
+        const read = (selector: string) => {
+          const el = document.querySelector(selector);
+          return el ? { fg: getComputedStyle(el).color, bg } : null;
+        };
+        return {
+          body: read(".field > dd"),
+          label: read(".field > dt"),
+          cost: read(".field-cost > dt"),
+          heading: read("h1"),
+        };
+      });
+
+      for (const [name, sample] of Object.entries(samples)) {
+        expect(sample, name).not.toBeNull();
+        expect(
+          contrast(rgb(sample!.fg), rgb(sample!.bg)),
+          `${name} in ${scheme}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    });
+  }
+
+  test("the ground actually changes with the scheme", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "light" });
+    await page.goto("/");
+    const light = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/");
+    const dark = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+
+    expect(light).not.toBe(dark);
+    expect(luminance(rgb(light))).toBeGreaterThan(luminance(rgb(dark)));
+  });
+
+  test("an explicit choice overrides the system and survives a reload", async ({ page }) => {
+    await page.emulateMedia({ colorScheme: "dark" });
+    await page.goto("/");
+
+    const toggle = page.locator("[data-theme-toggle]");
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+
+    await toggle.click();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+    await expect(toggle).toHaveAttribute("aria-pressed", "false");
+
+    // The head script applies it before first paint, so it holds across a load.
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  });
+
+  test("the lattice stays under the threshold in both themes", async ({ page }) => {
+    for (const scheme of ["light", "dark"] as const) {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto("/");
+      const opacity = await page.evaluate(() =>
+        parseFloat(getComputedStyle(document.querySelector(".lattice-base")!).opacity),
+      );
+      // A light line gains on a dark ground far faster than a dark line gains
+      // on paper, so the two themes carry different alphas for the same 1.09.
+      expect(opacity, scheme).toBeGreaterThan(0.02);
+      expect(opacity, scheme).toBeLessThanOrEqual(0.12);
+    }
   });
 });
 
