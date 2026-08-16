@@ -13,12 +13,12 @@ import {
   artifacts,
   caseStudies,
   closing,
-  evidence,
   greeting,
   narrative,
   nav,
-  position,
   person,
+  record,
+  recordCaption,
   type Artifact,
   type CaseStudy,
   type Meta,
@@ -61,7 +61,10 @@ function chips(text: string) {
   return copy(text).replace(
     /\[([^\]|]+)\|([^\]|]+)(?:\|([^\]]+))?\]/g,
     (_match, label: string, fact: string, href?: string) => {
-      const inner = `${label}<span class="chip-fact">${fact}</span>`;
+      // A real space, not a flex gap. The gap is invisible to text extraction,
+      // reader mode and screen readers, which read "LogicianUIour design
+      // system". Visual separation has to exist as a character.
+      const inner = `${label} <span class="chip-fact">${fact}</span>`;
       return href
         ? `<a class="chip" href="${href}">${inner}</a>`
         : `<span class="chip">${inner}</span>`;
@@ -83,7 +86,7 @@ function paragraphs(items: typeof narrative) {
  * board's decision rather than a layout guess.
  */
 function opening() {
-  const figures = evidence.figures
+  const figures = record
     .map(
       (f) => `            <div><span class="label">${copy(f.label)}</span>
               <b>${copy(f.value)}</b></div>`,
@@ -100,7 +103,7 @@ ${paragraphs(narrative)}
             <div class="evidence-figures">
 ${figures}
             </div>
-            <p class="evidence-caption">${copy(evidence.caption)}</p>
+            <p class="evidence-caption">${copy(recordCaption)}</p>
           </div>
         </aside>
       </section>`;
@@ -120,7 +123,7 @@ function workIndex() {
             <a class="index-link" href="/work/${study.slug}/">
               <span class="index-n micro">${n(i)}</span>
               <span class="index-body">
-                <span class="index-constraint display-m">${copy(study.constraint)}</span>
+                <h3 class="index-constraint display-m">${copy(study.constraint)}</h3>
                 <span class="index-title">${copy(study.title)}</span>
               </span>
               <span class="index-meta" aria-hidden="true">
@@ -140,6 +143,7 @@ function workIndex() {
         <ol class="index">
 ${rows}
         </ol>
+        <p class="index-more"><a href="/work/">All work, including what is underneath it &rarr;</a></p>
       </section>`;
 }
 
@@ -162,6 +166,89 @@ ${workIndex()}
       </div>
 
 ${closingMarkup()}
+    </main>`,
+  });
+}
+
+/* -- work index ---------------------------------------------------------- */
+
+function indexRow(
+  href: string,
+  marker: string,
+  constraint: string,
+  title: string,
+  meta: string[],
+) {
+  const metaCells = meta
+    .map((m) => `<span class="micro">${copy(m)}</span>`)
+    .join("\n                ");
+
+  return `          <li class="index-row">
+            <a class="index-link" href="${href}">
+              <span class="index-n micro">${copy(marker)}</span>
+              <span class="index-body">
+                <h3 class="index-constraint display-m">${copy(constraint)}</h3>
+                <span class="index-title">${copy(title)}</span>
+              </span>
+              <span class="index-meta" aria-hidden="true">
+                ${metaCells}
+                <span class="index-arrow" aria-hidden="true">&rarr;</span>
+              </span>
+            </a>
+          </li>`;
+}
+
+export function renderWorkIndex() {
+  const studies = caseStudies
+    .map((study, i) =>
+      indexRow(
+        `/work/${study.slug}/`,
+        n(i),
+        study.constraint,
+        study.title,
+        study.meta.slice(2).map((m) => m.value),
+      ),
+    )
+    .join("\n");
+
+  const built = artifacts
+    .map((item) => indexRow(`/${item.slug}/`, "—", item.constraint, item.title, []))
+    .join("\n");
+
+  return shell({
+    title: `Work — ${person.nameEn}`,
+    description:
+      "Three constraints and what each one cost, plus the design system and " +
+      "the automation underneath them.",
+    path: "/work/",
+    stylesheet: "/src/home.css",
+    module: "/src/main.ts",
+    jsonLd: {
+      "@context": "https://schema.org",
+      "@type": "CollectionPage",
+      name: "Work",
+      about: caseStudies.map((s) => s.constraint),
+      author: personJsonLd(),
+    },
+    body: `    <main class="main page" id="main" tabindex="-1">
+      <header class="work-head">
+        <p class="label">Work</p>
+        <h1 class="display-l">Every project here is named by the pressure that produced it.</h1>
+      </header>
+
+      <section class="section" aria-labelledby="constraints">
+        <h2 class="label section-label" id="constraints">Three constraints</h2>
+        <ol class="index">
+${studies}
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="built">
+        <h2 class="label section-label" id="built">Also built</h2>
+        <ol class="index">
+${built}
+        </ol>
+      </section>
     </main>`,
   });
 }
@@ -347,7 +434,7 @@ export function renderAbout() {
             <span class="case-counter micro">${esc(person.location)}</span>
           </p>
           <h1 class="display-l case-constraint">${copy(person.nameEn)} &mdash; <span lang="ko">${esc(person.nameKo)}</span></h1>
-${strip(position, "case-meta")}
+${strip(record, "case-meta")}
         </header>
         <div class="case-body">
           <p class="lede case-lede">${copy(about.lede)}</p>
@@ -366,6 +453,7 @@ export function sitePages(): { file: string; name: string; html: string }[] {
   const pages = [
     { file: "index.html", name: "main", html: renderHome() },
     { file: "about/index.html", name: "about", html: renderAbout() },
+    { file: "work/index.html", name: "work", html: renderWorkIndex() },
   ];
 
   caseStudies.forEach((study, i) => {
@@ -390,6 +478,7 @@ export function sitePages(): { file: string; name: string; html: string }[] {
 /** Every route the site serves, for the sitemap and for tests. */
 export const routes = [
   "/",
+  "/work/",
   ...caseStudies.map((s) => `/work/${s.slug}/`),
   ...artifacts.map((a) => `/${a.slug}/`),
   "/about/",

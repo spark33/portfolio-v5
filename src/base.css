@@ -16,9 +16,6 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  /* The hero name is meant to run past the viewport edge. Clip it there
-     rather than letting it open a horizontal scrollbar. */
-  overflow-x: clip;
 }
 
 body {
@@ -32,7 +29,6 @@ body {
   font-synthesis-weight: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
-  overflow-x: clip;
 }
 
 img,

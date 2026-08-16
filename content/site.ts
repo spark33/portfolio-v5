@@ -51,18 +51,6 @@ export const person = {
 };
 
 /**
- * The four steps of the name motif. `groups` keeps the decomposed step split
- * into syllables so the row reads as three parts rather than nine loose
- * letters — the point of the step is that the parts are still organised.
- */
-export const nameSequence = [
-  { step: "Composed", groups: [person.nameKo], note: "Three syllable blocks" },
-  { step: "Decomposed", groups: person.nameJamo, note: "Nine jamo, still in three groups" },
-  { step: "Transliterated", groups: [person.nameRoman], note: "Mechanical — a table did this" },
-  { step: "Resolved", groups: [person.nameEn], note: "Chosen — nothing derived it" },
-];
-
-/**
  * The home page, as a person talking.
  *
  * Links live inside sentences rather than in an index. Each `[chip]` names an
@@ -122,33 +110,21 @@ export const closing: Narrative[] = [
   },
 ];
 
-/** The evidence card that sits in the margin beside the opening. */
-export const evidence = {
-  figures: [
-    { label: "Institutions", value: "400+" },
-    { label: "Re-contract", value: "100%" },
-    { label: "Registered", value: "180k+" },
-    { label: "Peak weekly", value: "53k" },
-  ],
-  caption:
-    "Every institution that has reached the end of a contract has renewed. " +
-    "Term-time peaks around 900,000 messages a week.",
-};
-
-export const thesis =
-  "I have never designed in a vacuum. Every system I have worked in was " +
-  "already there when I arrived — the scope set by a public tender before I " +
-  "was involved, the accessibility law, the procurement cycle, the users who " +
-  "showed up already fluent in someone else's product. Designing well inside " +
-  "constraints you did not choose is a different skill from designing in the " +
-  "open, and it is the one almost every company hiring actually needs.";
-
-export const position: Meta[] = [
+/**
+ * The record. One constant, rendered in the home margin and on the about page
+ * — it used to be two (`position` and `evidence.figures`) carrying the same
+ * four numbers, which is two places for them to drift apart.
+ */
+export const record: Meta[] = [
   { label: "Institutions", value: "400+" },
   { label: "Re-contract", value: "100%" },
   { label: "Registered", value: "180k+" },
-  { label: "One product", value: "3 years" },
+  { label: "Peak weekly", value: "53k" },
 ];
+
+export const recordCaption =
+  "Every institution that has reached the end of a contract has renewed. " +
+  "Term-time peaks around 900,000 messages a week.";
 
 export const caseStudies: CaseStudy[] = [
   {
@@ -563,10 +539,13 @@ export const about = {
   ],
 };
 
+/**
+ * Three items. It was five, two of which were individual artifact pages while
+ * "Work" — the thing the site is for — had no slot at all, so returning from a
+ * case study meant going to the home page and scrolling past the narrative.
+ */
 export const nav = [
-  { href: "/", label: "Index" },
-  { href: "/logician-ui/", label: "LogicianUI" },
-  { href: "/harness/", label: "Harness" },
+  { href: "/work/", label: "Work" },
   { href: "/blog/", label: "Writing" },
   { href: "/about/", label: "About" },
 ];

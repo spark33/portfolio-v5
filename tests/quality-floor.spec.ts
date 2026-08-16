@@ -382,3 +382,84 @@ test.describe("every case study is its own URL", () => {
     });
   }
 });
+
+/**
+ * Two defect classes that shipped three times each before anyone noticed, now
+ * caught as classes rather than as instances.
+ */
+test.describe("regressions that keep coming back", () => {
+  const NARROW = [320, 360, 390, 414];
+
+  for (const width of NARROW) {
+    test(`nothing overflows the viewport at ${width}px`, async ({ page }) => {
+      await page.setViewportSize({ width, height: 800 });
+
+      for (const path of ["/", "/work/", "/work/inherited-mental-model/", "/about/"]) {
+        await page.goto(path);
+        await page.evaluate(() => document.fonts.ready);
+
+        const escaped = await page.evaluate(() =>
+          [...document.querySelectorAll<HTMLElement>("body *")]
+            .filter((el) => {
+              const box = el.getBoundingClientRect();
+              return box.width > 0 && box.right > innerWidth + 1;
+            })
+            .map((el) => `${el.tagName.toLowerCase()}.${el.className.toString().split(" ")[0]}`)
+            .slice(0, 5),
+        );
+
+        // `overflow-x: clip` used to hide this, so a chip 28px wider than the
+        // column simply lost its last words with no symptom at all.
+        expect(escaped, `${path} at ${width}px`).toEqual([]);
+        expect(
+          await page.evaluate(() => document.documentElement.scrollWidth),
+          `${path} scrollWidth at ${width}px`,
+        ).toBeLessThanOrEqual(width + 1);
+      }
+    });
+  }
+
+  test("visual separation exists as characters, not only as CSS", async ({ page }) => {
+    // Three times now: a ::before placeholder with no text, a <br> hidden on
+    // mobile that welded two words together, and a flex gap that rendered
+    // "LogicianUIour design system". Gaps, pseudo-content and hidden breaks are
+    // invisible to reader mode, text extraction and screen readers.
+    for (const path of ["/", "/work/", "/logician-ui/"]) {
+      await page.goto(path);
+
+      const text = await page.locator("main").innerText();
+
+      // Whole words, so the allowlist can be checked against the word rather
+      // than against a three-character fragment of it — an earlier version
+      // matched "tCh" inside "FactChat" and could never clear it.
+      const CAMEL_OK = new Set([
+        "FactChat",
+        "LogicianUI",
+        "ChatGPT",
+        "JavaScript",
+        "WebGL",
+        "KWCAG",
+        "WCAG",
+      ]);
+
+      const welded = (text.match(/[\p{L}\p{N}]+/gu) ?? []).filter(
+        (word) => /[a-z0-9][A-Z]/.test(word) && !CAMEL_OK.has(word),
+      );
+
+      expect([...new Set(welded)], `${path}: words welded together`).toEqual([]);
+    }
+  });
+
+  test("the index argument is carried by real headings", async ({ page }) => {
+    await page.goto("/work/");
+
+    // The brief's test is "read only the eyebrows and headings" — so the
+    // constraints have to be headings. They were spans, and the test that
+    // claimed otherwise queried the spans and passed.
+    const headings = await page.locator("h3").allTextContents();
+    expect(headings.length).toBeGreaterThanOrEqual(5);
+    for (const heading of headings) {
+      expect(heading.trim().length).toBeGreaterThan(20);
+    }
+  });
+});

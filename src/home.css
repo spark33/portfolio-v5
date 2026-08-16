@@ -41,11 +41,15 @@
    The reference this borrows from uses favicons, which work because its nouns
    are Microsoft and Behance. Mindlogic and LogicianUI have no such currency,
    so the chip carries the number instead of a mark. */
+/* Inline, not inline-flex, and allowed to wrap.
+   As a nowrap inline-flex box, "the harness · AGENTS, AUTOFIXES, AUTO-MERGE"
+   measured 398px inside a 358px column at 390px wide — it ran off the right
+   edge and `overflow-x: clip` hid the fact that the reader never saw the end
+   of it. box-decoration-break keeps the background whole across a line break. */
 .chip {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 0.5em;
-  white-space: nowrap;
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
   background: var(--paper-recessed);
   border-radius: 5px;
   padding: 0.1em 0.45em 0.16em;
@@ -58,6 +62,7 @@
 }
 
 .chip-fact {
+  white-space: nowrap;
   font-family: var(--font-mono);
   font-size: 0.66em;
   letter-spacing: 0.06em;
@@ -116,6 +121,19 @@ a.chip:hover {
 .contact {
   margin-top: var(--space-5);
   font-size: 1.21875rem;
+}
+
+.work-head {
+  padding-block: var(--space-6) var(--space-7);
+  max-width: 22ch;
+}
+
+.index-more {
+  margin-top: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
 }
 
 .section {

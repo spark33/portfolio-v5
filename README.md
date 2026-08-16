@@ -19,7 +19,7 @@ is a different skill from designing in the open, and it is the one most
 companies hiring actually need. Everything structural serves that claim.
 
 **Every project is introduced by its constraint, before its title.** On the
-index the constraint is the heading and the project name is subordinate to it,
+index the constraint is an `<h3>` and the project name is subordinate to it,
 so you cannot read the name before the pressure that produced it. On a case
 study the constraint is the `<h1>`. This is enforced by the content types in
 [`content/site.ts`](content/site.ts): a `CaseStudy` cannot be written without a
@@ -48,11 +48,10 @@ The lattice and the hoshi are CSS backgrounds, so they need no SVG, no script
 and no knowledge of page height. `?board` on any URL draws them, as a URL
 rather than a hover so it works for a keyboard, a screenshot and a phone.
 
-**The influence solver in `lib/board.ts` currently has no caller.** It placed
-the blocks of the previous hero; a narrative column has nothing for it to
-resolve. It is pure, tested and small, and it should either find a job on the
-case-study templates or be deleted — leaving it as it is, is the one thing not
-to do.
+The influence solver that placed the old hero's blocks has been **deleted**
+along with the CSS that styled them — eight classes appearing in zero rendered
+pages. It is in git history if a narrative page ever grows something for it to
+resolve.
 
 ## Layout
 
@@ -66,8 +65,7 @@ to do.
 | `plugins/site.ts`       | Writes every page to its URL path and registers MPA inputs   |
 | `src/tokens.css`        | Palette, type scale, tracking, spacing, easing               |
 | `src/base.css`          | Reset, type primitives, strips, focus, page frame            |
-| `lib/board.ts`          | The lattice, influence and the build-time solver              |
-| `src/board.css`         | The board's visible surface — lattice, hoshi, solved field    |
+| `src/board.css`         | The board's visible surface — lattice and star points         |
 | `src/board.ts`          | The only client script: two pointer coordinates               |
 | `src/home.css`          | Thesis and position strip                                     |
 | `src/case.css`          | Case studies and artifact pages — the decision spine         |
@@ -180,6 +178,21 @@ value to use when a declaration drifts. Checking a single width is not enough:
 the cell shrinks with the viewport faster than text does, and an earlier version
 of that file went green at 1440 while the lede overflowed its cells at 1100.
 That is also why the board only applies from 80rem up.
+
+Two defect classes shipped three times each before anything caught them, and
+both are now tested as classes rather than patched as instances:
+
+- **Silent overflow.** A chip measured 398px inside a 358px column at 390px
+  wide and lost its last words — with no symptom, because `overflow-x: clip`
+  was hiding it. That rule existed for a cropped hero that no longer exists; it
+  is gone, and a test now fails on any element crossing the viewport edge at
+  320, 360, 390 and 414.
+- **Separation that is not in the text.** A `::before` placeholder with no
+  text content, a `<br>` hidden on mobile that welded "not empty" to "when",
+  and a flex gap that rendered `LogicianUIour design system`. Gaps,
+  pseudo-content and hidden breaks are invisible to reader mode, text
+  extraction and screen readers. A test now walks the rendered text of every
+  page and fails on welded words.
 
 The rest:
 every route readable and parseable with JS disabled, one non-empty `<h1>` and
