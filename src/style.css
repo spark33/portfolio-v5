@@ -68,8 +68,13 @@ main p {
   animation: gate-failsafe 1ms 8s forwards;
 }
 
+/*
+ * Deliberately modest. The sequence starts as one small circle and the mark it
+ * resolves to is a name, not a banner — set full-bleed it reads as a splash
+ * screen, which is a different and worse thing.
+ */
 .gate__stage {
-  width: min(46rem, 78vw);
+  width: min(34rem, 72vw);
 }
 
 .gate--lifting {

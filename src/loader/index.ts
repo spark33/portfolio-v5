@@ -1,30 +1,34 @@
 import "./loader.css";
-import { APPROACH, LOCK_ORDER } from "./layout.ts";
-import { FRAME, MORPH_POINTS, MORPHS } from "./morphs.ts";
+import { FRAME, MORPHS, MORPH_POINTS } from "./morphs.ts";
 
 /**
  * The loading animation.
  *
+ *   ●                    one circle
  *   ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ   the name, taken apart
  *   SEAN PARK            the name he goes by
  *
- * Two stages and one continuous morph. 박상현 is three Hangul blocks, each a
- * square assembled from two or three jamo; taken apart it is nine pieces, and
- * those nine arrive as a line of type and then become eight Latin letters.
+ * Three states and one continuous morph through all of them, drawn by a single
+ * path. There is no arrival, no assembly and no handover: every frame in the
+ * run is the same twenty contours interpolated somewhere along the chain.
  *
- * The composed syllables are not drawn at all. Assembling them and immediately
- * pulling them apart again showed the same name twice, and the pieces are the
- * more interesting half — a name you can read only if you know how to put it
- * back together.
+ * The circle is ㅇ. 상 has one, so the name already contains a perfect circle —
+ * it does not have to be invented and it does not have to come from anywhere.
+ * Every contour starts as a copy of ㅇ's own ring, at ㅇ's own place and size,
+ * so the first frame is one small disc and ㅇ is the piece that never moves.
  *
- * That is also why this cannot be a stock preloader wearing someone's name:
- * the animation is specific to *this* name, in *this* script, and would have
- * to be rebuilt from scratch for any other.
+ * 박상현 is three Hangul blocks, each a square assembled from two or three
+ * jamo; taken apart it is the nine pieces the disc opens into. The composed
+ * syllables are not drawn — showing them and immediately pulling them apart
+ * again showed the same name twice, and the pieces are the more interesting
+ * half. That is also why this cannot be a stock preloader wearing someone's
+ * name: it is specific to *this* name in *this* script.
  *
  * Every form is baked outline data rather than live text — the whole point is
- * that a jamo turns into a Latin letter, and only matched contours can do
- * that. `scripts/build-loader.mjs` does the matching once, at build time,
- * against Pretendard Variable, at one weight and one scale for every glyph.
+ * that a circle turns into a jamo turns into a Latin letter, and only matched
+ * contours can do that. `scripts/build-loader.mjs` does the matching once, at
+ * build time, against Pretendard Variable, at one weight and one scale for
+ * every glyph.
  *
  * The whole animation is a pure function of normalised time, `apply(t)`. Any
  * frame can be rendered on demand, which is what makes it possible to
@@ -32,7 +36,7 @@ import { FRAME, MORPH_POINTS, MORPHS } from "./morphs.ts";
  */
 
 /** Total duration in milliseconds. */
-export const DURATION = 3200;
+export const DURATION = 2600;
 
 /**
  * Where the sequence comes to rest.
@@ -47,72 +51,62 @@ export const REST = 0.88;
 /** Beats, in normalised time. */
 const T = {
   /**
-   * The pieces fly in and land on the line.
+   * The disc opens into the line.
    *
-   * Starting before zero on purpose. The camera opens hard inside the first
-   * piece drawn, and a piece that begins arriving at t = 0 is a hairline there
-   * — the animation opened on three hundred milliseconds of one thin line in
-   * an empty frame. Half a beat of head start means the first thing on screen
-   * is solid ink at several times size, and what the pull-back reveals is that
-   * the mass you were looking at is a letter.
+   * Unstaggered, which took a couple of goes to accept. Every contour starts as
+   * the *same* circle in the *same* place, so one that leaves before its
+   * neighbours is briefly an identical circle sitting next to the one it left —
+   * it reads as the disc budding a duplicate, not as the disc opening. Moving
+   * them together means every frame is the whole line at one fraction of its
+   * spread, which reads as the mark stretching out into type.
+   *
+   * What carries the interest instead is `OPEN`: the circles fly apart before
+   * they change shape, so the beat has two readable halves rather than one
+   * smeared one.
    */
-  assembleFrom: -0.06,
-  assembleSpan: 0.24,
-  assembleStagger: 0.03,
+  openFrom: 0.05,
+  openSpan: 0.34,
 
   /**
-   * The name flows into the one he goes by.
+   * The line flows into the name he goes by.
    *
    * The longest beat, and unhurried on purpose: the middle of this morph is
    * the only place the piece is neither Korean nor Latin, and that in-between
    * is the most interesting thing in it. Rushing past it to reach a legible
    * frame throws away the reason for doing the morph at all.
    */
-  flowFrom: 0.46,
-  flowSpan: 0.38,
-  /** Unstaggered: by this point there are no pieces left, only the line. */
-  flowStagger: 0,
+  flowFrom: 0.5,
+  flowSpan: 0.34,
 
   /**
    * The exit.
    *
-   * The camera dives back into a stroke while the whole frame fades out, which
-   * does two jobs at once. Looping, it closes the seam: the last frame is a
-   * near-black close-up of ink, which is exactly what the first frame is, so
-   * the cut back to zero is invisible. Playing once, it is the handoff — the
-   * loader is pulled into the page rather than switched off.
+   * The camera closes back on the circle while the whole frame fades out, which
+   * does two jobs at once. Looping, it closes the seam: the last frame is
+   * framed exactly as the first. Playing once, it is the handoff — the loader
+   * is pulled away rather than switched off.
    */
   exitFrom: 0.93,
   exitSpan: 0.07,
-  /** The other side of the blink, so a loop dissolves rather than cuts. */
-  enterSpan: 0.03,
+  /**
+   * There is no fade *in*. The mark has to be there when the run starts, and
+   * any ramp at all opens the animation on an empty frame. Looping, the cut
+   * from the faded-out end back to a small disc on an empty field is the
+   * gentlest cut there is — the frame is nearly black on both sides of it.
+   */
 } as const;
 
 /**
- * Every staggered beat has to close before the run ends.
+ * Every beat has to close before the run comes to rest.
  *
- * A staggered beat spends part of its window before its last member starts, so
- * a span that looks like it ends in time does not. The flow once ran nine
- * staggered pieces past the end of the sequence, and the final frame caught
- * them mid-morph and rendered the name as a scramble. Checked here rather than
- * left as arithmetic in a comment, because it is the kind of thing that breaks
- * silently every time a beat is retimed.
+ * Checked here rather than left as arithmetic in a comment, because it is the
+ * kind of thing that breaks silently every time a beat is retimed — a span
+ * running past `REST` leaves the final frame mid-morph, and the name renders as
+ * a scramble.
  */
-const LAST = Math.max(
-  T.assembleFrom + 8 * T.assembleStagger + T.assembleSpan,
-  T.flowFrom + T.flowSpan,
-);
+const LAST = Math.max(T.openFrom + T.openSpan, T.flowFrom + T.flowSpan);
 if (LAST > REST) {
   throw new Error(`loader beats run to ${LAST.toFixed(3)}, past the resting frame at ${REST}`);
-}
-/**
- * The morph is drawn by one path that takes over from the nine at `flowFrom`,
- * and that path only knows where the pieces finish assembling — so a piece
- * still arriving at that moment would be yanked into place. Nothing on screen
- * is allowed to jump.
- */
-if (T.assembleFrom + 8 * T.assembleStagger + T.assembleSpan > T.flowFrom + 1e-9) {
-  throw new Error(`pieces are still arriving at the flow, which starts at ${T.flowFrom}`);
 }
 
 /** CSS-style cubic bézier, solved for y given x. */
@@ -141,8 +135,20 @@ function cubicBezier(x1: number, y1: number, x2: number, y2: number) {
   };
 }
 
-/** A piece travelling to the line: covers ground fast, then seats. */
-const lockEase = cubicBezier(0.16, 1, 0.3, 1);
+/**
+ * How the opening splits between travelling and unfolding.
+ *
+ * `travel` is the fraction of the beat the circles spend flying apart — they
+ * are in place well before they finish becoming letters — and `unfoldFrom` is
+ * how far in the shape change starts. The overlap is deliberate: no gap where
+ * a row of circles sits still waiting to turn into something.
+ */
+const OPEN = { travel: 0.62, unfoldFrom: 0.24 };
+
+/** The circles flying apart: leaves decisively, settles slowly. */
+const moveEase = cubicBezier(0.22, 0.86, 0.26, 1);
+/** The letterforms unfolding, gentler at both ends than the travel. */
+const openEase = cubicBezier(0.5, 0.02, 0.35, 1);
 /**
  * The flow into Latin.
  *
@@ -177,21 +183,6 @@ function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-/** Interpolates between two point runs and renders the result as path data. */
-function blend(
-  from: number[],
-  to: number[],
-  t: number,
-  contours: number,
-  render: (points: number[], contours: number) => string,
-): string {
-  const points = new Array<number>(from.length);
-  for (let i = 0; i < points.length; i++) {
-    points[i] = from[i] + (to[i] - from[i]) * t;
-  }
-  return render(points, contours);
-}
-
 export interface LoaderOptions {
   autoplay?: boolean;
   loop?: boolean;
@@ -222,15 +213,8 @@ function svgEl<K extends keyof SVGElementTagNameMap>(
  * The camera.
  *
  * A viewBox that moves, which is the difference between type appearing on a
- * screen and a space you are moved through. It opens hard inside a single
- * stroke — so the first thing on screen is an abstract mass, not a name —
- * pulls back as the pieces arrive, and then pushes in through the morph.
- *
- * That push is doing real work. Twenty contours becoming eleven means nine of
- * them shrink to nothing, and the field loses mass through the middle: on a
- * fixed camera the name visibly collapses and comes back, which reads as a
- * fault. Moving in as it contracts keeps it filling the frame, and the same
- * moment reads as a dive into the transformation instead.
+ * screen and a space you are moved through. It opens close on the disc, pulls
+ * back as the line opens out of it, and pushes in through the morph.
  *
  * The aspect ratio is fixed. Animating it would change the element's own
  * height — `width: 100%; height: auto` takes its ratio from the viewBox — and
@@ -250,14 +234,13 @@ interface Shot {
 const CENTRE = { x: FRAME.width / 2, y: FRAME.height / 2 };
 
 /**
- * Where the camera opens and closes: hard inside the first piece to be drawn.
+ * Where the camera opens and closes: on the circle.
  *
- * Measured off that piece's own outline rather than written down, because
- * "inside the first thing on screen" is the requirement and a hand-picked
- * coordinate stops meaning that the moment the layout moves. Opening anywhere
- * else means opening on an empty frame.
+ * Measured off the seed's own outline rather than written down, because "framed
+ * on the disc" is the requirement and a hand-picked coordinate stops meaning
+ * that the moment the layout moves.
  */
-function keyhole(points: number[]): Shot {
+function onSeed(points: number[]): Shot {
   let x1 = Infinity;
   let y1 = Infinity;
   let x2 = -Infinity;
@@ -268,37 +251,37 @@ function keyhole(points: number[]): Shot {
     y1 = Math.min(y1, points[i + 1]);
     y2 = Math.max(y2, points[i + 1]);
   }
-  // Close enough that the glyph overflows the view: this is a look at the ink,
-  // not a look at the letter.
-  const zoom = Math.min(6, Math.max(2.4, FRAME.height / ((y2 - y1) * 0.8)));
+  // Close, but not inside it. The disc should read as a small mark with room
+  // around it — it is about to become a whole name, and a crop implies the
+  // opposite.
+  const zoom = Math.min(3.2, Math.max(1.6, FRAME.height / ((y2 - y1) * 2.1)));
   return { at: 0, zoom, x: (x1 + x2) / 2, y: (y1 + y2) / 2 };
 }
 
 function shots(open: Shot): Shot[] {
   return [
     { ...open, at: 0 },
-    // Off the keyhole quickly. Held, it is three hundred milliseconds of one
-    // hairline in an empty frame — a confident opening for about a third as
-    // long as it lasted.
-    { at: 0.11, zoom: 1.9, x: FRAME.width * 0.3, y: CENTRE.y },
-    { at: 0.3, zoom: 1, ...CENTRE },
-    { at: 0.46, zoom: 1, ...CENTRE },
-    // In through the collapse, and back out as the name resolves.
-    { at: 0.7, zoom: 1.3, x: CENTRE.x, y: CENTRE.y * 0.98 },
+    // Held close while it is still a mark. The camera pulling back before the
+    // disc has done anything shrinks it away before anyone has seen it.
+    { at: 0.09, zoom: open.zoom * 0.72, ...CENTRE },
+    { at: 0.34, zoom: 1, ...CENTRE },
+    { at: 0.5, zoom: 1, ...CENTRE },
+    // In through the middle of the morph, where nine of the twenty contours
+    // shrink to nothing: on a fixed camera the field visibly loses mass and
+    // comes back, which reads as a fault. Moving in as it contracts keeps it
+    // filling the frame, and the same moment reads as a dive into the change.
+    { at: 0.74, zoom: 1.22, x: CENTRE.x, y: CENTRE.y * 0.98 },
     { at: REST, zoom: 1.02, ...CENTRE },
     // Held still while the name is legible. The one moment in the run the
     // camera is asked to do nothing, and it is the moment the piece is *for*.
     { at: 0.93, zoom: 1.02, ...CENTRE },
-    // Back into the keyhole, which is where the next pass starts.
+    // Back to the circle, which is where the next pass starts.
     { ...open, at: 1 },
   ];
 }
 
-/** The camera's whole path, opening and closing on the first piece drawn. */
-const SHOTS = shots(keyhole(MORPHS[LOCK_ORDER[0]].from));
-
-/** Line weight of the drawn outlines, in frame units. */
-const STROKE = 0.0065;
+/** The camera's whole path, opening and closing on the circle. */
+const SHOTS = shots(onSeed(MORPHS[0].seed));
 
 /**
  * The interior.
@@ -331,10 +314,6 @@ const ECHOES = [
  * a half for the broad one is the range where they read as cut into the
  * letterform rather than as damage to it.
  */
-
-/** Where in a piece's arrival the outline finishes drawing and the fill takes
- *  over. The two overlap, so the form is never a bare outline for long. */
-const DRAW = { span: 0.62, fillFrom: 0.45 };
 
 /** Distinguishes the mask of one mounted loader from another's. */
 let mounted = 0;
@@ -402,64 +381,105 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     return d;
   }
 
-  const partGroup = svgEl("g");
-  const partNodes = MORPHS.map((morph) => {
-    const from = toPath(morph.from, morph.contours);
-    const latin = toPath(morph.latin, morph.contours);
-
-    const outer = svgEl("g");
-    const path = svgEl("path", {
-      d: from,
-      fill: "#fff",
-      stroke: "#fff",
-      // Butt, not round. A round cap on a zero-length dash renders as a dot,
-      // so at rest — dash offset at full length, nothing meant to be drawn —
-      // every contour start left a speck on screen.
-      "stroke-linecap": "butt",
-      "stroke-linejoin": "round",
-      "stroke-width": STROKE,
-    });
-
-    // The points are baked in frame coordinates — the same space the final
-    // path uses, because that one has to hold all twenty contours at once and
-    // can carry no per-glyph transform. So the only transform on a piece is
-    // the distance it still has to travel.
-    outer.append(path);
-    partGroup.append(outer);
-
-    // Total outline length, for the draw-on. Read once, from the state the
-    // piece is drawn in. A jamo with several contours returns their sum, so
-    // they draw one after another — roughly the order they would be written.
-    const length = path.getTotalLength();
-    path.setAttribute("stroke-dasharray", String(length));
-
-    return { outer, path, length, morph, from, latin, current: from };
-  });
-  forms.append(partGroup);
-
-  // --- The whole line, as one path ------------------------------------------
+  // --- The whole run, as one path -------------------------------------------
   //
-  // The morph has to be a single element. A letter's outline and its counter
-  // are separate contours, and `fill-rule` only punches a hole when both live
-  // in the same path — split across nine, every counter rendered as a solid
-  // blob and SEAN PARK came out unreadable.
+  // One element for everything. A letter's outline and its counter are separate
+  // contours, and `fill-rule` only punches a hole when both live in the same
+  // path — split across nine, every counter rendered as a solid blob and SEAN
+  // PARK came out unreadable. It is also simply what the animation is: not nine
+  // things that later become one, but one field of twenty contours moving along
+  // a chain from a circle to a name.
   //
-  // It also makes the second stage one movement rather than nine, which is
-  // what it should be: by then there are no pieces left, only the name.
-  const chain = { start: [] as number[], end: [] as number[] };
-  let fieldContours = 0;
-  for (const node of partNodes) {
-    chain.start.push(...node.morph.from);
-    chain.end.push(...node.morph.latin);
-    fieldContours += node.morph.contours;
+  // Three flat runs of the same twenty contours, in the order the path draws
+  // them, so a frame is two lerps and a string.
+  const chain = { seed: [] as number[], jamo: [] as number[], latin: [] as number[] };
+
+  /**
+   * One contour's slice of those runs, with where it starts and where it lands.
+   *
+   * The centroids are the whole reason this is per contour rather than per
+   * piece. Twenty circles that change shape while they are still travelling
+   * spend the first third of the run as a lump — every one of them is halfway
+   * between a circle and a letter *and* halfway to where it is going, and the
+   * frame reads as a smear. Splitting the two lets the circles fly apart first
+   * and unfold once they are in place, which is legible at every frame in
+   * between: a mark, then a row of marks, then type.
+   */
+  const bits: Array<{
+    at: number;
+    length: number;
+    from: [number, number];
+    to: [number, number];
+  }> = [];
+  let contours = 0;
+
+  function centroid(points: number[], at: number, length: number): [number, number] {
+    let x = 0;
+    let y = 0;
+    for (let i = at; i < at + length; i += 2) {
+      x += points[i];
+      y += points[i + 1];
+    }
+    return [x / (length / 2), y / (length / 2)];
   }
 
-  const field = svgEl("path", {
-    d: toPath(chain.start, fieldContours),
-    fill: "#fff",
-    opacity: 0,
-  });
+  for (const morph of MORPHS) {
+    const base = chain.seed.length;
+    chain.seed.push(...morph.seed);
+    chain.jamo.push(...morph.jamo);
+    chain.latin.push(...morph.latin);
+
+    const span = MORPH_POINTS * 2;
+    for (let c = 0; c < morph.contours; c++) {
+      const at = base + c * span;
+      bits.push({
+        at,
+        length: span,
+        from: centroid(chain.seed, at, span),
+        to: centroid(chain.jamo, at, span),
+      });
+    }
+    contours += morph.contours;
+  }
+
+  const field = svgEl("path", { d: "", fill: "#fff" });
   forms.append(field);
+
+  /**
+   * The whole chain at one moment: every point through both morphs at once.
+   *
+   * Composed rather than branched, so there is no moment where one stage hands
+   * over to another and therefore no handover to get wrong. Before the flow
+   * starts its factor is 0 and that lerp is a no-op; the arithmetic is cheap
+   * enough not to be worth avoiding.
+   */
+  function chainAt(t: number): string {
+    const points = new Array<number>(chain.seed.length);
+
+    const opening = phase(t, T.openFrom, T.openSpan, 0, 0);
+    const moved = moveEase(Math.min(1, opening / OPEN.travel));
+    const formed = openEase(Math.max(0, (opening - OPEN.unfoldFrom) / (1 - OPEN.unfoldFrom)));
+    const flowed = flowEase(phase(t, T.flowFrom, T.flowSpan, 0, 0));
+
+    for (const bit of bits) {
+      const cx = bit.from[0] + (bit.to[0] - bit.from[0]) * moved;
+      const cy = bit.from[1] + (bit.to[1] - bit.from[1]) * moved;
+
+      for (let i = bit.at; i < bit.at + bit.length; i += 2) {
+        // Each point relative to its own contour's centre, so the shape can
+        // unfold on a schedule of its own while the centre travels on another.
+        const sx = chain.seed[i] - bit.from[0];
+        const sy = chain.seed[i + 1] - bit.from[1];
+        const x = cx + sx + (chain.jamo[i] - bit.to[0] - sx) * formed;
+        const y = cy + sy + (chain.jamo[i + 1] - bit.to[1] - sy) * formed;
+
+        points[i] = x + (chain.latin[i] - x) * flowed;
+        points[i + 1] = y + (chain.latin[i + 1] - y) * flowed;
+      }
+    }
+
+    return toPath(points, contours);
+  }
 
   // --- The interior --------------------------------------------------------
   // Outlines rather than solids: a filled echo can swallow a letter whole,
@@ -575,62 +595,13 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
   wrap.append(svg, meter);
   root.append(wrap);
 
-  /**
-   * The twenty contours at any moment of the morph, unstaggered.
-   *
-   * The visible animation staggers its arrival; this does not, because it is
-   * read at a time other than now and a stagger there would only smear the
-   * lead.
-   */
-  function chainAt(time: number): string {
-    const flowed = flowEase(phase(time, T.flowFrom, T.flowSpan, 0, 0));
-    return blend(chain.start, chain.end, flowed, fieldContours, toPath);
-  }
-
   /** Renders the frame at normalised time. */
   function apply(t: number) {
     // The counter has to finish when the *name* does, not when the run does —
     // the exit is not loading, it is leaving.
     const progress = progressEase(Math.min(1, t / REST));
 
-    // --- Pieces --------------------------------------------------------------
-    LOCK_ORDER.forEach((partIndex, order) => {
-      const node = partNodes[partIndex];
-      const approach = APPROACH[node.morph.kind];
-
-      const locked = lockEase(phase(t, T.assembleFrom, T.assembleSpan, T.assembleStagger, order));
-
-      const away = 1 - locked;
-      node.outer.setAttribute(
-        "transform",
-        `translate(${(approach.x * away).toFixed(4)} ${(approach.y * away).toFixed(4)})`,
-      );
-
-      // The outline draws itself on, and the fill catches up behind it. A
-      // stroke running along the letterform is what makes it read as drawn
-      // rather than as a glyph being faded up.
-      const drawn = Math.min(1, locked / DRAW.span);
-      node.path.setAttribute("stroke-dashoffset", (node.length * (1 - drawn)).toFixed(3));
-
-      const filled = Math.max(0, (locked - DRAW.fillFrom) / (1 - DRAW.fillFrom));
-      node.path.setAttribute("fill-opacity", filled.toFixed(3));
-      // The line fades as the fill arrives, so a piece ends as a solid form
-      // rather than a solid form wearing an outline. Gated on the draw having
-      // begun, so nothing is painted before the piece exists.
-      node.path.setAttribute("stroke-opacity", (drawn > 0 ? 1 - filled : 0).toFixed(3));
-    });
-
-    // The single path takes over for the morph. At its first frame it draws
-    // exactly what the nine were drawing, so the handover is invisible — and
-    // from there it is one continuous change of the same twenty contours,
-    // never a crossfade and never a cut.
-    const flowed = flowEase(phase(t, T.flowFrom, T.flowSpan, 0, 0));
-    const flowing = flowed > 0;
-    partGroup.setAttribute("opacity", flowing ? "0" : "1");
-    field.setAttribute("opacity", flowing ? "1" : "0");
-    if (flowing) {
-      field.setAttribute("d", blend(chain.start, chain.end, flowed, fieldContours, toPath));
-    }
+    field.setAttribute("d", chainAt(t));
 
     // --- Camera -------------------------------------------------------------
     let shot = SHOTS[SHOTS.length - 1];
@@ -656,27 +627,20 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
       `${(shot.x - vw / 2).toFixed(4)} ${(shot.y - vh / 2).toFixed(4)} ${vw.toFixed(4)} ${vh.toFixed(4)}`,
     );
 
-    // Stroke weight is in viewBox units, so it would thicken as the camera
-    // pulls out. Scaling it by the zoom keeps the drawn line the same weight
-    // on screen wherever the camera is.
-    const strokeAt = STROKE / shot.zoom;
-    for (const node of partNodes) {
-      node.path.setAttribute("stroke-width", strokeAt.toFixed(5));
-    }
-
     // --- Interior ------------------------------------------------------------
     // Each layer shows the chain some way ahead of now, enlarged about the
     // frame's centre and drifting. Clamped rather than wrapped: past the end
     // there is nothing further to read, and a wrap would put the beginning of
     // the next pass inside the last frame of this one.
     const { x: cx, y: cy } = CENTRE;
-    // The cuts are choreographed rather than constant: light on the two states
-    // that have to be read, full strength through the middle, where the forms
-    // are neither script and legibility is not the job. They never stop moving
-    // — that is what the resting frames are for — but neither the assembled
-    // line nor the name it resolves to should land chewed.
+    // The cuts are choreographed rather than constant: barely there on the two
+    // states that have to be read, full strength through the middle, where the
+    // forms are neither script and legibility is not the job. They never stop
+    // moving — that is what the resting frames are for — but the disc is a
+    // small mark and the name is the thing the whole run resolves to, and
+    // neither should land chewed.
     const bite =
-      0.45 + 0.55 * phase(t, 0.3, 0.2, 0, 0) * (1 - 0.9 * phase(t, 0.74, 0.12, 0, 0));
+      0.25 + 0.75 * phase(t, 0.44, 0.14, 0, 0) * (1 - 0.92 * phase(t, 0.76, 0.1, 0, 0));
     const settle = bite * cutScale;
     ECHOES.forEach((echo, index) => {
       const node = echoNodes[index];
@@ -699,13 +663,11 @@ export function mountLoader(root: HTMLElement, options: LoaderOptions = {}): Loa
     sheen.setAttribute("gradientTransform", `translate(${(t * 2.2 - 1.1) * FRAME.width} 0)`);
 
     // --- Exit ----------------------------------------------------------------
-    // The dive is the camera's; this is the blink that goes with it. Out over
-    // the dive, in over the first frames of the next pass — so a loop dissolves
-    // through a beat of dark instead of cutting from a resolved name back to an
-    // empty frame, and a single run hands off to the page rather than stopping.
-    const blink =
-      phase(t, 0, T.enterSpan, 0, 0) * (1 - phase(t, T.exitFrom, T.exitSpan, 0, 0));
-    svg.style.opacity = blink.toFixed(3);
+    // The camera closes back on the circle; this is the fade that goes with it.
+    // A loop dissolves through a beat of dark instead of cutting from a
+    // resolved name back to a bare mark, and a single run hands off to the page
+    // rather than stopping.
+    svg.style.opacity = (1 - phase(t, T.exitFrom, T.exitSpan, 0, 0)).toFixed(3);
 
     // --- Meter --------------------------------------------------------------
     const shown = Math.round(progress * 100);

@@ -17,15 +17,14 @@ test.describe("loader geometry", () => {
     return { min, max };
   }
 
-  test("both stages sit inside the frame, in one coordinate space", async () => {
+  test("every state sits inside the frame, in one coordinate space", async () => {
     const { FRAME, MORPHS } = await import("../src/loader/morphs.ts");
 
-    // Both stages are drawn by a single path holding every contour at once — a
+    // The whole run is drawn by a single path holding every contour at once — a
     // letter's counter only punches a hole when it shares a path with its
     // outline — and one path can carry no per-glyph transform. So every glyph
-    // has to be baked in the frame's own coordinates. Baked per glyph instead,
-    // they would all land on top of one another the instant that path took over.
-    for (const stage of ["from", "latin"] as const) {
+    // has to be baked in the frame's own coordinates.
+    for (const stage of ["seed", "jamo", "latin"] as const) {
       const all = MORPHS.flatMap((entry) => entry[stage]);
       const x = extent(all, 0);
       const y = extent(all, 1);
@@ -35,10 +34,11 @@ test.describe("loader geometry", () => {
       expect(y.min).toBeGreaterThanOrEqual(0);
       expect(y.max).toBeLessThanOrEqual(FRAME.height);
 
-      // Laid out at a single glyph's scale this would be a fraction of the
-      // width. Two thirds is well clear of that and demands no particular
-      // composition.
-      expect(x.max - x.min).toBeGreaterThan(FRAME.width * 0.66);
+      // The seed is one small disc by design; the two typeset states have to
+      // fill the frame. Laid out at a single glyph's scale they would be a
+      // fraction of it, and two thirds is well clear of that while demanding no
+      // particular composition.
+      if (stage !== "seed") expect(x.max - x.min).toBeGreaterThan(FRAME.width * 0.66);
     }
   });
 
@@ -49,7 +49,7 @@ test.describe("loader geometry", () => {
     // destroys it: fitting each stage to the frame separately. The jamo line is
     // wider in em than SEAN PARK, so width-fitting sets it smaller — and a
     // stage drawn smaller is a stage drawn lighter.
-    const heights = (["from", "latin"] as const).map((stage) => {
+    const heights = (["jamo", "latin"] as const).map((stage) => {
       const y = extent(MORPHS.flatMap((entry) => entry[stage]), 1);
       return y.max - y.min;
     });
@@ -67,7 +67,8 @@ test.describe("loader geometry", () => {
       const expected = entry.contours * MORPH_POINTS * 2;
       // A lerp between runs of different lengths reads past the end of one of
       // them and produces NaN coordinates, which render as nothing at all.
-      expect(entry.from).toHaveLength(expected);
+      expect(entry.seed).toHaveLength(expected);
+      expect(entry.jamo).toHaveLength(expected);
       expect(entry.latin).toHaveLength(expected);
     }
   });

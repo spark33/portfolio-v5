@@ -52,7 +52,7 @@ function stage(ground: keyof typeof GROUNDS = "dark"): { root: HTMLElement; host
   }
 
   const host = document.createElement("div");
-  host.style.cssText = "width:min(46rem,72vw)";
+  host.style.cssText = "width:min(34rem,66vw)";
   root.append(host);
 
   return { root, host };
