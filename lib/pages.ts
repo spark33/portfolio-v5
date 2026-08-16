@@ -1,12 +1,13 @@
 /**
  * Page renderers.
  *
- * The recurring structure is the resolution strip: a row of mono-labelled
- * cells that appears twice in the site's grammar — once for the name
- * (composed / decomposed / transliterated / resolved) and once for every
- * project (its constraint, its decisions, what they cost). The name and the
- * work get identical treatment on purpose, so the argument is carried by the
- * structure rather than asserted in copy.
+ * The recurring structure is the resolution strip: a run of mono-labelled
+ * steps that appears twice in the site's grammar — once for the name
+ * (composed / decomposed / transliterated / resolved, in `resolution()`) and
+ * once for every project (its constraint, its decisions, what they cost). The
+ * name and the work get identical treatment on purpose, so the argument is
+ * carried by the structure rather than asserted in copy. Both halves state
+ * what the step cost.
  */
 import {
   about,
@@ -14,6 +15,8 @@ import {
   caseStudies,
   closing,
   greeting,
+  nameCost,
+  nameResolution,
   narrative,
   nav,
   notFound,
@@ -97,6 +100,45 @@ function paragraphs(items: typeof narrative) {
   return items
     .map((item) => `        <p${item.lead ? ' class="lead"' : ""}>${chips(item.text)}</p>`)
     .join("\n");
+}
+
+/**
+ * The name, resolved in four steps. On the about page, and nowhere else.
+ *
+ * An ordered list because the steps are an order: each is produced from the one
+ * above it, and the last is the only one that loses anything. It is set as a
+ * ledger — mono label left, value right, a rule under each row — which is the
+ * same row the record uses in the home margin, so this is the site's grammar
+ * rather than a component invented for one block.
+ *
+ * It spent one commit as the home page's opening at display scale. That put a
+ * name in front of a reader who had come to find out about the work, and read
+ * as identity where the page's whole job is evidence. Here the page has already
+ * asked the question — its h1 is the name in two scripts — and the answer is
+ * useful: what to call this person, and what the English form costs.
+ */
+function resolution() {
+  const steps = nameResolution
+    .map(
+      (step) => `            <li class="resolve-step s${copy(step.n)}">
+              <span class="label">${copy(step.n)} &mdash; ${copy(step.step)}</span>
+              <span class="resolve-value">${copy(step.value)}</span>
+            </li>`,
+    )
+    .join("\n");
+
+  // Named by `aria-label` rather than by a heading: the about page's headings
+  // are its three sections, and a fourth one here would put the name back into
+  // an outline that is meant to read as an argument about the work.
+  return `          <section class="resolve" aria-label="The name, in four steps">
+            <ol class="resolve-steps">
+${steps}
+            </ol>
+            <div class="resolve-note">
+              <p class="label resolve-cost">Cost</p>
+              <p class="resolve-text">${copy(nameCost)}</p>
+            </div>
+          </section>`;
 }
 
 /**
@@ -480,6 +522,7 @@ ${margin(record)}
 
           <div class="case-body">
             <p class="lede case-lede">${copy(about.lede)}</p>
+${resolution()}
 ${sections}
           </div>
         </div>

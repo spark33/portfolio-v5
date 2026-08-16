@@ -51,6 +51,40 @@ export const person = {
 };
 
 /**
+ * The name, resolved in four steps. Rendered on the about page only.
+ *
+ * It answers a question that page has actually asked — its h1 is the name in
+ * two scripts — by saying what a reader should call this person and what the
+ * English form costs. It was briefly the home page's opening at display scale,
+ * which put identity in front of an employer who was there to find out about
+ * the work; the reasoning for taking it back off is in docs/iteration-log.md.
+ *
+ * The four values are derived from `person` rather than retyped, so they
+ * cannot drift from the wordmark, the footer or the structured data.
+ */
+export type NameStep = {
+  /** Two digits, like every other counter on the site. */
+  n: string;
+  /** The operation that produced this form. */
+  step: string;
+  value: string;
+};
+
+export const nameResolution: NameStep[] = [
+  { n: "01", step: "Composed", value: person.nameKo },
+  { n: "02", step: "Decomposed", value: person.nameJamo.join(" ") },
+  { n: "03", step: "Transliterated", value: person.nameRoman },
+  { n: "04", step: "Resolved", value: person.nameEn },
+];
+
+/**
+ * What the last step cost, in the field name every decision here uses.
+ */
+export const nameCost =
+  "Sean is what I answer to in English, and it is the only one of the four " +
+  "that loses the name: legible to everyone, and true to no document I own.";
+
+/**
  * The home page, as a person talking.
  *
  * Links live inside sentences rather than in an index. Each `[chip]` names an

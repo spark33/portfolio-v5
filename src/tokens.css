@@ -57,6 +57,21 @@
   --size-label: 0.6875rem;
   --size-micro: 0.625rem;
 
+  /* ---- weight ----------------------------------------------------------
+     Schibsted Grotesk is one variable file with a 400–900 axis, and the site
+     spent its first ten passes asking that axis for three values: 500, 600,
+     700. The name resolution uses it as a continuous scale instead, and the
+     direction is the argument. Weight rises as fidelity falls: the name as it
+     is written is set at the axis floor, and the anglicised form — the one
+     that is legible to everyone and true to no document — is set at nearly
+     the top, because that is the version the world actually uses.
+
+     Steps 01 and 02 are Pretendard, which ships as two static weights here,
+     so they take 400 — which is also the weight the shell preloads. */
+  --weight-source: 400;
+  --weight-carried: 700;
+  --weight-imposed: 860;
+
   /* ---- leading: tightens as the type grows ----------------------------- */
   --leading-display-xl: 0.88;
   --leading-display-l: 0.94;
