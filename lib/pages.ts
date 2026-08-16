@@ -19,6 +19,7 @@ import {
   person,
   record,
   recordCaption,
+  thesis,
   type Artifact,
   type CaseStudy,
   type Meta,
@@ -146,7 +147,9 @@ function workIndex() {
     .join("\n");
 
   return `      <section class="section" id="work" aria-labelledby="work-heading">
-        <h2 class="label section-label" id="work-heading">Three constraints</h2>
+        <p class="label section-label">${copy(thesis.label)}</p>
+        <h2 class="display-l display-measure thesis" id="work-heading">${copy(thesis.claim)}</h2>
+        <p class="lede thesis-support">${copy(thesis.support)}</p>
         <ol class="index">
 ${rows}
         </ol>

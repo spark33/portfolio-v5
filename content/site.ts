@@ -85,14 +85,25 @@ export const narrative: Narrative[] = [
       "to the procurement cycle. And our users arrived already fluent in a competitor's " +
       "product, so the interface conventions were decided somewhere else too.",
   },
-  {
-    kind: "p",
-    text:
-      "That is the part I actually want to talk about. Three things were already true " +
-      "when I arrived, and each one produced a decision I can defend — including what " +
-      "it cost.",
-  },
 ];
+
+/**
+ * The claim the site exists to make, as a heading rather than as prose.
+ *
+ * It used to be the fourth narrative paragraph — "That is the part I actually
+ * want to talk about…" — which meant that reading only the headings gave you a
+ * greeting, the words "Three constraints" at 11px, and three constraints, with
+ * nothing anywhere saying why a constraint is the thing being shown. The
+ * argument was in the copy and not in the structure, which is the failure mode
+ * this whole site is arranged against.
+ */
+export const thesis = {
+  label: "Three constraints",
+  claim: "Designing inside constraints you did not choose is a different skill.",
+  support:
+    "Three were already true before I arrived. Each produced a decision I can " +
+    "defend, including what it cost.",
+};
 
 export const closing: Narrative[] = [
   {

@@ -177,3 +177,40 @@ auto-placement and the toggle sizes to itself.
 is under 1.6. The broken state measured 6.0.
 
 Files: `src/base.css`, `tests/quality-floor.spec.ts`. Tests: 53 passed.
+
+## Pass 7 — read only the headings and the argument was not there
+
+**Gap.** The brief's own test. Headings on the home page, in order:
+
+> Hi, I'm Sean Park — 박상현 — and I run product and delivery at Mindlogic in
+> Seoul. / Three constraints / Users arrived already fluent… / Two features
+> had become… / No grade, no credit…
+
+A greeting, the words "Three constraints" set at 11px in mono, and three
+constraints. Nothing at any size says why a constraint is the thing being
+shown. The claim was there — it was the fourth narrative paragraph, "That is
+the part I actually want to talk about…" — which is precisely the failure this
+site is arranged against: the argument in the copy rather than in the
+structure. The old ledger made it structural; the narrative rewrite lost it.
+This was on the brief's known-problems list and it checks out.
+
+There was a second, related problem underneath it: the largest type on the home
+page was an `h3`. The section heading was 11px, the greeting `h1` 57.6px, and
+each index constraint 64px. The hierarchy ran backwards.
+
+**Fix.** The claim is now an `h2` — "Designing inside constraints you did not
+choose is a different skill." — at `display-l`, the largest thing on the page,
+with "Three constraints" demoted to the eyebrow above it and a supporting line
+under it carrying what the deleted paragraph said. Copy lives in
+`content/site.ts` as `thesis`, like everything else.
+
+Headings now read: who I am → the claim → the three constraints that support
+it. That is the argument, from headings alone.
+
+**Test.** `the home page states its claim in a heading, above the constraints`
+— the first `main h2` contains the claim, and the largest `h2` is larger than
+the largest `h3`, which catches both the missing claim and the inverted
+hierarchy.
+
+Files: `content/site.ts`, `lib/pages.ts`, `src/home.css`,
+`tests/quality-floor.spec.ts`. Tests: 54 passed.

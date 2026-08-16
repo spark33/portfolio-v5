@@ -108,6 +108,32 @@ test.describe("readable without JavaScript", () => {
     // Each one is a pressure, not a project name.
     for (const heading of headings) expect(heading.trim().length).toBeGreaterThan(20);
   });
+
+  test("the home page states its claim in a heading, above the constraints", async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto("/");
+    await page.evaluate(() => document.fonts.ready);
+
+    // The claim used to be the fourth narrative paragraph, so reading only the
+    // headings gave a greeting, "Three constraints" at 11px, and three
+    // constraints — nothing saying why a constraint is what is being shown.
+    const claim = page.locator("main h2").first();
+    await expect(claim).toContainText("constraints you did not choose");
+
+    // And it has to outrank what it introduces: the h3 constraints were the
+    // largest type on the page while the section heading was 11px mono.
+    const sizes = await page.evaluate(() => {
+      const size = (sel: string) =>
+        [...document.querySelectorAll<HTMLElement>(sel)].map((el) =>
+          parseFloat(getComputedStyle(el).fontSize),
+        );
+      return { h2: size("main h2"), h3: size("main h3") };
+    });
+
+    expect(Math.max(...sizes.h2)).toBeGreaterThan(Math.max(...sizes.h3));
+  });
 });
 
 test.describe("motion is declinable", () => {

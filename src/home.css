@@ -159,6 +159,22 @@ a.chip:hover {
   margin-bottom: var(--space-5);
 }
 
+/* The claim, as the largest thing on the page.
+   Reading only the headings used to give a greeting, the words "Three
+   constraints" set at 11px, and three constraints — and nothing at any size
+   saying why a constraint is the thing being shown. It was the fourth
+   narrative paragraph, which is exactly the failure this site is arranged
+   against: the argument in the copy rather than in the structure. */
+.thesis {
+  margin-bottom: var(--space-5);
+}
+
+.thesis-support {
+  max-width: 44rem;
+  color: var(--ink-secondary);
+  margin-bottom: var(--space-8);
+}
+
 @media (min-width: 80rem) {
   .spread {
     display: grid;
