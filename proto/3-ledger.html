@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prototype 3 — the record at display scale</title>
+    <link rel="stylesheet" href="/proto/proto.css" />
+    <style>
+      /* Thesis: numerals are the only part of this record a stranger can read
+         without knowing a single one of its nouns, so set them at the size of
+         the claim. The four figures become the page's display type and the
+         sentences become its caption — evidence first, in the one alphabet
+         that needs no translation. */
+
+      .ledger {
+        border-top: 1px solid var(--rule);
+        margin-top: 1rem;
+      }
+
+      .figure {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: end;
+        gap: 1rem;
+        padding-block: 0.5rem 0.7rem;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .figure .n {
+        font-size: clamp(3.5rem, 15.5vw, 15rem);
+        line-height: 0.86;
+        letter-spacing: -0.045em;
+        font-weight: 760;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .figure .of {
+        font-size: 0.9688rem;
+        color: var(--ink-secondary);
+        text-align: right;
+        max-width: 22ch;
+        line-height: 1.4;
+        padding-bottom: 0.6rem;
+      }
+
+      .figure .label { display: block; margin-bottom: -0.4rem; }
+
+      .caption {
+        margin-top: 1.5rem;
+        max-width: 42rem;
+        font-size: clamp(1.15rem, 1.5vw, 1.5rem);
+        line-height: 1.35;
+      }
+
+      .who {
+        margin-top: 2.5rem;
+        max-width: 38rem;
+        color: var(--ink-secondary);
+      }
+
+      .who b { font-weight: 700; color: var(--ink); }
+
+      .seal { color: var(--seal); }
+
+      @media (min-width: 80rem) {
+        .figure { grid-template-columns: calc(var(--u) * 13) 1fr; column-gap: var(--u); }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page head">
+      <span>Sean Park <span lang="ko">박상현</span></span>
+      <nav><span>Work</span><span>Writing</span><span>About</span></nav>
+    </header>
+
+    <main class="page">
+      <div class="ledger">
+        <div class="figure">
+          <p class="n"><span class="label">Institutions</span>400+</p>
+          <p class="of">Korean universities and public bodies running one product I own.</p>
+        </div>
+        <div class="figure">
+          <p class="n"><span class="label">Re-contract</span>100<span class="seal">%</span></p>
+          <p class="of">Every institution that has reached the end of a contract has renewed.</p>
+        </div>
+        <div class="figure">
+          <p class="n"><span class="label">Registered</span>180k+</p>
+          <p class="of">Registered users across three years of one release calendar.</p>
+        </div>
+        <div class="figure">
+          <p class="n"><span class="label">Peak weekly</span>53k</p>
+          <p class="of">Weekly actives during term, at around 900,000 messages a week.</p>
+        </div>
+      </div>
+
+      <p class="caption">You have not heard of the company, the product, or any of the institutions. The numbers are the part of this record that needs no translation.</p>
+
+      <p class="who"><b>Sean Park — <span lang="ko">박상현</span></b>, head of product and delivery at Mindlogic in Seoul. Three years on one product, none of it greenfield: the scope was set by a public tender, the accessibility standard is statutory, and the release calendar belongs to the procurement cycle.</p>
+    </main>
+  </body>
+</html>

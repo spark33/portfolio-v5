@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Prototype 1 — the resolution</title>
+    <link rel="stylesheet" href="/proto/proto.css" />
+    <style>
+      /* Thesis: the site's claim is that a record illegible to a foreign
+         reader can be made legible without being flattened. The name is that
+         claim at the scale of four words, so set the transformation itself —
+         composed, decomposed, transliterated, resolved — at display size, as
+         the first thing on the page. The argument is typographic before it is
+         verbal.
+
+         The weight axis carries the loss: 860 at the composed name down to 420
+         at the English one. Schibsted Grotesk is a 400–900 variable font and
+         the site only ever asks it for 500, 600 and 700. */
+
+      .strip {
+        border-top: 1px solid var(--rule);
+        margin-top: 1rem;
+        /* The measure the steps are sized against. */
+        container-type: inline-size;
+      }
+
+      .step {
+        padding-block: 1.1rem 1.4rem;
+        border-bottom: 1px solid var(--rule);
+      }
+
+      .step-top {
+        display: flex;
+        justify-content: space-between;
+        gap: 1rem;
+        margin-bottom: 0.5rem;
+      }
+
+      /* One size for all four steps, and it is not chosen — it is the size at
+         which the longest step fills the measure exactly. PARK SANGHYEON runs
+         8.62 em at this weight and tracking (measured; see proto/measure.mjs),
+         so the strip is set at a 8.62th of its own width and no step can ever
+         wrap or overflow at any viewport. The clamp is the fallback for a
+         browser without container units. */
+      .specimen {
+        font-size: clamp(2rem, 8.5vw, 7.5rem);
+        font-size: calc(100cqw / 8.62);
+        line-height: 0.95;
+        letter-spacing: -0.035em;
+        text-wrap: nowrap;
+      }
+
+      .step-note {
+        font-size: 0.9688rem;
+        line-height: 1.45;
+        color: var(--ink-secondary);
+        max-width: 30ch;
+      }
+
+      /* One continuous axis, four samples of it. */
+      .s1 .specimen { font-weight: 860; }
+      .s2 .specimen { font-weight: 700; letter-spacing: -0.02em; }
+      .s3 .specimen { font-weight: 540; }
+      .s4 .specimen { font-weight: 420; }
+
+      /* The accent, on the one step that loses the name. */
+      .s4 .step-top .label:first-child { color: var(--seal); }
+      .s4 .specimen { text-decoration: underline; text-decoration-color: var(--seal); text-underline-offset: 0.14em; text-decoration-thickness: 3px; }
+
+      .after {
+        padding-block: 2.5rem 4rem;
+      }
+
+      .role {
+        font-size: clamp(1.35rem, 2.4vw, 2.1rem);
+        line-height: 1.25;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        max-width: 24ch;
+      }
+
+      .after p.body {
+        margin-top: 1.25rem;
+        max-width: 38rem;
+        color: var(--ink-secondary);
+      }
+
+      @media (min-width: 80rem) {
+        .step {
+          display: grid;
+          grid-template-columns: calc(var(--u) * 13) 1fr;
+          column-gap: var(--u);
+          align-items: start;
+        }
+        .step-top { grid-column: 1; }
+        .specimen { grid-column: 1 / -1; }
+        .step-note { grid-column: 2; grid-row: 1; }
+      }
+
+      @media (max-width: 79.999rem) {
+        .step-note { margin-top: 0.55rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="page head">
+      <span>Sean Park <span lang="ko">박상현</span></span>
+      <nav><span>Work</span><span>Writing</span><span>About</span></nav>
+    </header>
+
+    <main class="page">
+      <div class="strip">
+        <section class="step s1">
+          <p class="step-top"><span class="label">01 — Composed</span><span class="label" lang="ko">한글</span></p>
+          <p class="specimen" lang="ko">박상현</p>
+          <p class="step-note">Three syllable blocks. The name on every document I hold.</p>
+        </section>
+
+        <section class="step s2">
+          <p class="step-top"><span class="label">02 — Decomposed</span><span class="label" lang="ko">자모</span></p>
+          <p class="specimen" lang="ko">ㅂㅏㄱ ㅅㅏㅇ ㅎㅕㄴ</p>
+          <p class="step-note">Nine letters. The structure survives; the name stops being pronounceable.</p>
+        </section>
+
+        <section class="step s3">
+          <p class="step-top"><span class="label">03 — Transliterated</span><span class="label">Revised Romanisation</span></p>
+          <p class="specimen">PARK SANGHYEON</p>
+          <p class="step-note">Every system can store it. Almost nobody says it.</p>
+        </section>
+
+        <section class="step s4">
+          <p class="step-top"><span class="label">04 — Resolved</span><span class="label">Cost</span></p>
+          <p class="specimen">Sean Park</p>
+          <p class="step-note">What I answer to at work. The only step that loses the name.</p>
+        </section>
+      </div>
+
+      <div class="after">
+        <p class="role">Head of product and delivery at Mindlogic, Seoul.</p>
+        <p class="body">You won't have heard of Mindlogic, and that is most of the reason this site exists. For three years I have worked on one product: FactChat, a multi-LLM assistant used across 400+ Korean universities and public bodies.</p>
+      </div>
+    </main>
+  </body>
+</html>
