@@ -123,9 +123,17 @@ a.chip:hover {
   font-size: 1.21875rem;
 }
 
+/* The measure has to be set on the element that carries the display size.
+   `max-width: 22ch` on this wrapper resolved `ch` against the inherited 18px
+   body size — about 210px — while the headline inside it was set at 124px, so
+   it broke one word per line and spent a whole 1440 viewport before any work
+   was visible. On the h1 the same unit resolves at the display size. */
 .work-head {
   padding-block: var(--space-6) var(--space-7);
-  max-width: 22ch;
+}
+
+.work-head > h1 {
+  max-width: 17ch;
 }
 
 .index-more {
