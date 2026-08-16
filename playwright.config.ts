@@ -6,7 +6,8 @@ import { defineConfig, devices } from "@playwright/test";
  * this Playwright version expects, and `playwright install` is unavailable there.
  * Prefer that binary when it exists; fall back to Playwright's own locally.
  */
-const bundled = process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium";
+const bundled =
+  process.env.CHROMIUM_PATH ?? "/opt/pw-browsers/chromium-1194/chrome-linux/chrome";
 const executablePath = existsSync(bundled) ? bundled : undefined;
 
 export default defineConfig({

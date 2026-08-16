@@ -1,0 +1,168 @@
+@import "./base.css";
+@import "./index-rows.css";
+
+/* The home page is a person talking.
+ *
+ * Links live inside the sentences rather than in an index, and the record sits
+ * in the margin beside the paragraph that earns it. The board sets both
+ * columns: the story runs in the first ten and a half cells, the margin note
+ * starts at cell twelve. */
+
+.spread {
+  padding-block: var(--space-6) var(--space-7);
+}
+
+.story > p {
+  font-size: 1.21875rem;
+  line-height: 1.62;
+  text-wrap: pretty;
+  max-width: 38rem;
+}
+
+.story > p + p {
+  margin-top: var(--space-5);
+}
+
+.story > p.lead {
+  color: var(--ink-secondary);
+}
+
+.greeting {
+  font-size: clamp(2.1rem, 4.2vw, 3.6rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  text-wrap: pretty;
+  margin-bottom: var(--space-6);
+  max-width: 20ch;
+}
+
+/* A noun nobody recognises, plus the fact that makes it mean something.
+   The reference this borrows from uses favicons, which work because its nouns
+   are Microsoft and Behance. Mindlogic and LogicianUI have no such currency,
+   so the chip carries the number instead of a mark. */
+/* Inline, not inline-flex, and allowed to wrap.
+   As a nowrap inline-flex box, "the harness · AGENTS, AUTOFIXES, AUTO-MERGE"
+   measured 398px inside a 358px column at 390px wide — it ran off the right
+   edge and `overflow-x: clip` hid the fact that the reader never saw the end
+   of it. box-decoration-break keeps the background whole across a line break. */
+.chip {
+  display: inline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  background: var(--paper-recessed);
+  border-radius: 5px;
+  padding: 0.1em 0.45em 0.16em;
+  font-weight: 600;
+  letter-spacing: -0.008em;
+  text-decoration: none;
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
+  transition: box-shadow var(--dur-state) var(--ease-exit);
+}
+
+.chip-fact {
+  white-space: nowrap;
+  font-family: var(--font-mono);
+  font-size: 0.66em;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 500;
+  color: var(--ink-secondary);
+}
+
+a.chip::after {
+  content: "↗";
+  font-family: var(--font-mono);
+  font-size: 0.6em;
+  color: var(--ink-secondary);
+}
+
+a.chip:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 42%, transparent);
+}
+
+/* The record, beside the sentence that claims it. */
+.evidence {
+  border: 1px solid var(--rule);
+  border-radius: 6px;
+  padding: var(--space-5);
+  background: color-mix(in srgb, var(--paper-recessed) 55%, transparent);
+}
+
+.evidence-figures {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5) var(--space-4);
+}
+
+.evidence-figures b {
+  display: block;
+  margin-top: var(--space-2);
+  font-size: 1.8rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.024em;
+  font-variant-numeric: tabular-nums;
+}
+
+.evidence-caption {
+  margin-top: var(--space-5);
+  font-size: var(--size-small);
+  line-height: 1.5;
+  color: var(--ink-secondary);
+  text-wrap: pretty;
+}
+
+.story-closing {
+  padding-block: var(--space-7) var(--space-6);
+}
+
+.contact {
+  margin-top: var(--space-5);
+  font-size: 1.21875rem;
+}
+
+.work-head {
+  padding-block: var(--space-6) var(--space-7);
+  max-width: 22ch;
+}
+
+.index-more {
+  margin-top: var(--space-6);
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  letter-spacing: var(--track-label);
+  text-transform: uppercase;
+}
+
+.section {
+  padding-block: var(--space-6) var(--space-7);
+}
+
+.section-label {
+  margin-bottom: var(--space-5);
+}
+
+@media (min-width: 80rem) {
+  .spread {
+    display: grid;
+    grid-template-columns: calc(var(--u) * 10.5) 1fr;
+    column-gap: calc(var(--u) * 1.5);
+    align-items: start;
+  }
+
+  /* Sticky so the record stays beside the argument while it is being made. */
+  .margin-note {
+    position: sticky;
+    top: calc(var(--u) * 0.5);
+    padding-top: calc(var(--u) * 1.5);
+  }
+}
+
+@media (max-width: 79.999rem) {
+  .margin-note {
+    margin-top: var(--space-6);
+    max-width: 38rem;
+  }
+}

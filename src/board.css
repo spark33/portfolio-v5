@@ -1,0 +1,102 @@
+/* The board's visible surface — which is almost nothing.
+ *
+ * Both the lattice and the star points are CSS backgrounds. Nothing here needs
+ * JavaScript, an SVG, or the page's height: the cell is a custom property, so
+ * the board resolves itself at any viewport and is correct in the first paint.
+ * The only script on the page writes two pointer coordinates.
+ *
+ * The lattice sits at --board-base, calibrated by measurement rather than eye:
+ * line #8f8e84 over paper #e9e9e3 blends to #e0e0da, contrast ratio 1.087.
+ * Below 0.08 it vanishes under compression; at 0.16 it starts reading as graph
+ * paper; 0.24 is a drawn grid. 0.10 survives a screenshot and a phone without
+ * announcing itself.
+ *
+ * A second copy, brighter, is masked to a disc under the pointer — so hovering
+ * does not conjure a grid from nothing, it raises the contrast of structure
+ * already on the page. That is the difference between this and a flashlight. */
+
+.board {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(100%, var(--page-max));
+  padding-inline: var(--gutter);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.lattice {
+  position: absolute;
+  inset: 0 var(--gutter);
+  background-image:
+    repeating-linear-gradient(
+      to right,
+      var(--lattice-ink) 0 1px,
+      transparent 1px var(--u)
+    ),
+    repeating-linear-gradient(
+      to bottom,
+      var(--lattice-ink) 0 1px,
+      transparent 1px var(--u)
+    );
+}
+
+.lattice-base {
+  opacity: var(--board-base);
+}
+
+.lattice-lift {
+  opacity: var(--board-lift);
+  -webkit-mask-image: radial-gradient(
+    circle var(--board-reach) at var(--mx, -999px) var(--my, -999px),
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    transparent 74%
+  );
+  mask-image: radial-gradient(
+    circle var(--board-reach) at var(--mx, -999px) var(--my, -999px),
+    #000 0%,
+    rgba(0, 0, 0, 0.5) 48%,
+    transparent 74%
+  );
+}
+
+/* No pointer, or no appetite for motion: the ambient lattice is the whole
+   story, and it is identical on every device. */
+@media (prefers-reduced-motion: reduce), (hover: none) {
+  .lattice-lift {
+    display: none;
+  }
+}
+
+/* The nine hoshi, at lines 4, 10 and 16 of the board — a six-cell pitch
+   starting four cells in. Horizontally that lands three marks inside nineteen
+   cells and clips the fourth; vertically it continues down the page, which
+   reads as one board after another. */
+.hoshi {
+  position: absolute;
+  inset: 0 var(--gutter);
+  background-image: radial-gradient(
+    circle 3px at center,
+    var(--ink) 100%,
+    transparent 0
+  );
+  background-size: calc(var(--u) * 6) calc(var(--u) * 6);
+  background-position: calc(var(--u) * 4) calc(var(--u) * 4);
+  opacity: 0.36;
+}
+
+/* The board, on request.
+   `?board` draws the lattice the page is standing on. This is the honest
+   version of revealing it: a URL rather than a hover, so it is available to a
+   keyboard, a screenshot and a phone. */
+.show-board .lattice-base {
+  opacity: 0.5;
+}
+
+.show-board .hoshi {
+  opacity: 0.8;
+}
+

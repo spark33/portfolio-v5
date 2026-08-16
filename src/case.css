@@ -1,0 +1,269 @@
+@import "./base.css";
+@import "./index-rows.css";
+@import "./prose.css";
+
+/* Case studies and artifact pages.
+ *
+ * Same spine every time: the constraint, then the title, then the fields,
+ * then a numbered run of decisions. A decision is context, the option not
+ * taken, and what it cost — and the cost is a required field, because a
+ * decision with no cost is a preference. It carries the second of the
+ * accent's three uses. */
+
+/* Composition: the header runs the full width of the page and the argument
+   runs in a single column against a mono rail. The headline is what uses the
+   width; the body keeps a readable measure. Capping the header too, as an
+   earlier pass did, left the whole page hugging the left edge of a 1440
+   viewport with nothing holding the right half. */
+
+.case {
+  padding-block: var(--space-5) var(--space-8);
+}
+
+.case-head {
+  padding-bottom: var(--space-6);
+}
+
+.case-topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--space-5);
+  padding-bottom: var(--space-6);
+}
+
+.case-counter {
+  font-variant-numeric: tabular-nums;
+}
+
+.case-constraint {
+  margin-bottom: var(--space-6);
+}
+
+.case-title {
+  color: var(--ink-secondary);
+  font-weight: 500;
+  margin-bottom: var(--space-7);
+}
+
+.doc-title {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.case-meta {
+  padding-block: var(--space-5);
+  border-top: 1px solid var(--rule);
+}
+
+.case-meta .strip-value {
+  font-size: var(--size-small);
+}
+
+/* One rail, one column. Everything below the header hangs off the same
+   grid, so the decision number, the field labels and the outcome marker all
+   sit on one vertical line down the page. */
+
+.case-body {
+  display: grid;
+  grid-template-columns: [rail] 10rem [body] minmax(0, 42rem) [tail] 1fr;
+  column-gap: var(--space-6);
+}
+
+/* Only the blocks that actually place children on the rail take the subgrid;
+   a paragraph does not want to become a grid container. */
+.decision,
+.outcome,
+.doc-section {
+  grid-column: rail / tail;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
+/* A standfirst, not a body paragraph. Sitting it in the body column left the
+   rail empty beside it and opened a void under the meta strip; spanning the
+   full width ties it to the header block above instead. */
+.case-lede {
+  grid-column: rail / tail;
+  max-width: 52rem;
+  margin-bottom: var(--space-6);
+  font-size: clamp(1.2rem, 1.75vw, 1.7rem);
+  text-wrap: pretty;
+}
+
+/* Decisions --------------------------------------------------------------- */
+
+.decision {
+  padding-block: var(--space-6);
+  align-content: start;
+  row-gap: var(--space-5);
+}
+
+.decision-n {
+  grid-column: rail;
+  font-variant-numeric: tabular-nums;
+  padding-top: 0.45em;
+}
+
+.decision-title {
+  grid-column: body;
+  margin-bottom: var(--space-2);
+  font-size: clamp(1.5rem, 2.15vw, 2rem);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.decision-fields {
+  grid-column: rail / tail;
+  display: grid;
+  grid-template-columns: subgrid;
+  row-gap: var(--space-5);
+  margin: 0;
+}
+
+.field {
+  grid-column: rail / tail;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: start;
+}
+
+.field > dt {
+  grid-column: rail;
+  padding-top: 0.4em;
+}
+
+.field > dd {
+  grid-column: body;
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* The second of the accent's three uses. */
+.field-cost > dt {
+  color: var(--seal);
+}
+
+.field-cost > dd {
+  color: var(--ink);
+}
+
+/* Outcome ----------------------------------------------------------------- */
+
+.outcome {
+  padding-block: var(--space-6);
+  border-top: 1px solid var(--rule);
+  align-content: start;
+}
+
+.outcome > .label {
+  grid-column: rail;
+  padding-top: 0.3em;
+}
+
+.outcome-list {
+  grid-column: body;
+  list-style: none;
+  padding: 0;
+  display: grid;
+  gap: var(--space-4);
+}
+
+.outcome-list > li {
+  padding-left: 1.4em;
+  text-indent: -1.4em;
+  text-wrap: pretty;
+}
+
+.outcome-list > li::before {
+  content: "—";
+  color: var(--ink-secondary);
+  margin-right: 0.6em;
+}
+
+/* Documentation pages ----------------------------------------------------- */
+
+.doc-section {
+  padding-block: var(--space-6);
+  align-content: start;
+  row-gap: var(--space-4);
+}
+
+.doc-section > h2 {
+  grid-column: rail / tail;
+  margin-bottom: var(--space-2);
+}
+
+.doc-section > p,
+.doc-section > .spec {
+  grid-column: body;
+}
+
+.spec {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--space-6);
+  font-size: var(--size-small);
+  text-align: left;
+}
+
+.spec th,
+.spec td {
+  padding: var(--space-3) var(--space-4);
+  vertical-align: top;
+}
+
+.spec thead th {
+  border-bottom: 1px solid var(--rule);
+}
+
+.spec tbody th {
+  font-family: var(--font-mono);
+  font-size: var(--size-label);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.spec tbody tr:nth-child(odd) {
+  background: var(--paper-recessed);
+}
+
+@media (max-width: 64rem) {
+  .case-body,
+  .decision,
+  .outcome,
+  .doc-section,
+  .decision-fields,
+  .field {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .decision,
+  .outcome,
+  .doc-section,
+  .decision-fields,
+  .field,
+  .case-lede,
+  .decision-n,
+  .decision-title,
+  .field > dt,
+  .field > dd,
+  .outcome > .label,
+  .outcome-list,
+  .doc-section > h2,
+  .doc-section > p,
+  .doc-section > .spec {
+    grid-column: 1;
+  }
+
+  .field {
+    row-gap: var(--space-2);
+  }
+
+  .field > dt,
+  .decision-n,
+  .outcome > .label {
+    padding-top: 0;
+  }
+}
