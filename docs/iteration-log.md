@@ -1,12 +1,15 @@
 # Iteration log
 
-Ten critique passes against [`docs/iteration-brief.md`](iteration-brief.md). Each
-pass: build, screenshot every page at 1440 / 768 / 390 in both themes, look at
-the screenshots, name the single largest gap, fix that one gap, run the whole
-Playwright suite.
+Ten critique passes against [`docs/iteration-brief.md`](iteration-brief.md), and
+one exploration pass after them. Each critique pass: build, screenshot every
+page at 1440 / 768 / 390 in both themes, look at the screenshots, name the
+single largest gap, fix that one gap, run the whole Playwright suite. The
+exploration pass ran a different method, described under "Creativity pass A".
 
 Baseline screenshots are in `shots-before/`, the current set in `shots/`. Both
-are gitignored — they are 66 PNGs a pass, and the log is the record.
+are gitignored — they are 66 PNGs a pass, and the log is the record. The
+exception is `proto/screenshots/`, which is committed: it is twelve images that
+are the evidence for one decision rather than a snapshot of a build.
 
 ---
 
@@ -324,6 +327,209 @@ Files: `content/site.ts`, `lib/pages.ts`, `lib/shell.ts`, `plugins/site.ts`,
 
 ---
 
+# Creativity pass A — make the typography the idea
+
+A different brief and a different method from the ten passes above. Those were
+critique-and-fix: find the largest defect, fix that one thing. This one had no
+defect to fix. The site was competent, internally consistent, and scored well on
+everything except the thing that decides whether anyone remembers it — there was
+no moment a juror would stop on, and typography was doing all the visual work
+while doing nothing interesting with it.
+
+Method: build three genuinely different directions as throwaway prototypes,
+screenshot each at 1440, 390 and 300px, look at them, pick one in writing, then
+build the winner properly. The prototypes are committed in
+[`proto/`](../proto/) with their screenshots, so the choice is reviewable rather
+than asserted.
+
+## The three directions
+
+**1 — The resolution.** *The site's claim is a name being made legible without
+being flattened, so set that transformation — composed, decomposed,
+transliterated, resolved — at display scale, as the first thing on the page.*
+Four steps of 박상현, each labelled with the operation that produced it, the last
+carrying what it cost.
+
+**2 — Weight is who decided.** *Schibsted Grotesk carries a continuous 400–900
+axis and the site asks it for three values; put the axis to work as meaning —
+what was imposed on the work set light, what was chosen set heavy — so the
+colour of a page maps the argument before a word of it is read.* Applied to the
+claim, the index rows and the three fields of a decision.
+
+**3 — The record at display scale.** *Numerals are the only part of this record
+a stranger can read without knowing one of its nouns, so set the four figures at
+the size of the claim and let the sentences caption them.* 400+, 100%, 180k+,
+53k as the page's display type.
+
+## The choice, and what the other two did better
+
+**Direction 1, built.** At 300px — the width that decides whether a text-only
+site gets opened at all — it is the only one of the three showing something a
+juror could not get from a font choice: a stack of four specimens, one Korean,
+one a row of jamo that reads as pure structure, two Latin, with a red rule under
+the last. Baseline, 2 and 3 all read at that size as things already seen: a grey
+paragraph, a big headline with bold words, a row of big numbers.
+
+It is also the only one of the three that is the site's own argument rather than
+a treatment applied to it. Every project here is introduced by the constraint
+that produced it and states what the decision cost; the name now gets identical
+treatment, which is what `lib/pages.ts` has claimed in its file header since the
+first commit and has not been true since the motif was deleted. `person.nameJamo`
+had been sitting in `content/site.ts` rendered nowhere, with a comment
+explaining that the three groups were kept so the syllable structure would
+survive decomposition. The material had been prepared and abandoned.
+
+**What 2 did better.** It is a *system* and direction 1 is a *place*. Weight as
+authorship applies to every page — the index rows, the decision fields, the
+lede — and would have made the argument visible in body copy, where a reader
+spends most of their three minutes. Direction 1 spends its idea in the first
+screen of one page and the rest of the site is unchanged. That is a real loss
+and I took it deliberately: a system that has to be explained by a legend (my
+prototype needed one: `WEIGHT 400 — GIVEN TO ME · WEIGHT 880 — DECIDED BY ME`)
+is a system nobody decodes, and at 300px the weight contrast reads as ordinary
+bold-for-emphasis. The half of it that survives is in the winner: the axis is
+now a named, documented scale, and its direction carries the meaning.
+
+**What 3 did better.** It is by far the loudest at thumbnail size, and it is
+right that the numbers are the part of this record that needs no translation.
+Two things killed it. It makes the person a dashboard — pass 4 spent a whole
+pass dissolving those same four figures out of a card because a card argues the
+record is a widget, and this direction argues it harder. And it says nothing
+about judgement: the site's claim is that the decisions and their costs are the
+evidence, and a wall of metrics is the version of this record that a recruiter
+screen already produces.
+
+## What was built
+
+**The strip.** `nameResolution` in `content/site.ts`, derived from `person` so
+the four forms cannot drift from the wordmark, the footer or the structured
+data. Rendered by `resolution()` in `lib/pages.ts` as an ordered list — the
+steps are an order, each produced from the one above it — with the mono step
+name, the specimen, and a note. Step 04 carries a `COST` field in the site's
+accent, which is the first of the three places `src/tokens.css` has always said
+the accent belongs: *the lossy step of the name*. The token comment predicted
+this element.
+
+**A size that is derived rather than chosen.** The specimens have no font-size
+in the type scale. They are set at `100cqw / --fit` — the strip's own measure
+divided by a constant — so the type is a function of the page width, and no step
+can wrap or overflow at any viewport because the longest of the four runs 8.9 em
+against a divisor of 10. Below 48rem the divisor tightens to 9.1: a wide screen
+can afford 10% slack and a phone cannot. `proto/measure.mjs` is where the 8.9
+comes from; it is measured at the weight and tracking the type is actually set
+in, because a heavier weight is a wider string and CSS has no unit for "the
+width of this string".
+
+This is the opposite failure mode to the one this codebase keeps producing. Four
+times now a measure written for one font size has been inherited by another; here
+the size is derived from the measure instead, so the two cannot disagree.
+
+**The weight axis, as a scale.** `--weight-source: 400`, `--weight-carried: 700`,
+`--weight-imposed: 860` in `src/tokens.css`. Weight rises as fidelity falls:
+박상현 at the axis floor, "Sean Park" at 860, because the least true form is the
+one the world uses. Both Korean steps are Pretendard, which ships here as two
+static weights, so they take 400 — which is also the weight the shell preloads,
+so neither large Korean row waits on an unpreloaded file.
+
+**The greeting.** It was "Hi, I'm Sean Park — 박상현 — and I run product and
+delivery at Mindlogic in Seoul." Directly under a strip that has just spent a
+screen on both halves of the name, that repeats both of them in one breath. The
+h1 is now the sentence the greeting was burying — "I run product and delivery at
+Mindlogic in Seoul." — which is also the one an employer is reading for. The
+cost is the site's three friendliest words; the first-person voice survives in
+the narrative under it.
+
+**A defect found while doing it, and it is the fourth of its kind.** The `COST`
+field rendered in secondary grey rather than in the accent, because it is a `p`
+inside `.resolve-note` and the rule written for the container
+(`.resolve-note p`, one class and one element) outweighs the rule written for
+the element (`.resolve-cost`, one class). Pass 1 was a measure on a container
+beating the element, pass 5 the same in `.prose`, pass 9 `.story > p` beating
+`.contact`. Fixed by giving the note text its own class; noted at the site of it.
+
+**Two tests, both verified failing first.** `the name fills its measure and never
+wraps` — at 320/390/768/1024/1440, every step occupies one line box and fits the
+measure, and the longest still uses more than 80% of it, which is what catches
+container units silently failing to the fallback clamp. Verified against
+`--fit: 8.0`, where it fails on overflow. And `the name resolves in four steps,
+and every step is real text` — the four values read out of the rendered text,
+including the spaces between the jamo groups, because three positioned spans
+would look identical and be invisible to a screen reader.
+
+The specimens deliberately carry no `display-*` class. Those exist to keep a
+body-copy measure off display type and their test counts characters per line;
+a three-character name would read as broken under it. The invariant that
+matters here is a different one and is tested directly.
+
+## Where it ended up
+
+**Lighthouse**, mobile profile, after the pass:
+
+| Route | Perf | A11y | Best practices | SEO | CLS |
+| ----- | ---- | ---- | -------------- | --- | --- |
+| `/` | 100 | 100 | 100 | 100 | 0 |
+| `/work/` | 100 | 100 | 100 | 100 | 0 |
+| `/work/inherited-mental-model/` | 100 | 100 | 100 | 100 | 0 |
+| `/logician-ui/` | 100 | 100 | 100 | 100 | 0 |
+| `/about/` | 100 | 100 | 100 | 100 | 0 |
+| `/blog/` | 100 | 100 | 100 | 100 | 0 |
+| `/blog/cutting-transcript-latency/` | 100 | 100 | 100 | 100 | 0 |
+| `/404.html` | 100 | 100 | 100 | **63** | 0 |
+
+LCP 1.5 s and TBT 0 ms throughout. CLS went from 0.002 to 0 on every route,
+which is not a coincidence: the strip's height is `line-height × font-size` and
+its font-size comes from the container's width, so nothing about it moves when
+the web font swaps in. The one element that used to shift was the first line of
+the home page.
+
+This Lighthouse build also reports an `agentic-browsing` category, scoring 67 on
+every route including the ones untouched by this pass. It is not one of the four
+the brief names and nothing here moved it; recording it so the next pass knows
+it was already there.
+
+**Tests:** 58 passing, from 56. Two added, none weakened. One existing assertion
+was updated rather than removed — the h1 regex, because the h1's copy changed —
+and it is no weaker than it was.
+
+**Total JavaScript:** still 1.5 KB. Nothing in this pass runs at runtime.
+
+## What I did not do, and why
+
+- **Direction 2 as a site-wide system.** The strongest thing about it —
+  weight carrying meaning rather than emphasis — is in the winner. The rest of
+  it, light-for-imposed and heavy-for-chosen across index rows and decision
+  fields, is a coherent second pass and I did not start it, because half a
+  system applied to two page types would read as inconsistency rather than as
+  rigour.
+- **The share card.** `public/og.png` still carries the claim and the record,
+  not the resolution. Its own rule is to be regenerated when the claim, the
+  record or the palette changes, and none of the three did. Redrawing it around
+  the strip is a new design decision about a different surface, and a card whose
+  job when unfurled is to state the argument in one line is not obviously
+  improved by spending that line on a name.
+- **Changing the display face.** Lead 4 in the brief was that Schibsted Grotesk
+  may be the ceiling — a completely neutral grotesque in the same register as
+  every Neue Montreal site. It is neutral, and it stayed, for a reason the pass
+  made stronger rather than weaker: the whole strip is Korean and Latin set at
+  the same size on adjacent lines, and it only holds because the two faces are
+  metric twins. Replacing the Latin face for the display setting would have put
+  the mismatch in the one place on the site where the two scripts are most
+  directly compared. The interest had to come from what the type is doing, not
+  from what it is.
+- **The strip on any page but the home page.** It is the site's one moment and
+  repeating it on `/about/` would spend it. The about page still opens on a
+  plain "Sean Park — 박상현" h1, which now looks thin by comparison. That is the
+  most obvious candidate for the next pass.
+- **The home h1 is still smaller than the h3s below it**, and now smaller than
+  the strip above it too. Pass 10 left this open and this pass did not close it;
+  the greeting is deliberately conversational and I still did not want to shout
+  it. It is more visible now than it was.
+- **No testing on a real mid-range Android.** Still Chromium at a throttled
+  profile. The strip is the heaviest text block the site has ever rendered and
+  it is the thing I would most want to see on real hardware.
+
+---
+
 ## Reference check
 
 `www.awwwards.com` was reachable, so this is against real submission
@@ -346,6 +552,21 @@ text-first, no imagery at all. Two things it does that are worth stating:
 piece; neither is a useful comparison for a text-only site, and neither
 suggested a change here. Recording them because looking and finding nothing is
 a result.
+
+**Creativity pass A re-checked this**, against the current Sites of the Day
+list: **2xa-studio** again, plus **no-art**, **studio-k95**, **haoqi-design**,
+**produx-design**, **mosbys-files**, **revelatio-studio** and **nothin** —
+submission screenshots pulled from each `/sites/<slug>` `og:image`, not
+described from a trend article.
+
+2xa-studio is still the bar and still the closest comparison: one commitment,
+visible in a thumbnail, giant display type colliding with a dense body-text
+field. Two things from the wider set were worth writing down. Every one of them
+survives being shrunk to a thumbnail, which is a harder test than looking good
+at 1440 and is the one this site was failing. And **haoqi-design** sets Hangul
+as a display element beside Latin — as stickers rather than as typography, but
+it is the only site in the set doing anything at all with a second script,
+which is evidence for how empty that territory is rather than against it.
 
 ---
 

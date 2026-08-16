@@ -1,12 +1,13 @@
 /**
  * Page renderers.
  *
- * The recurring structure is the resolution strip: a row of mono-labelled
- * cells that appears twice in the site's grammar — once for the name
- * (composed / decomposed / transliterated / resolved) and once for every
- * project (its constraint, its decisions, what they cost). The name and the
- * work get identical treatment on purpose, so the argument is carried by the
- * structure rather than asserted in copy.
+ * The recurring structure is the resolution strip: a run of mono-labelled
+ * steps that appears twice in the site's grammar — once for the name
+ * (composed / decomposed / transliterated / resolved, in `resolution()`) and
+ * once for every project (its constraint, its decisions, what they cost). The
+ * name and the work get identical treatment on purpose, so the argument is
+ * carried by the structure rather than asserted in copy. Both halves state
+ * what the step cost.
  */
 import {
   about,
@@ -14,6 +15,7 @@ import {
   caseStudies,
   closing,
   greeting,
+  nameResolution,
   narrative,
   nav,
   notFound,
@@ -100,6 +102,44 @@ function paragraphs(items: typeof narrative) {
 }
 
 /**
+ * The name, resolved in four steps, at display scale.
+ *
+ * An ordered list because the steps are an order: each one is produced from
+ * the one above it, and the last is the only one that loses anything. The
+ * mono step names and the notes are the same machine voice the rest of the
+ * site labels its fields in, and the fourth note sits under a COST field
+ * because that is the grammar every decision on this site is written in.
+ *
+ * The value carries no `display-*` class. Those exist to hold a body-copy
+ * measure off display type, and their test counts characters per line — a
+ * three-character name would read as broken under it. The invariant that
+ * matters here is different and is tested directly: every step occupies
+ * exactly one line box and fits its measure at every width.
+ */
+function resolution() {
+  const steps = nameResolution
+    .map(
+      (step) => `          <li class="resolve-step s${copy(step.n)}">
+            <p class="label resolve-n">${copy(step.n)} &mdash; ${copy(step.step)}</p>
+            <p class="resolve-value">${copy(step.value)}</p>
+            <div class="resolve-note">
+${step.cost ? `              <p class="label resolve-cost">Cost</p>\n` : ""}              <p class="resolve-text">${copy(step.note)}</p>
+            </div>
+          </li>`,
+    )
+    .join("\n");
+
+  // Named by `aria-label`, not by a heading: a heading here would sit above
+  // the h1 and would take the first `main h2`, which the home page reserves
+  // for its claim. The margin note is named the same way.
+  return `      <section class="page resolve" aria-label="The name, in four steps">
+        <ol class="resolve-steps">
+${steps}
+        </ol>
+      </section>`;
+}
+
+/**
  * The opening: a person talking, with the record beside them.
  *
  * The narrative runs in the board's first ten and a half cells and the
@@ -181,6 +221,8 @@ export function renderHome() {
     module: "/src/main.ts",
     jsonLd: personJsonLd(),
     body: `    <main class="main" id="main" tabindex="-1">
+${resolution()}
+
 ${opening()}
 
       <div class="page">
