@@ -230,6 +230,13 @@ Current gaps: LogicianUI coverage and component count, harness time recovered,
 support volume on the agents/add-ons distinction, and two retention figures on
 the 한국장학재단 project.
 
+## Iterating on this
+
+[`docs/iteration-brief.md`](docs/iteration-brief.md) is a self-contained brief
+for a critique-and-refine session: what the target actually rewards, the method,
+the hard rules, and the two defect classes this codebase keeps producing. Paste
+it as the opening instruction of a fresh session.
+
 ## Research
 
 [`docs/references.md`](docs/references.md) and
