@@ -30,7 +30,9 @@ const PAGES = [
   ["about", "/about/"],
   ["writing", "/blog/"],
   ["post", "/blog/cutting-transcript-latency/"],
-  ["404", "/does-not-exist/"],
+  // vite preview falls back to index.html for unmatched paths, so the real
+  // page has to be requested at its file name.
+  ["404", "/404.html"],
 ];
 
 const WIDTHS = [

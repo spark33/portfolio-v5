@@ -16,6 +16,7 @@ import {
   greeting,
   narrative,
   nav,
+  notFound,
   person,
   record,
   recordCaption,
@@ -487,6 +488,66 @@ ${sections}
   });
 }
 
+/* -- not found ----------------------------------------------------------- */
+
+/**
+ * The one page whose job is to be useful about a dead end.
+ *
+ * Same grammar as everything else — the condition is the `h1` and the name of
+ * it is subordinate — and it carries the work index rather than an apology,
+ * because the reader is here by accident and the site is small enough to show
+ * all of itself.
+ *
+ * Not in `routes`: it must not appear in the sitemap, and it is served by the
+ * host for unmatched paths rather than linked to.
+ */
+export function renderNotFound() {
+  const studies = caseStudies
+    .map((study, i) =>
+      indexRow(
+        `/work/${study.slug}/`,
+        n(i),
+        study.constraint,
+        study.title,
+        study.meta.slice(2).map((m) => m.value),
+      ),
+    )
+    .join("\n");
+
+  const built = artifacts
+    .map((item) => indexRow(`/${item.slug}/`, "—", item.constraint, item.title, []))
+    .join("\n");
+
+  return shell({
+    title: `${notFound.title} — ${person.nameEn}`,
+    description: notFound.lede,
+    path: "/404",
+    stylesheet: "/src/home.css",
+    noindex: true,
+    body: `    <main class="main page" id="main" tabindex="-1">
+      <header class="work-head">
+        <p class="label section-label">${esc(notFound.code)} &mdash; ${copy(notFound.title)}</p>
+        <h1 class="display-l display-measure">${copy(notFound.constraint)}</h1>
+        <p class="lede work-lede">${copy(notFound.lede)}</p>
+      </header>
+
+      <section class="section" aria-labelledby="nf-constraints">
+        <h2 class="label section-label" id="nf-constraints">Three constraints</h2>
+        <ol class="index">
+${studies}
+        </ol>
+      </section>
+
+      <section class="section" aria-labelledby="nf-built">
+        <h2 class="label section-label" id="nf-built">Also built</h2>
+        <ol class="index">
+${built}
+        </ol>
+      </section>
+    </main>`,
+  });
+}
+
 /* -- the page map the build consumes ------------------------------------- */
 
 export function sitePages(): { file: string; name: string; html: string }[] {
@@ -494,6 +555,9 @@ export function sitePages(): { file: string; name: string; html: string }[] {
     { file: "index.html", name: "main", html: renderHome() },
     { file: "about/index.html", name: "about", html: renderAbout() },
     { file: "work/index.html", name: "work", html: renderWorkIndex() },
+    // Vercel serves this for any unmatched path. It is deliberately absent
+    // from `routes`, so it never reaches the sitemap.
+    { file: "404.html", name: "not-found", html: renderNotFound() },
   ];
 
   caseStudies.forEach((study, i) => {

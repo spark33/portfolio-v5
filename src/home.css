@@ -168,6 +168,12 @@ a.chip:hover {
   padding-block: var(--space-6) var(--space-7);
 }
 
+.work-lede {
+  max-width: 44rem;
+  margin-top: var(--space-5);
+  color: var(--ink-secondary);
+}
+
 .index-more {
   margin-top: var(--space-6);
   font-family: var(--font-mono);

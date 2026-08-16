@@ -482,6 +482,50 @@ test.describe("regressions that keep coming back", () => {
     }
   });
 
+  test("the 404 is a real page, is not indexable, and offers the work", async ({ page }) => {
+    // The host serves this for any unmatched path; `vite preview` falls back
+    // to index.html instead, so the file itself is what gets requested here.
+    await page.goto("/404.html");
+
+    await expect(page.locator("h1")).toHaveText(/Nothing is published/);
+    await expect(page.locator('meta[name="robots"]')).toHaveAttribute(
+      "content",
+      "noindex",
+    );
+
+    // A dead end that offers nothing is an apology. Every case study and every
+    // artifact is reachable from here.
+    const hrefs = await page.locator("main .index-link").evaluateAll((links) =>
+      links.map((a) => a.getAttribute("href")),
+    );
+    expect(hrefs).toContain("/work/inherited-mental-model/");
+    expect(hrefs).toContain("/logician-ui/");
+    expect(hrefs.length).toBeGreaterThanOrEqual(5);
+  });
+
+  test("the share card is advertised only when the origin is known", async ({ page }) => {
+    // A scraper fetches og:image with no page to resolve a relative path
+    // against, so a relative one is worse than none — the same rule the
+    // sitemap already follows. These builds run without SITE_ORIGIN.
+    await page.goto("/");
+
+    const image = page.locator('meta[property="og:image"]');
+    const declared = await image.count();
+
+    if (declared) {
+      await expect(image).toHaveAttribute("content", /^https?:\/\/.+\/og\.png$/);
+      await expect(page.locator('meta[name="twitter:card"]')).toHaveAttribute(
+        "content",
+        "summary_large_image",
+      );
+    }
+
+    // Either way the file itself has to be there, at the size it claims.
+    const response = await page.request.get("/og.png");
+    expect(response.status()).toBe(200);
+    expect(Number(response.headers()["content-length"] ?? 1)).toBeGreaterThan(1000);
+  });
+
   test("the theme toggle keeps a control's proportions at every width", async ({ page }) => {
     // As a lone grid item in the stacked mobile masthead it had nothing to
     // size it and stretched to 162px — a capsule six times wider than tall

@@ -11,6 +11,7 @@ import { dirname, join } from "node:path";
 import type { Plugin } from "vite";
 import { OUT_DIR as BLOG_DIR, POSTS_DIR, loadPosts, renderIndex, renderPost } from "../lib/blog.ts";
 import { routes, sitePages } from "../lib/pages.ts";
+import { siteOrigin } from "../lib/shell.ts";
 
 /** Directories this plugin owns and rebuilds from scratch each time. */
 const GENERATED = ["work", "logician-ui", "harness", "about", BLOG_DIR];
@@ -21,23 +22,6 @@ const WATCHED = ["content/", "lib/"];
 function write(file: string, contents: string) {
   mkdirSync(dirname(file), { recursive: true });
   writeFileSync(file, contents);
-}
-
-/**
- * The origin the sitemap needs, or null if nobody has told us what it is.
- *
- * `SITE_ORIGIN` wins; otherwise Vercel's production hostname is used when the
- * build is running there. A sitemap has to carry absolute URLs, so without one
- * of these there is nothing truthful to write.
- */
-function origin(): string | null {
-  const configured = process.env.SITE_ORIGIN?.trim();
-  if (configured) return configured.replace(/\/$/, "");
-
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL?.trim();
-  if (vercel) return `https://${vercel.replace(/\/$/, "")}`;
-
-  return null;
 }
 
 function sitemap(base: string) {
@@ -84,7 +68,7 @@ export function generateSite({ includeDrafts = false } = {}): Record<string, str
 
   // A sitemap pointing at example.com is worse than no sitemap, so when the
   // origin is unknown we write neither it nor a reference to it.
-  const base = origin();
+  const base = siteOrigin();
   if (base) {
     write("public/sitemap.xml", sitemap(base));
     write("public/robots.txt", `User-agent: *\nAllow: /\nSitemap: ${base}/sitemap.xml\n`);

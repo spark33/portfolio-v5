@@ -579,6 +579,22 @@ export const about = {
 };
 
 /**
+ * The page a reader reaches by mistake.
+ *
+ * Written in the same grammar as everything else: the condition first, the
+ * name of it second. A 404 is the one page whose whole job is to be useful
+ * about a dead end, so it carries the work index rather than an apology.
+ */
+export const notFound = {
+  code: "404",
+  constraint: "Nothing is published at this address.",
+  title: "Not found",
+  lede:
+    "The address may have changed, or it may never have existed. Everything " +
+    "the site holds is on this page.",
+};
+
+/**
  * Three items. It was five, two of which were individual artifact pages while
  * "Work" — the thing the site is for — had no slot at all, so returning from a
  * case study meant going to the home page and scrolling past the narrative.
